@@ -31,7 +31,8 @@
     syscall $IO_PUTSTRING
 
     mov     s0,TIMES        # Initialize loop counter
-
+    sub     s0,1            # Compensate
+    
     syscall $LOCAL_GETTIME
     mov     u4,u0           # Save the seconds
     mov     u5,u1           # Save the microseconds
@@ -45,7 +46,6 @@
     call    :calcTime       # Calculate time difference
 
     mov     u0,TIMES
-    add     u0,1            # Compensate
     mov     f0,u0           # Convert to float
     div     f0,f1           # Calculate function calls / second
 
@@ -60,6 +60,8 @@
     syscall $IO_PUTSTRING
     
     mov     s0,TIMES        # Initialize loop counter
+    mul     s0,20           # Increase time
+    sub     s0,1            # Compensate
     
     syscall $LOCAL_GETTIME
     mov     u4,u0           # Save the seconds
@@ -73,7 +75,7 @@
     call    :calcTime       # Calculate the time difference
     
     mov     u0,TIMES
-    add     u0,1            # Compensate
+    mul     u0,20           # Increase time (same as before)
     mov     f0,u0           # Convert to float
     div     f0,f1           # Calculate function calls / second
 
