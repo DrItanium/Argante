@@ -6,13 +6,13 @@
 #
 # Status: done
 #
-# AIX Author:     Mariusz Marcinkiewicz <tmoggie@ags.pl>
-# BSD Author:     Michal Zalewski <lcamtuf@ids.pl>
-# IRIX Author:    Michal Zalewski <lcamtuf@ids.pl>
-# Linux Author:   Michal Zalewski <lcamtuf@ids.pl>
-# Solaris Author: Michal Zalewski <lcamtuf@ids.pl>
-# Conversion by:  James Kehl <ecks@optusnet.com.au>
-
+# AIX Author:       Mariusz Marcinkiewicz <tmoggie@ags.pl>
+# BSD Author:       Michal Zalewski <lcamtuf@ids.pl>
+# IRIX Author:      Michal Zalewski <lcamtuf@ids.pl>
+# Linux Author:     Michal Zalewski <lcamtuf@ids.pl>
+# Solaris Author:   Michal Zalewski <lcamtuf@ids.pl>
+# Conversion by:    James Kehl <ecks@optusnet.com.au>
+# Various fixes by: Adam Chodorowski <adam.chodorowski@bigfoot.com>
 #
 # Firstly, update the build number.
 E=kernel/.argbuild
@@ -20,10 +20,12 @@ E=kernel/.argbuild
 X=$(shell cat $E)
 CFLAGS+=-DBUILD=$X
 
-# Work out the system 
-SYS=Linux
+# Where are we?
+TOP := $(shell pwd)
 
-#
+# Include the configuration.
+include conf.mk
+
 # Definitions
 
 # Generic
@@ -37,8 +39,13 @@ SHROPTS = -shared -fPIC
 # I don't know if it will work with other than i-x86's,
 # flame me if not. Fingers crossed.
 #
+# chodorowski: Works on Linux/i386 and OpenBSD/i386, but not Solaris/sparc.
+#
 ARCH=$(shell uname -m)
+
+ifneq ($(SYS),Solaris)
 CFLAGS+=-mcpu=$(ARCH) -march=$(ARCH)
+endif
 
 # System dependant
 # NOTE: SVGA and PACKET in modules makefile
@@ -75,8 +82,8 @@ endif
 
 # Solaris
 ifeq ($(SYS), Solaris)
-LDLIBS += -lsocket -Xlinker -export-dynamic -ldl
-SHROPTS = -L/usr/ucblib -lucb -Xlinker "-R/usr/ucblib" 
+LDLIBS += -lsocket -Xlinker -export-dynamic -ldl 
+SHROPTS = -L/usr/ucblib -lucb -Xlinker "-R/usr/ucblib"
 endif
 
 IDSTR ="`whoami`@`uname -n` on `date +'%A, %d %B %Y, %H:%M'`"
@@ -86,16 +93,15 @@ export CFLAGS LDLIBS SHROPTS CC IDSTR
 DIRS=compiler/ kernel/ modules/ hll/ tools/
 
 all: $(DIRS)
-	cd compiler/; ${MAKE}
-	cd kernel/ ; ${MAKE}
-	cd modules/ ; ${MAKE}
-	cd hll/ ; ${MAKE}
-	cd tools/ ; ${MAKE}
-#	for I in $(DIRS); do { (cd $$I; $(MAKE)) || exit 1 }; done
+	@for dir in $(DIRS); do \
+		$(MAKE) -C $$dir TOP=$(TOP); \
+	done
 #	let X=$X+1; echo $$X >$E
 
 clean: $(DIRS)
-	for I in $(DIRS); do { (cd $$I; $(MAKE) clean) || exit 1 }; done
+	@for dir in $(DIRS); do \
+		$(MAKE) -C $$dir TOP=$(TOP) clean; \
+	done
 
 # I have not touched anything below this line
 # -------------------------------------------
