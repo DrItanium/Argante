@@ -62,6 +62,133 @@ struct bformat header;
 unsigned char *bytecode, *data;
 FILE *in, *out;
 
+/* NAG symbol support - jk */
+#define STATE_DATA 1
+#define STATE_CODE 2
+
+typedef struct _syment syment; /* No puns please */
+struct _syment {
+	char *name; /* Dynamic len. Worth the effort IMHO */
+	int addr;
+	int size;
+	char stortype;
+	syment *next;
+};
+
+syment *syment_head=NULL;
+
+#define misprint(c) (isprint(c) || c=='\r' || c=='\t' || c=='\e' || c=='\n' || c=='\b')
+
+void read_syms(char *f)
+{
+	FILE *sym;
+	char buf[80]; /* Symname is < 70 for agtc & nagt so we're safe */
+	int n, ci, ct=0;
+	syment *new;
+
+	sym=fopen(f, "rb");
+	if (!sym) 
+	{
+		perror("fopen of symfile failed");
+		return;
+	}
+
+	while(1)
+	{
+		ct++;
+		n=0;
+		
+		while (n < (sizeof(buf) - 1) && (ci=fgetc(sym)) > 0 && (buf[n]=ci))
+			n++;
+		buf[n]=0;
+
+		if (n==0)
+		{
+			fprintf(stderr, "%d symbols read from table\n", ct);
+			break;
+		} else if (n >= (sizeof(buf) - 1))
+		{
+			fprintf(stderr, "Overlong symbol name: aborting symbol read!\n");
+			break;
+		}
+
+		new=malloc(sizeof(syment));
+		if (!new)
+		{
+			fprintf(stderr, "Malloc failure!\n");
+			break;
+		}
+		new->name=strdup(buf);
+		/* Fixme - truncation checks */
+		fread(&new->addr, sizeof(new->addr), 1, sym);
+		fread(&new->size, sizeof(new->size), 1, sym);
+		fread(&new->stortype, sizeof(new->stortype), 1, sym);
+
+		/* Link in */
+		new->next=syment_head;
+		syment_head=new;
+	}
+	fclose(sym);
+}
+
+int addrtosym(int addr, char stortype, char *ibuf)
+{
+	syment *s;
+
+	s=syment_head;
+	while (s && (s->addr != addr || s->stortype != stortype))
+	{
+	//	fprintf(stderr, "addr %d!=%d || type %d != %d (name %s)\n", s->addr, addr, s->stortype, stortype, s->name);
+		s=s->next;
+	}
+
+	if (s)
+	{
+		sprintf(ibuf,":%s",s->name);
+		return 0;
+	}
+
+	switch(stortype) {
+		case STATE_CODE:
+			sprintf(ibuf,":CODE_0x%x",addr);
+			break;
+		case STATE_DATA:
+			sprintf(ibuf,":DATA_0x%x",addr);
+			break;
+		default:
+			sprintf(ibuf,":unknown_type_0x%x",addr);
+	}
+	return 1;
+}
+
+void do_args(int a, int t, int ta, char *out)
+{
+	float *tmp;
+	static char buf[80];
+	tmp=(float *) &a;
+	
+	switch(t){
+          case TYPE_IMMEDIATE: 
+		if (ta==TYPE_FREG)
+			sprintf(out,"%f",*tmp);
+		else
+			sprintf(out,"0x%x",a);
+		break;
+          case TYPE_IMMPTR:
+		if (addrtosym(a, STATE_DATA, buf))
+		;
+	//		sprintf(out,"*0x%x",a);
+	//	else
+			sprintf(out,"*%s", buf);
+		break;
+          case TYPE_UREG: sprintf(out,"u%d",a);break;
+          case TYPE_SREG: sprintf(out,"s%d",a);break;
+          case TYPE_FREG: sprintf(out,"f%d",a);break;
+          case TYPE_UPTR: sprintf(out,"*u%d",a);break;
+          default: sprintf(out,"BAD");
+	}
+}
+
 int disasm(char *str, char *str2, char *str3,int otheraddr)
 {
         unsigned int reality;
@@ -99,53 +226,46 @@ int disasm(char *str, char *str2, char *str3,int otheraddr)
 	if (op[i].params==0)
           return 1;
         // put symbol
-        if (whatever==CMD_SYSCALL){
-            for(l=0;l<SCNUM;l++){
-              if(sys[l].num==a1){
-                sprintf(str2,"$%s",sys[l].name);
-                return 2;
-              }
-            }
+	switch(whatever)
+	{
+		case CMD_SYSCALL:
+			for(l=0;l<SCNUM;l++)
+			{
+				if(sys[l].num==a1)
+				{
+					sprintf(str2,"$%s",sys[l].name);
+					return 2;
+				}
+			}
+		case CMD_JMP:
+		case CMD_CALL:
+		case CMD_LOOP:
+			if (addrtosym(a1, STATE_CODE, str2))
+				sprintf(str2,"0x%x",a1);
+
+			return 2;
         }
  	
 	if (((a1<0)||(a1>=REGISTERS)) && t1!=TYPE_IMMEDIATE && t1!=TYPE_IMMPTR){
     	    sprintf(str,"Bad instruction.");
 	    return 0;
           }
-        tmp=(float*)&a1;
-	switch(t1){
-          case TYPE_IMMEDIATE: 
-	  if (op[i].params==2 && t2==TYPE_FREG)
-	    sprintf(str2,"%f",(float)*tmp);
-	  else sprintf(str2,"0x%x",a1);break;
-          case TYPE_IMMPTR: sprintf(str2,"*0x%x",a1);break;
-          case TYPE_UREG: sprintf(str2,"u%d",a1);break;
-          case TYPE_SREG: sprintf(str2,"s%d",a1);break;
-          case TYPE_FREG: sprintf(str2,"f%d",a1);break;
-          case TYPE_UPTR: sprintf(str2,"*u%d",a1);break;
-          default: sprintf(str,"Bad instruction."); return 0;
-	}
-	// Ist das the end ?
+
 	if (op[i].params==1)
-          return 2;
+	{
+		do_args(a1, t1, 0, str2);
+		return 2;
+	}
+	
+	do_args(a1, t1, t2, str2);
+
 	if (((a2<0)||(a2>=REGISTERS)) && t2!=TYPE_IMMEDIATE && t2!=TYPE_IMMPTR){
     	    sprintf(str,"Bad instruction.");
 	    *str2='\0'; *str3='\0';
 	    return 0;
-          }
-        tmp=(float*)&a2;  
-	switch(t2){
-          case TYPE_IMMEDIATE: 
-	  if (t1==TYPE_FREG)
-	    sprintf(str3,"%f",(float)*tmp);
-	  else sprintf(str3,"0x%x",a2);break;
-          case TYPE_IMMPTR: sprintf(str3,"*0x%x",a2);break;
-          case TYPE_UREG: sprintf(str3,"u%d",a2);break;
-          case TYPE_SREG: sprintf(str3,"s%d",a2);break;
-          case TYPE_FREG: sprintf(str3,"f%d",a2);break;
-          case TYPE_UPTR: sprintf(str3,"*u%d",a2);break;
-          default: *str2='\0'; *str3='\0';sprintf(str,"Bad instruction.");return 0;
-	}
+        }
+
+	do_args(a2, t2, t1, str3);
 	return 3;
 }
 
@@ -153,12 +273,14 @@ int main(int argc, char **argv)
 {
 	char s[128], s2[128], s3[128];
 	unsigned int addr,i,d,repeat=0;
+	int rdl;
 	printf("\nMaurycy Prodeus (C) 2000 <z33d@eth-security.net>\n");
 	printf("Disassembler of %s ver %d.%03d (C) 2000 Michal Zalewski <lcamtuf@tpi.pl>\n\n",
               SYSNAME,SYS_MAJOR,SYS_MINOR);
 	if (argc<3){
-	    printf("Usage: %s <filename.img> <filename.agt>\n",argv[0]);
+	    printf("Usage: %s <filename.img> <filename.agt> [filename.sym]\n",argv[0]);
 	    printf("\nWhere .img is input and .agt is output\n");
+	    printf("(and .sym is symbol table if one's available)\n");
 	    exit(-1);
 	}
 	in=fopen(argv[1],"r");
@@ -193,7 +315,9 @@ int main(int argc, char **argv)
 	    exit(-1);
 	}
 	fclose(in);
-	
+
+	if (argc >= 4)
+		read_syms(argv[3]);
 	out=fopen(argv[2],"w");
 	if (!out){
 	    printf("I can't open output file!\n");
@@ -213,86 +337,83 @@ int main(int argc, char **argv)
 	if (header.datasize>0){
 	    printf("Parsing data ... ");
 	    fprintf(out,"\n.DATA\n\n");
-	    addr=0;d=0;
-	    fprintf(out,":DATA_0x%x\n\n\t",addr);
-	    while(addr<header.datasize*4){
+	    addr=0;
 	    
-	    i=addr;
-	    repeat=0;
-	    while (*(int*)(&data[addr])==*(int*)(&data[addr+4])){
-	      addr+=4;
-	      if (addr>=header.datasize*4)
-	          break;
-	      repeat++;
-	    }
-	    if (repeat>0){
-		repeat++;
-		fprintf(out,"0x%x repeat %d\n",*(int*)(&data[addr]), repeat);
-		addr+=4;
-		if (addr>=header.datasize*4)
-		    break;
-		fprintf(out,":DATA_0x%x\n\n\t",addr);
-	        d=0;
-	    }
-	    i=addr;
-	    while((isprint(data[i]) || data[i]=='\n' || data[i]=='\r'
-	    || data[i]=='\b') && (i<header.datasize*4) && 
-	    data[i]!='"' && data[i]!='\\'){
-	      i++;
-	    }
-	    if (i-addr<4){
-	      fprintf(out,"0x%x\n", *(int*)(&data[addr]));
-	      addr+=4;
-	      if (addr>=header.datasize*4)
-	         break;
-	      fprintf(out,":DATA_0x%x\n\n\t",addr);
-	      d=0;
-	      continue;
-	    }
-	    
-	    while((isprint(data[addr]) || data[addr]=='\n' || data[addr]=='\r'
-	    || data[addr]=='\b') && (addr<header.datasize*4) && 
-	    data[addr]!='"' && data[addr]!='\\'){
-		if (!d){
-		  d=1;
-		  fprintf(out,"\"");
-		  i=0;
-		}	    
-		if (!iscntrl(data[addr]))
-		  fprintf(out,"%c",data[addr]);
-		else switch(data[addr]){
-		    case '\n': fprintf(out,"\\n");break;
-		    case '\r': fprintf(out,"\\r");break;
-		    case '\b': fprintf(out,"\\b");break;
-		}
-	        i++;
-		addr++;
-		if (addr>=header.datasize*4){
-		    if (d)
-		      fprintf(out,"\"\n");
+	    rdl=header.datasize * 4; /* Real Data Length - a plague on both words! */
+	    /* Ick. Did something crawl in here and die? */
+	    while (addr < rdl)
+	    {
 		    d=0;
-		    break;
-		}
-	    } // end of while(isprint ...
-	    if (i%4!=0)
-	      addr+=4-i%4;
-	    
-	    if (addr>=header.datasize*4)
-		break;
-	    if (d){
-		fprintf(out,"\"\n:DATA_0x%x\n\n\t",addr);
-		d=0;
-	    }
-	    if ((!isprint(data[addr]) && data[addr]!='\n' && data[addr]!='\r'
-	    && data[addr]!='\b') || data[addr]=='\\' || data[addr]=='"'){
-		fprintf(out,"0x%x\n", *(int*)(&data[addr]));
-		addr+=4;
-		if (addr>=header.datasize*4)
-		    break;
-		fprintf(out,":DATA_0x%x\n\n\t",addr);
-		d=0;
-	    }
-	    
+		    addrtosym(addr / 4, STATE_DATA, s);
+		    fprintf(out,"%s\n\n\t",s);
+		   
+		    /* Repeat test */
+		    repeat=1;
+		    while (addr < rdl - 4 && *(int*)(&data[addr])==*(int*)(&data[addr+4])){
+			    addr+=4;
+			    repeat++;
+		    }
+		    
+		    if (repeat > 1)
+		    {
+			    fprintf(out,"0x%x repeat %d\n",*(int*)(&data[addr]), repeat);
+			    continue;
+		    }
+
+		    /* String test */
+		    while(addr < rdl && misprint(data[addr]))
+		    {
+			    if (!d)
+			    {
+				    fprintf(out, "\"");
+				    d=1;
+			    }
+			    
+			    switch(data[addr])
+			    {
+				    case '\n':fprintf(out,"\\n");break;
+				    case '\r':fprintf(out,"\\r");break;
+				    case '\e':fprintf(out,"\\e");break;
+				    case '\b':fprintf(out,"\\b");break;
+				    case '\t':fprintf(out,"\\t");break;
+				    case '\"':fprintf(out,"\\\"");break;
+				    default: fputc(data[addr], out);
+			    }
+			    addr++;
+		    }
+		    
+		    if (d) /* A string! */
+		    {
+			    d=0;
+			    if (addr % 4) /* Hmm... string not on dword boundary */
+			    {
+				    /* If there's any data, we should print it.
+				     * No compiler yet understands \x00 escapes but
+				     * this will change and it's better than nothing.
+				     */
+				    i=addr;
+				    while (i%4)
+				    {
+					    d+=data[i];
+					    i++;
+				    }
+
+				    if (d)
+				    { /* Yuk! there IS data! */
+					    while(addr % 4)
+					    {
+						    fprintf(out, "\\x%x", data[addr]);
+						    addr++;
+					    }
+				    } else addr=i;
+			    }
+
+			    fprintf(out, "\"\n");
+			    continue;
+		    }
+		    /* Hm. Plain old int, I guess. */
+		    fprintf(out, "0x%x\n", data[addr]);
+		    addr+=4;
 	    }
 	    printf("[DONE]\n");
 	}
@@ -300,6 +421,8 @@ int main(int argc, char **argv)
 	printf("Disassembling code ... ");
 	fprintf(out,"\n.CODE\n\n");
 	for(addr=0;addr<header.bytesize;addr++){
+		if (!addrtosym(addr, STATE_CODE, s))
+				fprintf(out, "%s\n", s);
 	    switch(disasm(s,s2,s3,addr)){
 		case 0:	printf("Error.\n0x%x: %s\n", addr, s); exit(-1); 
 		case 1: fprintf(out,"\t%s\n",s); break;
