@@ -1,0 +1,113 @@
+MODULES_ALL=@MODULES_ALL@
+MODULES_KERN=@MODULES_KERN@
+MODULES_NATIVE=@MODULES_NATIVE@
+
+ALL_SC=$(foreach A,$(MODULES_ALL),$(A).sc)
+ALL_H=$(foreach A,$(MODULES_ALL),$(A).h)
+
+ALL_O=$(foreach A,$(MODULES_ALL),$(A).@OBJEXT@)
+ALL_SO=$(foreach A,$(MODULES_ALL),$(A).so)
+
+KERN_O=$(foreach A,$(MODULES_KERN),$(A).@OBJEXT@)
+KERN_SO=$(foreach A,$(MODULES_KERN),$(A).so)
+
+NATIVE_O=$(foreach A,$(MODULES_NATIVE),$(A).@OBJEXT@)
+
+CLEAN=core core.* $(ALL_O) $(ALL_SO)
+CLEAN+=dynamic.@OBJEXT@ st_kern.c st_nativ.c st_kern.@OBJEXT@ st_nativ.@OBJEXT@ st_kern.a st_nativ.a
+CLEAN+=modlistk modlistn modlistk.new modlistn.new
+
+DISTCLEAN=Makefile
+MAINTAINERCLEAN=$(ALL_SC) $(ALL_H) asyscall.h
+
+# Do NOT include compat libs 'LIBOBJS' because we don't produce executables.
+
+CFLAGS+=-I@top_srcdir@/include -I../include -I@top_srcdir@ -I..
+
+SHROPTS=-shared -fpic
+
+TARGETS=st_nativ.a asyscall.h
+
+ifeq (@MODULES@,DYNAMIC)
+TARGETS+=dynamic.@OBJEXT@ $(KERN_SO)
+else
+TARGETS+=st_kern.a
+endif
+
+# END variables
+
+all: $(TARGETS)
+
+asyscall.h: $(ALL_SC) 
+	cat $^ > $@
+
+FORCE:;
+
+# General module building
+#
+.SUFFIXES:
+.SUFFIXES: .@OBJEXT@ .so .h .sc
+
+VPATH=@srcdir@
+
+%.@OBJEXT@: %.c %.h
+	$(CC) $(CFLAGS) $(LDLIBS) -DSTATIC -c $< -o $@
+
+%.so: %.c %.h
+	$(CC) $(CFLAGS) $(LDLIBS) $(SHROPTS) $< -o $@
+
+%.h: %.c @srcdir@/scgen.pl
+	@srcdir@/scgen.pl @srcdir@/$*
+
+%.sc: %.c @srcdir@/scgen.pl
+	@srcdir@/scgen.pl @srcdir@/$*
+
+# Hack to update static loaders when list changes
+#
+modlistk: FORCE
+	echo $(MODULES_KERN) > $@.new
+	(cmp -s $@ $@.new && $(RM) $@.new) || mv -f $@.new $@
+	
+modlistn: FORCE
+	echo $(MODULES_NATIVE) > $@.new
+	(cmp -s $@ $@.new && $(RM) $@.new) || mv -f $@.new $@
+
+# Loader stuff
+#
+st_kern.@OBJEXT@: st_kern.c
+	$(CC) $(CFLAGS) $(LDLIBS) -c $< -o $@
+
+st_nativ.@OBJEXT@: st_nativ.c
+	$(CC) $(CFLAGS) $(LDLIBS) -c $< -o $@
+
+dynamic.@OBJEXT@: @srcdir@/dynamic.c
+	$(CC) $(CFLAGS) $(LDLIBS) -c $< -o $@
+
+st_kern.c: $(TARGET_H) @srcdir@/statcgen.sh modlistk
+	@srcdir@/statcgen.sh $(MODULES_KERN) > $@
+
+st_nativ.c: $(TARGET_H) @srcdir@/statcgen.sh modlistn
+	@srcdir@/statcgen.sh $(MODULES_NATIVE) > $@
+
+# Libraries/Archives 
+#
+
+st_kern.a: st_kern.@OBJEXT@ $(KERN_O)
+	$(AR) cru $@ $^
+	@RANLIB@ $@
+
+st_nativ.a: st_nativ.@OBJEXT@ $(NATIVE_O)
+	$(AR) cru $@ $^
+	@RANLIB@ $@
+
+# Cleanup
+#
+
+clean: FORCE 
+	$(RM) $(CLEAN)
+
+distclean: FORCE 
+	$(RM) $(CLEAN) $(DISTCLEAN)
+	
+maintainerclean: FORCE 
+	$(RM) $(CLEAN) $(DISTCLEAN) $(MAINTAINERCLEAN)

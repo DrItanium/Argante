@@ -1,0 +1,32 @@
+dvi: nagt.dvi syscall.dvi kdesign.dvi
+pdf: nagt.pdf syscall.pdf syscall.dvi
+
+ifneq (@srcdir@,.)
+%.tex: @srcdir@/%.tex
+	$(RM) $@
+	@LN_S@ $< $@
+
+syscall:
+	$(RM) $@
+	@LN_S@ @srcdir@/syscall $@
+endif
+
+%.dvi: %.tex common.tex
+	latex $<
+
+%.pdf: %.tex common.tex
+	pdflatex $<
+
+syscall.dvi: syscall.tex syscall
+
+syscall.pdf: syscall.tex syscall
+
+clean:
+	$(RM) *.log *.aux *.dvi *.pdf core
+	$(RM) commentgrep
+
+distclean: clean
+	$(RM) Makefile
+
+maintainerclean: distclean
+

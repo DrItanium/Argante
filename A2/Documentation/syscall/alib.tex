@@ -1,0 +1,25 @@
+\begin{scmodule}{ALIB}{\perjsk}{\perjsk}{Sun Jan 13 2002}
+Provides syscalls for run-time linking.
+\end{scmodule}
+Known Issues:\\
+ALIB\_LOOKUP doesn't say whether symbol is code or data.
+\begin{sccall}[]{ALIB\_OPEN}
+  Inputs: \scargs{"library-filename"}\\
+ Outputs: \scargs{unsigned library\_handle}\\
+  SideFx: Loads code, data \& symbols from specified image.\\
+   Other: Can throw ERR\_ALIB\_FAIL
+\end{sccall}
+\begin{sccall}{ALIB\_LOOKUP}
+  Inputs: \scargs{unsigned library\_handle, "symbol name"}\\
+          (A zero library-handle means any)\\
+ Outputs: \scargs{unsigned symbol\_address}\\
+  SideFx: N/A\\
+   Other: Throws ERR\_ALIB\_FAIL on a bad lib handle\\
+	  Throws ERR\_ALIB\_NOSYM if symbol not found or undefined
+\end{sccall}
+\begin{sccall}{ALIB\_CLOSE}
+  Inputs: \scargs{unsigned library\_handle}\\
+ Outputs: \scargs{}\\
+  SideFx: Unloads pages, data \& symbols belonging to specified lib\\
+   Other: Throws ERR\_ALIB\_FAIL on a bad lib handle
+\end{sccall}

@@ -1,0 +1,8 @@
+
+/* returns handle */
+syscall (unsigned) ALIB_OPEN (@unsigned fn, unsigned fnlen);
+/* returns address */
+syscall (@unsigned) ALIB_LOOKUP (unsigned handle, @unsigned sym, unsigned symlen);
+syscall () ALIB_CLOSE (unsigned handle);
+
+

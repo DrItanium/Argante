@@ -1,0 +1,40 @@
+
+VPATH=@srcdir@
+
+SRCDIR=@srcdir@
+include @top_srcdir@/img.mk
+
+LAC_OBJECTS=mainp.@OBJEXT@ parser.@OBJEXT@ yaccer.@OBJEXT@ type.@OBJEXT@ error.@OBJEXT@
+LAC_OBJECTS+=check.@OBJEXT@ stm.@OBJEXT@ var.@OBJEXT@ codegen.@OBJEXT@ lstring.@OBJEXT@
+
+LOADLIBES+=$(foreach A,@A2_LIBOBJ_ALL@,../$A)
+
+CLEAN=core core.* *.agt *.img parser.output lac $(LAC_OBJECTS)
+DISTCLEAN=Makefile
+MAINTAINERCLEAN=parser.c parser.h yaccer.c
+
+CFLAGS+=-I@srcdir@ -I. -I@top_srcdir@ -I..
+
+all: lac
+
+lac: $(LAC_OBJECTS)
+	$(CC) $(CFLAGS) $(LDLIBS) $^ $(LOADLIBES) -o $@
+
+parser.h parser.c: @srcdir@/parser.y
+	bison -d -v $^ -o parser.c
+
+yaccer.c: @srcdir@/main.l parser.h
+	flex -B -p -o$@ $<
+
+FORCE:;
+
+clean: FORCE
+	$(RM) $(CLEAN)
+
+distclean: FORCE
+	$(RM) $(CLEAN) $(DISTCLEAN)
+	
+maintainerclean: FORCE
+	$(RM) $(CLEAN) $(DISTCLEAN) $(MAINTAINERCLEAN)
+
+

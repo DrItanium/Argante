@@ -1,0 +1,40 @@
+/*
+ * This is a fairly good example of the strengths, weaknesses
+ * and quirks of LACRETNI.
+ *
+ * Have a look at the .agt equivalent from bench/ sometime.
+ */
+#include "display.lh"
+#include "fs.lh"
+#include "local.lh"
+
+func () DoSubdir() {
+	handler NoSuchDir;
+	goto ChDir;
+NoSuchDir:
+	/* Yes, the handler is cancelled on exception.
+	   This means if there's something ELSE wrong with chdir
+	   we'll know when we retry. */
+	FS_MAKE_DIR["rename/"];
+ChDir:
+	FS_WD_SET["rename/"];
+}
+
+DoSubdir[]; /* Call it */
+
+/* open(FileName, O_CREAT | O_EXCL) */
+func() CreateFile(@unsigned f, unsigned flen) {
+	/* LACRETNI is a very assembler-related language.
+	   As everything is already in the relevant registers,
+	   we have nothing to change in the calls! */
+	[ignore]=FS_OPEN_CREATE[0, f, flen];
+	FS_CLOSE[ignore];
+}
+
+/* Note how "dummyfile" is equivalent to straddr("dummyfile"), strlen("dummyfile") */
+CreateFile["dummyfile"];
+FS_RENAME["dummyfile", "DUMMYFILE"];
+
+FS_MAKE_DIR["dummydir"];
+FS_RENAME["dummydir", "dummyDIR"];
+

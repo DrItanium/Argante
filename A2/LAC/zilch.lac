@@ -1,0 +1,390 @@
+/*
+ * Zilch for Argante2 (c) 2002 James Kehl <ecks@optusnet.com.au>
+ * An old favourite.
+ *
+ * Modification and distribution as per GNU General Public Licence
+ * version 2. NO WARRANTY.
+ *
+ * Thanks to Filippo Velli.
+ */
+
+#include "display.lh"
+#include "local.lh"
+#include "cfd.lh"
+
+unsigned console_fd;
+@unsigned str_buf;
+unsigned str_buf_sz;
+
+@unsigned scores;
+unsigned lead_score;
+unsigned player;
+unsigned max_player;
+
+@unsigned dice_buf;
+
+/* Code begins. */
+[console_fd]=;
+
+/* Instead of keeping the actual dice, count the number of dice with x dots. */
+alloc(dice_buf, 6);
+max_player=2;
+alloc(scores, max_player);
+
+/* It's ugly but it works. */
+["TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP"];
+[str_buf, str_buf_sz]=;
+unfinalize(str_buf);
+
+func() print_scores() {
+	@unsigned tmp;
+	unsigned i;
+	tmp=scores;
+	i=1;
+top:
+	CFD_WRITE[console_fd, "Player "];
+	CFD_WRITE_INT[console_fd, i];
+	CFD_WRITE[console_fd, ": "];
+	CFD_WRITE_INT[console_fd, @tmp];
+	CFD_WRITE_CHAR[console_fd, '\n'];
+	i+=1;
+	tmp+=1;
+	if i > max_player goto end;
+	goto top;
+end:
+	return;
+}
+
+func (unsigned) is_human() {
+	if player == 0 goto yes;
+	return [0];
+yes:
+	return [1];
+}
+
+func (unsigned) must_roll(unsigned risked) {
+	@unsigned tmp;
+	unsigned ishuman;
+	[ishuman]=is_human[];
+	tmp=scores;
+	tmp+=player;
+	risked+=@tmp;
+	if risked > 499 goto over_min;
+	if ishuman == 0 goto skip_min_msg;
+	CFD_WRITE[console_fd, "You still have to roll 500 points.\n"];
+skip_min_msg:
+	return [1]; /* You have to break 500 to start */
+over_min:
+	if lead_score < 5000 goto notyet; /* If the leader's broken 5000, they'll win before our next turn! */
+	if risked > lead_score goto notyet; /* Hm. We can beat the leader. */
+	if ishuman == 0 goto skip_last_msg;
+	CFD_WRITE[console_fd, "This is the last round, and you're not leading.\n"];
+skip_last_msg:
+	return [1];
+notyet:
+	return [0];
+}
+
+/* For the AI routine. */
+func (float) chance_of_zilching(unsigned num_dice) {
+	float temp;
+	temp=1;
+top:
+	temp*=0.66666666;
+	num_dice-=1;
+	if num_dice > 0 goto top;
+	return [temp];
+}
+
+func (unsigned) should_roll_ai(unsigned risked, unsigned num_dice) {
+	float f;
+	[f]=chance_of_zilching[num_dice];
+	f*=risked; /* Our 'real' risk */
+	if f > 200 goto nope;
+	return [1]; /* so we'll risk 1500 points on 5 dice or 300 on 1 */ 
+nope:
+	return [0];
+}
+
+func (unsigned) should_roll_human(unsigned risked, unsigned num_dice) {
+	@unsigned buf;
+	CFD_WRITE[console_fd, "You risk "];
+	CFD_WRITE_INT[console_fd, risked];
+	CFD_WRITE[console_fd, " points on "];
+	CFD_WRITE_INT[console_fd, num_dice];
+	CFD_WRITE[console_fd, " dice.\n"];
+	buf=str_buf;
+ask:
+	CFD_WRITE[console_fd, "(K)eep it, or (R)oll again? "];
+	@buf=0;
+	CFD_READ[console_fd, buf, str_buf_sz];
+	/* We have to do it this way as 'R' is an int - not a string! */
+	@buf&=@straddr("\xff");
+	if @buf == @straddr("R") goto roll;
+	if @buf == @straddr("K") goto keep;
+	CFD_WRITE[console_fd, "What? "];
+	goto ask;
+roll:
+	return [1];
+keep:
+	return [0];
+}
+
+func () wait_for_key() {
+	CFD_WRITE[console_fd, "Press enter to continue...\n"];
+	CFD_READ[console_fd, str_buf, str_buf_sz];
+}
+
+func () add_score(unsigned add) {
+	@unsigned tmp;
+	tmp=scores;
+	tmp+=player;
+	@tmp+=add;
+	if @tmp > lead_score goto update;
+	return;
+update:
+	lead_score=@tmp;
+}
+
+/* Check for a triple */
+func (unsigned, unsigned) check_triple(@unsigned dice) {
+	unsigned num;
+	num=1;
+top:
+	if @dice > 2 goto gotone;
+	num+=1;
+	dice+=1;
+	if num < 7 goto top;
+	
+	return [0, 0];
+gotone:
+	@dice-=3;
+	if num > 1 goto aww; /* not 1000 points */
+	return [1000, 3];
+aww:
+	num*=100;
+	return [num, 3];
+}
+
+/* Check for a straight - 2345 and a 1 or a 6 */
+func (unsigned, unsigned) check_straight(@unsigned dice) {
+	@unsigned dtmp;
+	unsigned num;
+
+	dtmp=dice;
+	dtmp+=1;
+	num=0;
+top:
+	if @dtmp != 1 goto no; /* nope */
+	dtmp+=1;
+	num+=1;
+	if num < 4 goto top;
+
+	/* Ok, have we got a 1 or a 6? */
+	if @dice == 1 goto yes;
+	if @dtmp == 1 goto yes;
+no:
+	return [0, 0];
+yes:
+	/* You get 1000 points from a straight, and can't lose them. */
+	add_score[1000];
+	return [0, 5];
+}
+
+/* Check for 1s and 6ixes */
+func (unsigned, unsigned) check_std(@unsigned dice) {
+	unsigned score;
+	unsigned num;
+	unsigned diceused;
+	score=0;
+	diceused=0;
+	num=@dice;
+	diceused+=num;
+	num*=100; /* 100 points per 1 */
+	score+=num;
+	dice+=5;
+	num=@dice;
+	diceused+=num;
+	num*=50; /* 50 points per 6 */
+	score+=num;
+	return [score, diceused];
+}
+
+
+func () rolldice(@unsigned buf, unsigned throws) {
+	unsigned num;
+	@unsigned btmp;
+
+	/* Zero buffer. */
+	btmp=buf;
+	num=6;
+zetop:
+	@btmp=0;
+	btmp+=1;
+	num-=1;
+	if num > 0 goto zetop;
+
+	/* Throw dice. */
+thtop:
+	/* Roll the die... */
+	[num]=LOCAL_GETRANDOM[];
+	num%=6;
+	/* Increment buf[num] */
+	btmp=buf;
+	btmp+=num;
+	@btmp+=1;
+	/* Next! */
+	throws-=1;
+	if throws > 0 goto thtop;
+}
+
+func () printdice(@unsigned buf) {
+	CFD_WRITE[console_fd, "You threw:\n"];
+	if @buf < 1 goto two;
+	CFD_WRITE_INT[console_fd, @buf];
+	CFD_WRITE[console_fd, " ones\n"];
+two:
+	buf+=1;
+	if @buf < 1 goto three;
+	CFD_WRITE_INT[console_fd, @buf];
+	CFD_WRITE[console_fd, " twos\n"];
+three:
+	buf+=1;
+	if @buf < 1 goto four;
+	CFD_WRITE_INT[console_fd, @buf];
+	CFD_WRITE[console_fd, " threes\n"];
+four:
+	buf+=1;
+	if @buf < 1 goto five;
+	CFD_WRITE_INT[console_fd, @buf];
+	CFD_WRITE[console_fd, " fours\n"];
+five:
+	buf+=1;
+	if @buf < 1 goto six;
+	CFD_WRITE_INT[console_fd, @buf];
+	CFD_WRITE[console_fd, " fives\n"];
+six:
+	buf+=1;
+	if @buf < 1 goto end;
+	CFD_WRITE_INT[console_fd, @buf];
+	CFD_WRITE[console_fd, " sixes\n"];
+end:
+	return;
+}
+
+func () do_turn() {
+	unsigned dice_left;
+	unsigned dice_used;
+	unsigned tot_dice_used;
+	unsigned score;
+	unsigned tot_score;
+	unsigned tot_round_score;
+	tot_score=player;
+	tot_score+=1;
+	/* PLAYER x's TURN */
+	CFD_WRITE[console_fd, "***** PLAYER "];
+	CFD_WRITE_INT[console_fd, tot_score];
+	CFD_WRITE[console_fd, "'s TURN *****\n"];
+	tot_round_score=0;
+top:
+	print_scores[];
+	CFD_WRITE_CHAR[console_fd, '\n'];
+	dice_left=5;
+roll_dice:
+	tot_score=0;
+	tot_dice_used=0;
+	rolldice[dice_buf, dice_left];
+	printdice[dice_buf];
+	
+	[score, dice_used]=check_straight[dice_buf];
+	if dice_used == 0 goto bent;
+	[dice_used]=is_human[];
+	if dice_used == 0 goto top;
+	CFD_WRITE[console_fd, "That's a straight - free 1000 points!\n"];
+	wait_for_key[];
+	goto top;
+bent:
+	[score, dice_used]=check_triple[dice_buf];
+	tot_score+=score;
+	tot_dice_used+=dice_used;
+	[score, dice_used]=check_std[dice_buf];
+	tot_score+=score;
+	tot_dice_used+=dice_used;
+	
+	dice_left-=tot_dice_used;
+	if tot_dice_used == 0 goto zilch;
+
+	tot_round_score+=tot_score;
+	CFD_WRITE[console_fd, "That's "];
+	CFD_WRITE_INT[console_fd, tot_score];
+	CFD_WRITE[console_fd, " points\n"];
+	wait_for_key[];
+
+	if dice_left != 0 goto some_dice_left;
+	dice_left=5;
+some_dice_left:
+	[dice_used]=must_roll[tot_round_score];
+	if dice_used == 1 goto roll_dice;
+	/* Human or AI? */
+	[dice_used]=is_human[];
+	if dice_used == 0 goto ai;
+	/* Human */
+	[dice_used]=should_roll_human[tot_round_score, dice_left];
+	if dice_used == 1 goto roll_dice;
+	goto keep;
+ai:	/* AI */
+	[dice_used]=should_roll_ai[tot_round_score, dice_left];
+	if dice_used == 1 goto roll_dice;
+	goto keep;
+zilch:
+	CFD_WRITE[console_fd, "ZILCH!\n"];
+	wait_for_key[];
+	return;
+keep:
+	CFD_WRITE[console_fd, "Keeping "];
+	CFD_WRITE_INT[console_fd, tot_round_score];
+	CFD_WRITE[console_fd, " points\n"];
+	add_score[tot_round_score];
+	return;
+}
+
+func() do_game() {
+	@unsigned p;
+	player=0;
+	lead_score=0;
+	p=scores;
+zero:
+	@p=0;
+	p+=1;
+	player+=1;
+	if player < max_player goto zero;
+	player=0;
+top:
+	p=scores;
+	p+=player;
+	if @p > 4999 goto game_over;
+	do_turn[];
+	player+=1;
+	player%=max_player;
+	goto top;
+game_over:
+	CFD_WRITE[console_fd, "*** GAME OVER ***\n"];
+	print_scores[];
+}
+
+goto game;
+no_fd:
+IO_PUTSTRING["Your A2 kernel doesn't seem to support the console-fd.
+Try a single-threaded kernel or compile this to native code.\n"];
+
+rethrow:
+raise errno;
+
+game:
+handler no_fd;
+CFD_WRITE[console_fd,
+"Zilch for Argante version 0.009 by James Kehl <ecks@optusnet.com.au>
+This program is distributed with NO WARRANTY, see GNU GPL for details.\n"];
+handler rethrow;
+do_game[];
+

@@ -1,0 +1,36 @@
+syscall (unsigned, @unsigned, unsigned) CFD_READ
+	(unsigned vfd_handle, @unsigned buf_addr, unsigned buf_sz);
+
+syscall (unsigned) STRFD_OPEN(@unsigned buf_addr, unsigned buf_sz);
+syscall (unsigned) STRFD_CREATE(unsigned buf_sz);
+syscall () STRFD_CLOSE(unsigned vfd_handle);
+
+syscall (unsigned) STRFD_GET_OFFSET(unsigned vfd_handle);
+syscall () STRFD_SET_OFFSET(unsigned vfd_handle, unsigned new_offset);
+
+syscall (unsigned) STRFD_GET_ADDR(unsigned vfd_handle);
+syscall (unsigned) STRFD_GET_SIZE(unsigned vfd_handle);
+
+/* Like most CFDops these return:
+   - a pointer to the dword containing the byte after the last read/written in
+     the SECOND (r1) register
+   - bytes NOT read/written in the THIRD (r2) register. */
+syscall (unsigned, @unsigned, unsigned) STRFD_READ
+	(unsigned vfd_handle, @unsigned buf_addr, unsigned buf_sz);
+syscall (unsigned, @unsigned, unsigned) STRFD_WRITE
+	(unsigned vfd_handle, @unsigned buf_addr, unsigned buf_sz);
+
+syscall (unsigned) STRFD_GETCHAR(unsigned vfd_handle);
+syscall () STRFD_SETCHAR(unsigned vfd_handle, unsigned a_byte);
+
+syscall () STRFD_STRCHR(unsigned vfd_handle, signed shift_val, unsigned needle);
+syscall () STRFD_STRSTR(unsigned vfd_handle, signed shift_val,
+	@unsigned needle_addr, unsigned needle_sz);
+
+syscall (signed) STRFD_STRCMP(unsigned vfd_handle,
+	@unsigned needle_addr, unsigned needle_sz);
+
+/* NOT YET IMPLEMENTED! */
+syscall () STRFD_SPN(unsigned vfd_handle, @unsigned accept_addr, unsigned accept_sz);
+syscall () STRFD_CSPN(unsigned vfd_handle, @unsigned reject_addr, unsigned reject_sz);
+

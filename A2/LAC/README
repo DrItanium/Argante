@@ -1,0 +1,38 @@
+
+LACRETNI Readme: 3/8/2001.
+--------------------------
+
+LACRETNI is a halfhearted A2 HLL. I say halfhearted because it lacks
+nearly everything that a good compiler should have. After all, it is
+INTERCAL backwards.
+
+That said, it generates fairly good asm. Yes, it lacks DFA at the moment,
+but it also lacks expressions to be put into temporaries at the moment too.
+And variables stay in registers, to a fault. (You can't take & of anything).
+Globals, of course, don't stay in registers. So you can't dereference them.
+
+This allows use of an advanced optimizing technique - "Do What I Say"
+("not what I mean"). No compiler on earth can turn your linear tables
+into btrees and your bubblesorts into quicksorts. So, please remember:
+you do the optimization; the compiler just does what you tell it.
+(Hopefully.)
+
+The whole thing is very much like an excuse for a MLL or meta-assembler.
+Well, it saves a lot of typing doing a+=b instead of ADD u:r4, s:r14. And
+typing all those MOV's for syscalls. (Though I'm a little perplexed at my
+own SYSCALLs' return registers :)
+
+Reentrancy is wholeheartedly supported - if registers didn't get saved the
+whole language would be fairly sad! See hello2.lac for recursion example.
+
+There ARE now plenty of example files supplied for you to learn the
+language (best way, unless you grok Yacc and BNF :) Read *.lac. Ok? And
+the headers are in *.lh, just like the #include directives say.
+(Conditional compilation and all that is still a future addition...)
+
+All in all - remember LACRETNI is to make my life easier (as a compiler
+writer), not yours. :)
+
+James
+------------------------
+

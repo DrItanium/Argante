@@ -1,0 +1,125 @@
+0.009:
+- coredump with modulo op fixed
+- added CFD_PRINT_* functions
+- LAC: fix strlen of binary (i.e. with \x00) string
+- LAC: add memory management commands: alloc, realloc, dealloc,
+  finalize (to make readonly) and unfinalize (to make r/w). All
+  strings are now readonly by default.
+- more shrinkages using atokern_memcpy and mem_ro_block
+- added Kernel Notes
+- build/configure changes; Solaris and Alpha should work now
+- added Zilch (LAC/zilch.lac) - the 0.009 Demo App
+
+0.008:
+- A2 becomes Official Argante r2! Yaaaay!
+- Syscall Reference and Asm Tutorial source added in Documentation/.
+- mem_ro_block, mem_rw_block added for contiguous (i.e. you can cast
+  to char *) memory access; alloca hacks removed. Faster IO!
+- INCLUDE_TABLES thing removed from modules.
+- FS api changed to conform (and use) cfdop. Please check your code!
+  This breaks things using the return values of FS_READ/FS_WRITE!
+- New exceptions created to replace some generics.
+- Dynamically-resized StrFDs enabled.
+- NAGT no-mode segfault fixed.
+- LAC: headers for cfd and strfd added
+- LAC: don't produce main stack code for objects
+- Check size against A2_MAX_BLKSIZ before alloc'ing/realloc'ing a
+  block. Similar check added in imageman. (memory.agt broke anyway.)
+- vconsole (based on FlexSock lib) added; can be used to replace A1's vcpucons.
+- realloc now modifies its argument.
+
+0.007:
+- //'s changed to /* so ANSI compilers won't choke
+- LAC: ["String"] is equivalent to [straddr("String"), strlen("String")]
+- LAC, NAGT: \e now produces 27 always
+- LAC: Windows
+- added atokern_memcpy and kerntoa_memcpy, they might be used soon too...
+- fixed really dumb syscall hash bug for about the 3rd time :(
+- NAGT: Accept [%:^]sym in data segments and relocate them properly
+- imgdump: clear x->reloc properly and format data relocs nicely
+- imgdump: print second argument of syscall2
+- manager now prints human-readable exception ID
+- -W changes: bcode_op.h: char -> unsigned char (killed imgdump)
+              jitgen.pl: char -> uchar in output
+	      vfd: 'int lid' to 'unsigned lid'  
+	      various other random tidbits
+- FS can now write 8bit characters; and operates in binary mode now
+  (it's more OS-independant)
+- Common File Descriptor ops layer + module (CFD) added
+- String module added (STRFD)
+- Console module added - currently ST only
+- imgstrip: a utility to get apps ported from the Commodore 64 under 64K
+- signed jmp/call bcode-ops added; old images will still work
+- NAGT: .rodata added and operational
+        (.pack and .ropack supported for forward compatibility)
+- manager now uses history when using readline. Please send in any
+  patches to configure.ac you need to get readline support working.
+
+0.006:
+- Exception ID passed in r31.
+- LAC keyword 'errno' added for exception ID; raise statement added
+- LAC can now accept - and output - \x00 in strings; nice for bitmasks
+- s/error/Nerror in NAGT, was possibly mistaken for libc's 'error'
+- RS_STAT should now work on any system that has sysinfo
+- no longer segfaults on loading two images a session
+- static module subset built for native - NO_ALIB hack dropped
+- Unloading all modules works 
+- plenty of changes for Autoconf & srcdir builds:
+- memory.h clashed, renamed to amemory.h
+- A2_ prefix introduced: macros in amemory.h and config.h clash
+  with Windows macros
+- removed redundant &'s
+- NAGT now supports recursive .define macros, faster.
+- fixed NAGT forgetting to clear sym size dumb bug
+- fixed NAGT d=malloc(sizeof(d)) bug - how did it ever work? eek
+- enabled load-time DL for non-threaded consoles
+- added new printk2 function and rewrote the old one in terms of it
+- switched from strsep to strtok_r, because strtok_r got emulated first
+- LAC used <string.h> and "string.h" so "string.h" became "lstring.h"
+- kerntoa_strcpy changed to omit NULs
+
+
+0.005:
+- s/Argante2/A2; please petition Michal to accept this as 'official'
+  Argante2 :)
+- licence now specifies (L)GPL version 2
+- possible validation problem with extreme opcodes fixed
+- codepages added to allow dynamic linking, use NO_CODE_PAGES
+  to avoid perf penalty
+- exceptionally dumb MAX_MEMBLK thing fixed... it used 36 bits of an int.
+  Breaks binary compatibility... Would you rather only 256 data segments?
+  This is STILL a bug in Argante1.
+- nagt modified to not output an empty code segment
+- if you passed fs module an 80Mb filename, it would segfault
+- fold() no longer adds leading /'s because it scrambled memory
+- LAC now accepts % as modulo operator
+
+
+"rose-b" pre-alpha:
+- fixed potential large-register attack.
+- fixed rol/ror op. Unless you had 1-bit bytes, it was a unary scramble.
+- reshuffled files just to give you headaches. And to extricate system from
+  interpreter and manager.
+- Cify. Native Code is HERE! Or close, if you have a good C compiler.
+  
+
+"rose" pre-alpha:
+- fixed REALLOC bug.
+- fixed IFABO/IFBEL bug.
+  (Also modified Adam's benchmarks so they still work?!)
+- Fixed PUSH/POP bug.
+- Mapped memory 'destroy' changed to a syscall2.
+  (Function pointers into possibly reloaded modules: bad.)
+- completely rearranged module load interface
+  (autogenerated modules aren't affected.)
+  Also stopped ever-inflating schash.
+- out-by-one csize bug fixed
+- plugged leak in hac_unload, which now completely uninitializes
+  (i.e. hac_init has to be called again to reinitialize)
+- plugged a couple of leaks in fs module (>=0 is a lot different from >0)
+- append without fseek is not a bug (inverted test)
+- readdir's arguments changed to allow syscall1 (for LAC, of course)
+
+- Multithreading!
+- LACRETNI with examples. It's amazing how far you can abuse a language.
+  It now works, too. Don't even keep the old one for historical reasons. :)

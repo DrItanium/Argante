@@ -1,0 +1,48 @@
+| This script is intended to load and unload a module many times,
+| to expose memory leaks and race conditions.
+| 
+| I don't know what good the w's do. If you know better, remove 'em.
+~ Running MixModule test:
+^LAC/lac-HAC
+$LAC/hello2.img
+!
+<2
+w0 1
+>modules/fs.so
+w0 1
+<2
+w0 1
+>modules/fs.so
+w0 1
+<2
+w0 1
+>modules/fs.so
+w0 1
+<2
+w0 1
+>modules/fs.so
+w0 1
+<2
+w0 1
+>modules/fs.so
+w0 1
+<2
+w0 1
+>modules/fs.so
+w0 1
+<2
+w0 1
+>modules/fs.so
+w0 1
+<2
+w0 1
+>modules/fs.so
+w0 1
+<2
+w0 1
+>modules/fs.so
+w0 1
+<2
+w0 1
+>modules/fs.so
+!

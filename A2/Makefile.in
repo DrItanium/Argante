@@ -1,0 +1,32 @@
+
+SUBDIRS=compat include modules kernel compiler agent
+DIST_SUBDIRS=$(SUBDIRS) bench lib LAC Documentation
+
+CLEAN=core core.* a2 autoscan.log configure.scan
+DISTCLEAN=config.status config.log config.cache autocfg.h Makefile
+MAINTAINERCLEAN=configure
+
+all: $(foreach A, $(SUBDIRS), $(A)-all )
+	$(RM) a2
+	@LN_S@ kernel/a2 a2 
+	@echo --------------------------
+	@echo Done! Type \'./a2\' to start
+	@echo
+
+clean: $(foreach A, $(DIST_SUBDIRS), $(A)-clean )
+	$(RM) $(CLEAN)
+
+distclean: $(foreach A, $(DIST_SUBDIRS), $(A)-distclean )
+	$(RM) $(CLEAN) $(DISTCLEAN)
+	
+maintainerclean: $(foreach A, $(DIST_SUBDIRS), $(A)-maintainerclean )
+	$(RM) $(CLEAN) $(DISTCLEAN) $(MAINTAINERCLEAN)
+
+%-all:
+	$(MAKE) -C $* all
+%-clean:
+	$(MAKE) -C $* clean
+%-distclean:
+	$(MAKE) -C $* distclean
+%-maintainerclean:
+	$(MAKE) -C $* maintainerclean

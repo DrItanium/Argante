@@ -1,0 +1,4 @@
+# Benchmarking HAC. Everything is denied except for debug-display
+# functions and local_gettime etc.
+/display/	/write/		allow
+/lib/		/load	allow

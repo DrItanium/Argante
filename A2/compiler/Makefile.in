@@ -1,0 +1,41 @@
+CLEAN=core core.* nagt nagt.@OBJEXT@ blobstak.@OBJEXT@ imgdump cify imgstrip
+DISTCLEAN=Makefile
+MAINTAINERCLEAN=
+
+CFLAGS+=-I@top_srcdir@/include -I../include -I@top_srcdir@ -I..
+LOADLIBES+=$(foreach A,@A2_LIBOBJ_ALL@,../$A)
+
+VPATH=@srcdir@
+
+TARGETS=nagt imgdump cify imgstrip
+all: $(TARGETS)
+
+nagt: nagt.@OBJEXT@ blobstak.@OBJEXT@
+
+nagt.@OBJEXT@: @srcdir@/nagt.c ../include/lang2.h ../modules/asyscall.h
+	$(CC) $(CFLAGS) $(LDLIBS) -c $< -o $@
+
+blobstak.@OBJEXT@: @srcdir@/blobstak.c
+	$(CC) $(CFLAGS) $(LDLIBS) -c $< -o $@
+
+imgdump: @srcdir@/imgdump.c ../include/lang2.h ../modules/asyscall.h
+	$(CC) $(CFLAGS) $(LDLIBS) $< $(LOADLIBES) -o $@
+
+cify: @srcdir@/cify.c
+	$(CC) $(CFLAGS) $(LDLIBS) $< $(LOADLIBES) -o $@
+
+imgstrip: @srcdir@/imgstrip.c
+	$(CC) $(CFLAGS) $(LDLIBS) $< $(LOADLIBES) -o $@
+
+FORCE:;
+
+clean: FORCE
+	$(RM) $(CLEAN)
+
+distclean: FORCE
+	$(RM) $(CLEAN) $(DISTCLEAN)
+	
+maintainerclean: FORCE
+	$(RM) $(CLEAN) $(DISTCLEAN) $(MAINTAINERCLEAN)
+
+

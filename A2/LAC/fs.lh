@@ -1,0 +1,38 @@
+
+syscall (unsigned) FS_OPEN (unsigned mode, @unsigned fn, unsigned fnlen);
+syscall (unsigned) FS_OPEN_EXISTING (unsigned mode, @unsigned fn, unsigned fnlen);
+syscall (unsigned) FS_OPEN_CREATE (unsigned mode, @unsigned fn, unsigned fnlen);
+
+syscall () FS_CLOSE (unsigned);
+syscall () FS_FLUSH (unsigned);
+syscall () FS_SEEK (unsigned handle, unsigned offs);
+syscall (unsigned) FS_TELL (unsigned handle);
+
+/* Sorry about the triple-ret ugliness. Both return:
+   - a pointer to the dword containing the byte after the last read/written
+     in the SECOND (r1) register
+   - bytes NOT read/written in the THIRD (r2) register. */
+syscall (unsigned, @unsigned, unsigned)
+	FS_READ
+	(unsigned handle, @unsigned buf, unsigned sz);
+syscall (unsigned, @unsigned, unsigned)
+	FS_WRITE
+	(unsigned handle, @unsigned buf, unsigned sz);
+
+/* FS_WD_GET and WD_SET return sizeof in r1. */
+syscall (unsigned, unsigned)
+	FS_WD_GET (@unsigned buf, unsigned sz);
+syscall (unsigned, unsigned)
+	FS_WD_SET (@unsigned buf, unsigned sz);
+
+syscall (unsigned) FS_OPEN_DIR(unsigned ignoreme, @unsigned fn, unsigned fnlen);
+/* buf sz in r2 */
+syscall (unsigned, unsigned, unsigned) FS_READ_DIR (unsigned dirhandle, @unsigned buf, unsigned bufsz);
+syscall () FS_MAKE_DIR (@unsigned fn, unsigned fnlen);
+
+/* Returns filetype, filesize, modtime. */
+syscall (unsigned, unsigned, signed) FS_STAT (@unsigned fn, unsigned fnlen);
+
+syscall () FS_RENAME (@unsigned src, unsigned srclen, @unsigned dst, unsigned dstlen);
+syscall () FS_DELETE (@unsigned fn, unsigned fnlen);
+

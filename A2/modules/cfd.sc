@@ -1,0 +1,11 @@
+/* from cfd */
+{ "CFD_CLOSE",	0x1f5,	1 },
+{ "CFD_READ",	0x1fe,	1 },
+{ "CFD_WRITE",	0x208,	1 },
+{ "CFD_WRITE_NT",	0x209,	1 },
+{ "CFD_WRITE_CHAR",	0x20a,	1 },
+{ "CFD_WRITE_INT",	0x20b,	1 },
+{ "CFD_WRITE_UINT",	0x20c,	1 },
+{ "CFD_WRITE_HEX",	0x20d,	1 },
+{ "CFD_WRITE_OCT",	0x20e,	1 },
+{ "CFD_WRITE_FLOAT",	0x20f,	1 },

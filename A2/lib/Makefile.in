@@ -1,0 +1,12 @@
+
+SRCDIR=@srcdir@
+include @top_srcdir@/img.mk
+
+TARGETS=linktst1 linktst2 rtlink rtlink2 nosyms rtlink3 rtlink4
+all: $(foreach A,$(TARGETS),$A.ao)
+
+clean:
+	$(RM) *.img *.ao
+
+distclean maintainerclean: clean
+	$(RM) Makefile

@@ -1,0 +1,202 @@
+====================================================
+Module developer notes - A2 pre-alpha "Rose"
+====================================================
+
+*************************
+PLEASE NOTE THE NEW CANCELLATION REQUIREMENTS IN kernel.txt:
+PERHAPS THE SADISTS WHO WANT TO REMOVE MODULES FROM A RUNNING
+SYSTEM DESERVE DATA CORRUPTION, BUT THEY MIGHT HAVE LAWYERS.
+SO DON'T INTRODUCE RACES, OK?
+*************************
+
+THIS INFORMATION IS IN ADDITION TO kernel.txt, WHICH DESCRIBES REENTRANCY
+DEMANDS, MEMORY ACCESS AND #HAC USAGE. THIS FILE FOCUSES SPECIFICALLY ON THE
+DETAILS OF MODULE DEVELOPMENT AND WON'T OVERLAP ANYTHING THAT SHOULDN'T BE
+SAID TWICE. THANKYOU.
+
+==
+0. THE BASIC MODULE.
+
+As with the opcode tables, a great deal of the work involved in creating
+module initialization code can be done for you. All you need to do is supply
+even minimal functions for:
+
+static inline int module_internal_init(int lid):
+	Called in manager context; guaranteed to be only part of module
+	running at that time, so setting globals is OK.
+	lid is 'library id', a unique identifier for your library which acts
+	as a key into the reserved structure and FD tables. Store this in a
+	static global if you need it later.
+	Return 0 for success and 1 for failure - if 1, module is unloaded and
+	syscalls stay unavailable.
+
+static inline void module_internal_vcpu_start(struct vcpu *cpu):
+	Called in CPU context. Throwing exceptions is problematic, because no
+	code has been executed and so no handlers can be set. So avoid it.
+
+static inline void module_internal_vcpu_stop(struct vcpu *cpu):
+	Called in CPU context; exceptions are even more problematic because
+	this is already a dead CPU. You may well revive it, and that's bad.
+	
+static inline void module_internal_shutdown()
+	Called in manager context. If everything works like it's supposed to,
+	this guaranteed to be the only part of your module running.
+
+Please keep them static inline, or at the least static. They are _internal_
+and should not be available externally, and most especially not to other
+modules which might be linked with yours.
+
+Finally, to include the 'external' code which the kernel will be interfacing
+with, write
+#include "file_name.h"
+(e.g. The strfd module has #include "strfd.h")
+at the end of your file. Don't create one of your own as it will be
+overwritten. 
+
+==
+1. THE MORE USEFUL MODULE.
+
+The previous code was perfectly able to load and unload, but didn't do much.
+So here's how to add a few syscalls.
+
+First, stick in a line like the following:
+/*! allowed x - y */
+
+This tells the autogenerator you have been assigned a range of syscall numbers
+from x to y. You HAVE been assigned a range of syscall numbers, haven't you?
+We'll define the range 99900 - 99999 as a testing range. Feel free to use this
+before you've been assigned a range, but if you release code that uses it,
+Sendmail ("the daemon from hell") will come round and have a little chat with
+you.
+
+Next, stick in a line like so:
+/*! NEW_CALL1 = new_call1 */
+
+This tells the autogenerator this module provides a syscall with an asm name
+of $NEW_CALL1, which is executed by calling the function new_call1. The
+autogenerator will then write this into the initialization code and the
+compiler definitions.
+
+Hold on, you say, what is the number for this syscall? For the moment, who
+cares? The autogenerator assigns one, the compiler knows what it is, the
+kernel knows what it is, and everything's rosy. However, if you're planning to
+release your code, it's best to explicitly number the calls.
+
+So, say the autogenerator assigns NEW_CALL1 to syscall number 99900. To make
+this permanent, change the line to:
+/*! NEW_CALL1 99900 = new_call1 */
+
+As a final cherry on the icing, you'll need to actually write the function
+new_call1. (Oops!)
+
+The prototype will be something like:
+static void new_call1(SYSCALL_ARGS);
+Forget what SYSCALL_ARGS are; just take it for granted you will get curr_cpu,
+and an anyval *arg (but don't use that yet.)
+
+So, here's a stupidly simple LOCAL_GETTIME function: (HAC is unused.)
+
+/*! LOCAL_GETTIME 301 = local_gettime */
+static void local_gettime(SYSCALL_ARGS) {
+	struct timezone tz;
+	struct timeval tv;
+	gettimeofday(&tv,&tz);
+	
+	curr_cpu->reg[0].val.u=tv.tv_sec;
+	curr_cpu->reg[1].val.u=tv.tv_usec;
+}
+
+==
+2. THE SYSCALL2.
+
+If you've ever looked at Argante1 asm code and become slightly irked that
+printing a mere int required exclusive use of the u0 register, the SYSCALL2 is
+your answer.
+
+The SYSCALL2 asm op sends its second argument to the syscall function as
+'arg' - but DON'T modify it because syscall2's second argument is defined as
+readonly.
+
+You also need to stick the magic word SYS2 before the ='s sign in the
+comment-bang (autogenerator) line like so:
+/*! NEW_CALL1 SYS2 = new_call1 */
+/*! NEW_CALL1 99900 SYS2 = new_call1 */
+
+For the moment, if a SYS2 op is called without an 'arg', 'arg' is set to
+register 0. This means little. Some of my modules start counting extra
+arguments from register 1 for this reason, but you are completely free, and,
+indeed, better off to leave people who SYSCALL a SYSCALL2 op to fend for
+themselves.
+
+An example SYS2 op (again stupidly simple, without HAC):
+/*! IO_PUTINT 0x2 SYS2 = io_putint */
+static void io_putint(SYSCALL_ARGS) {
+	printf("%ld", arg->val.u);
+}
+
+==
+3. PER-VCPU STORAGE - THE RESERVED STRUCTURE.
+
+For the most low-level per-vcpu storage requirements, we have the 'reserved
+structure' array, which provides one void pointer per vcpu per module. One
+void pointer doesn't sound like much, but you can malloc whatever you like
+into it; a structure being most appropriate here.
+
+You'll need to store the library ID you got during module init to use these
+functions. Most of the time you'll only use set_reserved in vcpu_start. Be
+sure to free in vcpu_stop!
+
+void *module_get_reserved(struct vcpu *cpu, int lid);
+int module_set_reserved(struct vcpu *cpu, int lid, void *newdata);
+
+set_reserved returns 1 if it fails, so you can deallocate the data and assume
+crash position. One possible cause of failure is a corrupt LID. Another is
+that the system is out of memory.
+
+get_reserved may return NULL if set_reserved hasn't been called or it failed.
+If it returns NULL, your best bet is to throw an exception (I recommend OOM).
+The alternative to aborting is to dereference a NULL pointer and bring the
+system down, so always check the return value!
+
+==
+4. PER-VCPU STORAGE - THE VIRTUAL FILE DESCRIPTOR
+
+This is designed to be used for, like the name says, file handles and whatnot.
+The VFD facilities have significant advantages over reserved structures for
+this purpose, and have their own limitations which aren't significant for
+this use.
+
+The most important advantage ATM is that you don't need to mess with lots of
+resizing of reserved structures. The limitation is that each VCPU has an
+upper limit on virtual file descriptors, which are shared between all modules.
+(Of course this is an intentional limit.) 
+
+extern int vfd_alloc_new(struct vcpu *curr_cpu, int lid);
+
+This returns a unique number which identifies your new VFD. Your OPEN call is
+pretty useless if it doesn't return this to the user.
+
+extern void *vfd_get_data(struct vcpu *curr_cpu, int lid, int handle);
+extern void vfd_set_data(struct vcpu *curr_cpu, int lid, int handle, void *newd);
+extern void vfd_dealloc(struct vcpu *curr_cpu, int lid, int handle);
+
+These all throw a ERR_BAD_FD exception if passed a handle that wasn't created
+by your library (according to lid).
+
+extern int vfd_find_mine(struct vcpu *curr_cpu, int lid);
+
+vfd_find_mine is worth noting; it returns a handle if your module owns a VFD.
+It's most useful for destroying all your VFD's in a vcpu_stop routine - mind,
+though, that you actually vfd_dealloc or vfd_find_mine will keep returning the
+same number...
+
+Despite the name, you don't have to limit yourself to IO with these. You could
+write a MySQL module and VFDs for database connections. More generically, you
+might write a hashtable module and use VFDs for particular hashtables.
+Anything that a VCPU might want multiples of is a candidate.
+
+The future for this involves a common layer for file-type descriptors, so
+'IO_WRITE' can actually switch to 'FS_WRITE' or 'SOCKET_WRITE' or
+'SYSLOG_WRITE' depending on which module created the VFD. (It won't stop you
+being creative, and writing something for which WRITE is meaningless, though.)
+

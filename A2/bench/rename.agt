@@ -1,0 +1,55 @@
+#
+# A2 OS - test suite
+# (C) 2001 JSK
+#
+# Create & rename file "dummyfile" and "dummydir"
+#
+
+!SIGNATURE	"rename.agt"
+
+.DATA
+
+:SubDir
+	"rename/"
+:FileName
+	"dummyfile"
+:FileName2
+	"DUMMYFILE"
+:DirName
+	"dummydir"
+:DirName2
+	"DummyDIR"
+.CODE
+# chdir("rename")
+  handler :NoRenameDir
+:ChDir
+  mov u:r0, :SubDir
+  mov u:r1, ^SubDir
+  syscall $FS_WD_SET
+  handler 0
+# open(FileName, O_CREAT | O_EXCL)
+  mov u:r1, :FileName
+  mov u:r2, ^FileName
+  syscall2 $FS_OPEN_CREATE, 0
+  syscall2 $FS_CLOSE, u:r0
+# mkdir(DirName)
+  mov u:r0, :DirName
+  mov u:r1, ^DirName
+  syscall $FS_MAKE_DIR
+# rename(DirName, DirName2)
+  mov u:r2, :DirName2
+  mov u:r3, ^DirName2
+  syscall $FS_RENAME
+# rename(FileName, FileName2)
+  mov u:r0, :FileName
+  mov u:r1, ^FileName
+  mov u:r2, :FileName2
+  mov u:r3, ^FileName2
+  syscall $FS_RENAME
+  halt
+:NoRenameDir
+  mov u:r0, :SubDir
+  mov u:r1, ^SubDir
+  syscall $FS_MAKE_DIR
+  jmp :ChDir
+.END

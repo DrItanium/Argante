@@ -1,0 +1,92 @@
+!SIGNATURE      "StringStream demo"
+!PRIORITY       10000
+
+.define LINELEN 60
+.DATA
+:sBuffer
+	0 repeat 256
+:sText1
+	"moo" # 3 chars
+:sText2
+	"OOM " # 4 chars
+:sText3
+	"l000k" # 5 chars
+.CODE
+# Construct a strfd out of it.
+	mov u:r0, :sBuffer
+	mov u:r1, ^sBuffer
+	syscall $STRFD_OPEN
+	mov u:r30, u:r0
+# Now put some garbage into it
+	mov s:r29, 30
+:loop1
+	mov u:r1, :sText1
+	mov u:r2, 3 # real size: no padding :(
+	syscall2 $STRFD_WRITE, u:r30
+	mov u:r1, :sText2
+	mov u:r2, 4
+	syscall2 $STRFD_WRITE, u:r30
+	loop s:r29, :loop1
+# Save the length
+	syscall2 $STRFD_GET_OFFSET, u:r30
+	mov u:r29, u:r0
+# Now mix it up a bit
+	mov u:r1, 2
+	syscall2 $STRFD_SET_OFFSET, u:r30
+:loop2
+	mov u:r1, :sText3
+	mov u:r2, 5
+	syscall2 $STRFD_WRITE, u:r30
+	syscall2 $STRFD_GET_OFFSET, u:r30
+	add u:r0, 5
+	ifabo u:r0, u:r29
+	jmp :end
+	mov u:r1, u:r0
+	syscall2 $STRFD_SET_OFFSET, u:r30
+	jmp :loop2
+:end
+# Print it
+	syscall2 $STRFD_GET_ADDR, u:r30
+	mov u:r1, u:r29
+	syscall $IO_PUTSTRING
+	syscall2 $IO_PUTCHAR, 0x0a
+# Now every 40 characters or less there must be a newline - but only
+# where there's a space. Things might get thorny if there are no spaces,
+# in that case let it be longer.
+	mov u:r1, LINELEN
+	mov u:r3, 0 # BASE
+:loop3
+	ifabo u:r1, u:r29
+	jmp :done
+	syscall2 $STRFD_SET_OFFSET, u:r30
+	syscall2 $STRFD_GETCHAR, u:r30
+	ifeq u:r0, 0x0a
+	jmp :nextlp3
+	ifeq u:r0, 0x20
+	jmp :nextlp3
+# No cookies, go back a char.
+	sub u:r1, 1
+	ifabo u:r1, u:r3
+	jmp :loop3
+# Ouch, no more room.
+	add u:r3, LINELEN
+	mov u:r1, u:r3
+	add u:r1, LINELEN
+	jmp :loop3
+:nextlp3
+	syscall2 $STRFD_SET_OFFSET, u:r30
+	mov u:r1, 0x0a
+	syscall2 $STRFD_SETCHAR, u:r30
+	syscall2 $STRFD_GET_OFFSET, u:r30
+	mov u:r3, u:r0
+	mov u:r1, u:r0
+	add u:r1, LINELEN
+	jmp :loop3
+:done	
+# Print it
+	syscall2 $STRFD_GET_ADDR, u:r30
+	mov u:r1, u:r29
+	syscall $IO_PUTSTRING
+	syscall2 $IO_PUTCHAR, 0x0a
+	syscall2 $STRFD_CLOSE, u:r30
+	halt

@@ -1,0 +1,31 @@
+- Fix nagt so it can't produce illegally large segments. Will do this when .packed is added.
+- change realloc u, s to reperm.
+- Come to think of it, allocating RO memory is never useful. The whole alloc instruction
+  should be changed to alloc dest, size; just like realloc.
+- common library for image file manipulations.
+- Update documentation.
+- Alter metastack to allow cleaner resizing and a way around
+  exception bug in LAC.
+- Eliminate perror & stderr code
+- Agents (Mental Note: network byte order!)
+- Windows Threads
+- packed data in NAGT
+- Complete CFD and STRFD call set.
+- Debugging images without gdb and hard work
+- Allow DL memory to be added anywhere, not just on top.
+- Improve memory allocation (i.e. allow large blocks.)
+- Use a better memory paradigm than paging, for small blocks.
+- LAC improvements: 
+  + it's easy to use more than registers for variables; just push
+    a static. Not that 32 variables does you much good.
+  + Rewrite as an optimizing compiler. (I bags this one: JSK)
+- HAC: Profile & Optimize.
+	Flat Hash?
+- NAGT: Symbol Hash.
+- other platforms...?
+- swapendian
+- FIX UGLY BUGS IN IMAGE DEF'N:
+	- messagedesc.size != size of payload: CODE, DATA
+	- reloc offsets based on bcode_op_packed not bcode_op
+	  (i.e. alignment differences will cause hack alerts)
+	- library for image handling?

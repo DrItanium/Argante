@@ -1,0 +1,101 @@
+# Flow control benchmark
+#
+# Modified for A2 'lemon' 1/7/01 shykta.
+#
+# This is a simple benchmarking program that tests the performance
+# of various flow control related opcodes. The following tests are
+# performed:
+#
+# + Function call overhead, ie. CALL and RET.
+# + LOOP instruction overhead
+
+!SIGNATURE      "Flow control benchmark"
+!PRIORITY       10000
+
+.DATA
+
+.define     TIMES   10000000 # Execute loop body this many times.
+
+:sNL
+    "\n"
+:sFunctionCalls
+    "Function calls / second: "
+
+:sLoops
+    "Loops / second: "
+
+.CODE
+    mov     u:r0,:sFunctionCalls
+    mov     u:r1,^sFunctionCalls
+    syscall $IO_PUTSTRING
+
+    mov     s:r8,TIMES        # Initialize loop counter
+    sub     s:r8,1            # Compensate
+    
+    syscall $LOCAL_GETTIME
+    mov     u:r10,u:r0           # Save the seconds
+    mov     u:r11,u:r1           # Save the microseconds
+
+:loop
+    call    :func
+    loop    s:r8, :loop
+
+    call    :calcTime       # Calculate time difference
+
+    mov     f:r8,TIMES
+    div     f:r8,f:r0           # Calculate function calls / second
+    
+    syscall2 $IO_PUTFLOAT, f:r8
+
+    mov     u:r0,:sNL
+    mov     u:r1,^sNL
+    syscall $IO_PUTSTRING
+
+    mov     u:r0,:sLoops
+    mov     u:r1,^sLoops
+    syscall $IO_PUTSTRING
+    
+    mov     s:r8,TIMES        # Initialize loop counter
+    mul     s:r8,20           # Increase time
+    sub     s:r8,1            # Compensate
+    
+    syscall $LOCAL_GETTIME
+    mov     u:r10,u:r0           # Save the seconds
+    mov     u:r11,u:r1           # Save the microseconds
+    
+:loop2
+    loop    s:r8, :loop2
+    
+    call    :calcTime       # Calculate the time difference
+    
+    mov     f:r8,TIMES
+    mul     f:r8,20           # Increase time (same as before)
+    div     f:r8,f:r0         # Calculate function calls / second
+
+    syscall2 $IO_PUTFLOAT, f:r8
+
+    mov     u:r0,:sNL
+    mov     u:r1,^sNL
+    syscall $IO_PUTSTRING
+
+    halt
+
+:func
+    ret     0               # Return immediately
+
+:calcTime
+    # Mangles: r0, r1
+    # Inputs:  r10 - seconds of second timevalue
+    #          r11 - microseconds of second timevalue
+    # Outputs: f:r0 - difference between second timevalue and first in float format 
+    
+    syscall $LOCAL_GETTIME
+    sub     u:r0,u:r10          # Calculate seconds elapsed
+    sub     s:r1,u:r11          # Calculate microsecond difference
+    
+    mov     f:r0,u:r0           # Convert seconds to float
+    mov     f:r1,s:r1           # Convert microseconds to float
+    div     f:r1,f:1000000.0    # Recalculate microseconds to seconds
+    add     f:r0,f:r1           # Add them together
+
+    ret     0

@@ -1,0 +1,30 @@
+/*
+ * port of ptrs.ahl.
+ */
+#include "display.lh"
+
+func () Dupa (unsigned y) {
+  IO_PUTINT[ignore]; /* It's in r0 anyway... */
+  IO_PUTCHAR['\n'];
+}
+
+func () Main () {
+	@unsigned n;
+	@unsigned x;
+
+	alloc(n, 1);
+	@n=1;
+	x=n;
+	Dupa[@x]; /* Should be 1 */
+	@n=2;
+	Dupa[@x]; /* Should be 2 */
+	@n=3;
+	Dupa[@x]; /* Should be 3 */
+	alloc(x, 1);
+	@x=5;
+	@n=4;
+	Dupa[@n]; /* Should be 4 */
+	Dupa[@x]; /* Should be 5 */
+}
+
+Main[];

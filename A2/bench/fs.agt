@@ -1,0 +1,127 @@
+#
+# Argante OS - sample RSIS/agtc code
+# (C) 2000 Michal Zalewski <lcamtuf@ids.pl>
+# (C) 2001 JSK
+#
+# Append current date (converted to readable form) to file
+#
+
+!DOMAINS	1
+!INITDOMAIN	1
+!SIGNATURE	"filesystem and locallib example"
+!PRIORITY 	100
+
+.DATA
+
+:File
+	"/AddDateHere"
+:WDStrBuf1
+	"/subdir"
+	0x0 repeat 10
+:WDStrBuf2
+	"/subdir"
+	0x0 repeat 10
+:BufSz
+	0
+:HostStrBuf
+# This is a clever way of writing a newline to the file,
+# we just use one character not set in the buffer...
+	"\n\n\n\n" repeat 20
+:DateStrBuf
+	"    " repeat 20
+:TodayIs
+	"Today is "
+:FileSize
+	"File is "
+:FileSize2
+	" bytes big\n"
+:FileMTime
+	"File modified "
+:WeAre
+# Conveniently 4 bytes already, so no ugly null padding.
+	" at "
+.CODE
+
+# Some WorkingDir tests, 'koz that's all I've written ATM.
+  mov u:r0,:WDStrBuf2
+  mov u:r1,^WDStrBuf2
+  syscall $FS_WD_GET
+  syscall $IO_PUTSTRING
+  
+  syscall2 $IO_PUTCHAR, 10
+
+  mov u:r0, :WDStrBuf1
+  mov u:r1, ^WDStrBuf1
+  syscall $FS_WD_SET
+  syscall $IO_PUTSTRING
+  
+  syscall2 $IO_PUTCHAR, 10
+  
+  syscall $FS_WD_GET
+  syscall $IO_PUTSTRING
+  
+  syscall2 $IO_PUTCHAR, 10
+  
+  mov u:r0,:WDStrBuf2
+  mov u:r1,^WDStrBuf2
+  syscall $FS_WD_SET
+
+# Ok... So WD works, let's do the original thing.
+  mov u:r1,:File
+  mov u:r2,^File
+# Append mode
+  syscall2 $FS_OPEN, 0
+  mov u:r15,u:r0
+
+  syscall $LOCAL_GETTIME
+  mov u:r1, :DateStrBuf
+  mov u:r2, ^DateStrBuf
+  syscall $LOCAL_TIMETOSTR
+  mov *u::BufSz,u:r2
+
+  mov u:r0,:TodayIs
+  mov u:r1,^TodayIs
+  syscall $IO_PUTSTRING
+
+  mov u:r0,:DateStrBuf
+  mov u:r1,*u::BufSz
+  syscall $IO_PUTSTRING
+
+  syscall2 $IO_PUTCHAR, 10
+
+  mov u:r1,:DateStrBuf
+  mov u:r2,*:BufSz
+  syscall2 $FS_WRITE, u:r15
+
+# New in 0.006: say who we are.
+  mov u:r1,:WeAre
+  mov u:r2,^WeAre
+  syscall2 $FS_WRITE, u:r15
+
+  mov u:r0,:HostStrBuf
+  mov u:r1,^HostStrBuf
+  syscall $LOCAL_GETHOSTNAME
+# Add a \n to the end of the line
+  add u:r1, 1
+  mov u:r2,u:r1
+  mov u:r1,u:r0
+  syscall2 $FS_WRITE, u:r15
+
+  syscall2 $FS_CLOSE, u:r15
+
+  mov u:r0,:File
+  mov u:r1,^File
+  syscall $FS_STAT
+
+  mov u:r15,u:r1
+  mov u:r0,:FileSize
+  mov u:r1,^FileSize
+  syscall $IO_PUTSTRING
+  syscall2 $IO_PUTINT, u:r15
+  mov u:r0,:FileSize2
+  mov u:r1,^FileSize2
+  syscall $IO_PUTSTRING
+
+  halt
+
+.END

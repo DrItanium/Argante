@@ -1,0 +1,31 @@
+
+
+VPATH=@srcdir@
+
+CFLAGS+=-I@top_srcdir@/include -I../include -I@top_srcdir@ -I..
+
+TARGETS=vconsole
+VCONS_OBJECTS=flexsock.o vconsole.o
+
+LOADLIBES+=$(foreach A,@A2_LIBOBJ_ALL@,../$A) @SOCKET_LIBS@
+
+CLEAN=core core.* $(TARGETS) $(VCONS_OBJECTS)
+DISTCLEAN=Makefile
+MAINTAINERCLEAN=
+
+all: $(TARGETS)
+
+vconsole: $(VCONS_OBJECTS)
+
+FORCE:;
+
+clean: FORCE
+	$(RM) $(CLEAN)
+
+distclean: FORCE
+	$(RM) $(CLEAN) $(DISTCLEAN)
+	
+maintainerclean: FORCE
+	$(RM) $(CLEAN) $(DISTCLEAN) $(MAINTAINERCLEAN)
+
+

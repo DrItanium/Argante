@@ -1,0 +1,9 @@
+# Multithreading test.
+
+!SIGNATURE      "Sleeper"
+!PRIORITY       10000
+
+.DATA
+.CODE
+	wait 10000000
+	halt

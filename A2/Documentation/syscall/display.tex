@@ -1,0 +1,36 @@
+\begin{scmodule}{DISPLAY}{Unknown}{\perjsk}{Fri Jul 13 2001}
+Simple console output module for debugging.
+\end{scmodule}
+Known Issues:\\
+This will be phased out when agents are introduced.\\
+Does not flush output until newline printed.
+\begin{sccall}[]{IO\_PUTSTRING}
+  Inputs: \scargs{"string"}\\
+ Outputs: \scargs{}\\
+  SideFx: Displays string on kernel console.\\
+   Other: N/A
+\end{sccall}
+\begin{sccall}{IO\_PUTINT}
+  Inputs: \scargs{signed a}\\
+ Outputs: \scargs{}\\
+  SideFx: Displays signed integer on kernel console.\\
+   Other: N/A
+\end{sccall}
+\begin{sccall}{IO\_PUTCHAR}
+  Inputs: \scargs{unsigned a}\\
+ Outputs: \scargs{}\\
+  SideFx: Displays raw 8 low bits of a on console.\\
+   Other: "syscall2 \$IO\_PUTCHAR, 10" will print newlines and flush output. 
+\end{sccall}
+\begin{sccall}{IO\_PUTFLOAT}
+  Inputs: \scargs{float a}\\
+ Outputs: \scargs{}\\
+  SideFx: Displays float in "\%g" format.\\
+   Other: N/A 
+\end{sccall}
+\begin{sccall}{IO\_PUTHEX}
+  Inputs: \scargs{unsigned a}\\
+ Outputs: \scargs{}\\
+  SideFx: Displays hex number.\\
+   Other: N/A 
+\end{sccall}

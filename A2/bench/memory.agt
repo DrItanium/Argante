@@ -1,0 +1,80 @@
+# Memory throughput benchmark
+#
+# This is a simple benchmarking program that tests the throughput of 
+# of various memory copying opcodes. Because CPCNT has attained Nirvana
+# in A2, we can only try MOV.
+#
+
+!SIGNATURE      "Memory throughput benchmark"
+!PRIORITY       10000
+
+.DATA
+
+.define DWORDS  4194304        # 16 MB  
+
+:src
+    DWORDS      
+:dest
+    DWORDS
+:sNL
+    "\n"
+:sMOV 
+    "Megabytes / second using MOV: "
+
+.CODE
+    alloc   *:src,3       # Allocate some memory
+    alloc   *:dest,3       # Allocate some memory
+    
+    mov     u:r0,:sMOV
+    mov     u:r1,^sMOV
+    syscall $IO_PUTSTRING
+
+    mov     s:r15,DWORDS       # Initialize loop counter
+    sub     s:r15,1            # Compensate
+    mov     u:r2,*:src
+    mov     u:r3,*:dest
+
+    syscall $LOCAL_GETTIME
+    mov     u:r4,u:r0           # Save the seconds
+    mov     u:r5,u:r1           # Save the microseconds
+
+:loop
+    mov     *u:r3,*u:r2
+    add     u:r2,1
+    add     u:r3,1
+    loop    s:r15, :loop
+
+    call    :calcTime       # Calculate time difference
+
+    mov     u:r0,DWORDS       # How many dwords we copied
+    mov     f:r0,u:r0           # Convert to float 
+    mul     f:r0,4.0          # 1 dword = 4 bytes
+    div     f:r0,1024.0       # 1 kB = 1024 bytes
+    div     f:r0,1024.0       # 1 MB = 1024 kB
+    div     f:r0,f:r1           # Calculate megabytes / second
+    syscall $IO_PUTFLOAT
+
+    mov     u:r0,:sNL
+    mov     u:r1,^sNL
+    syscall $IO_PUTSTRING
+
+    halt
+
+:calcTime
+    # Inputs:  u0 - seconds of first timevalue
+    #          u1 - microseconds of first timevalue
+    #          u4 - seconds of second timevalue
+    #          u5 - microseconds of second timevalue
+    # Outputs: f1 - difference between second timevalue and first in float format 
+    syscall $LOCAL_GETTIME
+    
+    sub     u:r0,u:r4           # Calculate seconds elapsed
+    sub     s:r1,u:r5      # Calculate microsecond difference
+
+    mov     f:r0,u:r0           # Convert seconds to float
+    mov     f:r1,s:r1           # Convert microseconds to float
+    div     f:r1,f:1000000.0    # Recalculate microseconds to seconds
+    add     f:r0,f:r1           # Add them together
+    mov     f:r1,f:r0
+
+    ret     0

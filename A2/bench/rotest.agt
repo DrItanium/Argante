@@ -1,0 +1,21 @@
+
+.RODATA
+:rosym
+	"LA LA LA"
+:didntwork
+	"readonly test failed."
+:didwork
+	"readonly test passed."
+.CODE
+	handler :success
+	mov *:rosym, 111
+	handler 0
+	mov u:r0, :didntwork
+	mov u:r1, ^didntwork
+	syscall $IO_PUTSTRING
+	raise 0xf00baa
+:success
+	mov u:r0, :didwork
+	mov u:r1, ^didwork
+	syscall $IO_PUTSTRING
+	halt

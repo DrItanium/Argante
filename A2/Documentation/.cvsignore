@@ -1,0 +1,6 @@
+Makefile
+*.log
+*.aux
+*.dvi
+*.pdf
+commentgrep

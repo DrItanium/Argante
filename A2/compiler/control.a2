@@ -1,0 +1,46 @@
+#
+# .22 compiler example
+# note this is just a idea ATM
+
+#
+# Various compiler options are set with .option
+# Examples below
+
+.option signature "Flow control benchmark"
+.option priority 10000
+
+# Set defaults for data segments.
+.option data nobreak readonly
+.option code local
+
+.include "bla.h" 
+
+.define $TIMES 10000000 # Execute loop body this many times.
+
+# Symbol address: 
+#	size (dword):
+#	size (byte):
+.code global symbol "main"
+    mov     u:r0,:sFunctionCalls
+    mov     u:r1,^sFunctionCalls
+    syscall $IO_PUTSTRING
+
+    mov     s:r8,TIMES        # Initialize loop counter
+    sub     s:r8,1            # Compensate
+    
+    syscall $LOCAL_GETTIME
+    mov     u:r10,u:r0           # Save the seconds
+    mov     u:r11,u:r1           # Save the microseconds
+
+
+.local "loop"
+.local "loop2"
+.local "calcTime"
+
+.data break readonly symbol "sNL"
+	"\n"
+	t:0x0a0a0a0a repeat 40
+.data break readonly symbol "sCalls"
+	"Function calls / second: "
+.data break readonly symbol "sLoops"
+	"Loops / second: "

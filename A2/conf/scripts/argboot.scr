@@ -1,0 +1,20 @@
+|
+| A2 startup script
+| (C) 2000 Michal Zalewski
+| (C) 2001 James Kehl
+|
+~	*******************************
+~	 * A2 Virtual Operating System *
+~	  *******************************
+| For DL people.
+>modules/display.so
+>modules/locallib.so
+>modules/fs.so
+>modules/strfd.so
+>modules/console.so
+>modules/cfd.so
+>modules/alib.so
+^conf/bench.HAC
+~ I await your command, master:
+| Kickstart for binary versions.
+~ (type "$control.img" to run the example or "?" for help)

@@ -1,0 +1,44 @@
+\documentclass[a4paper,oneside,openany]{book}
+\title{\Huge{Argante2}\\\huge{Syscall Reference}}
+\author{
+	\LARGE{James Kehl}\\
+	ecks@optusnet.com.au
+}
+\begin{document}
+\maketitle{}
+\input{common}
+\newcommand{\scargs}[1]{[ #1 ]}
+\newenvironment{scmodule}[4]
+{
+	\pagebreak[4]
+	\section{#1}
+	\begin{tabbing}
+	\enskip\=\qquad\qquad\qquad\qquad\=\+\kill
+	\emph{Author:}\>#2\nopagebreak\\
+	\emph{Editor:}\>#3\nopagebreak\\
+	\emph{Last Updated:}\>\nopagebreak#4
+	\end{tabbing}
+	\smallskip
+}
+{
+\smallskip\\
+}
+% Whooee.
+\newenvironment{sccall}[2][(SYS2)]
+{
+	\subsection[#2]{#2 #1}
+}
+{
+%\\\hrulefill
+}
+\chapter{Syscall Reference}
+Most syscalls will take their first argument in r0, second argument in r1, and so on. A syscall marked SYS2 will use an extra syscall2 argument as its first input, and take any extra arguments from r1 on.\\
+The syntax used to describe inputs and outputs is borrowed from LAC. A "string" is
+two arguments: a buffer address, and that buffer's size.
+\input{syscall/alib}
+\input{syscall/cfd}
+\input{syscall/display}
+\input{syscall/fs}
+\input{syscall/locallib}
+\input{syscall/strfd}
+\end{document}

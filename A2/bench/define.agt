@@ -1,0 +1,37 @@
+# Recursive definitions demo. (C) 2002 JSK.
+#
+# If all goes to plan, you should end up with
+# 2^0x32x'1'
+# 2^1x32x'2'
+# 2^2x32x'3'
+# 2^3x32x'4'
+# 2^4x32x'5'
+# 2^5x32x'6'
+# 2^6x32x'7'
+# 2^7x32x'8'
+# 2^8x32x'9'
+# 2^9x32x'0'
+# or (2^10 - 1) x 32 = 32736 chars all up (8184 packets)
+# which, according to my reasoning, should show any more
+# NAGT bugs :) 
+
+.define BA BB11111111111111111111111111111111BB
+.define BB BC22222222222222222222222222222222BC
+.define BC BD33333333333333333333333333333333BD
+.define BD BE44444444444444444444444444444444BE
+.define BE BF55555555555555555555555555555555BF
+.define BF BG66666666666666666666666666666666BG
+.define BG BH77777777777777777777777777777777BH
+.define BH BI88888888888888888888888888888888BI
+.define BI BJ99999999999999999999999999999999BJ
+.define BJ 00000000000000000000000000000000
+
+.DATA
+:sFunctionCalls
+	 "BA"
+.CODE
+	 mov     u:r0,:sFunctionCalls
+	 mov     u:r1,^sFunctionCalls
+	 syscall $IO_PUTSTRING
+	 halt
+

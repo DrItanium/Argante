@@ -1,0 +1,6 @@
+Makefile
+lac
+*.agt
+*.img
+*.ao
+parser.output

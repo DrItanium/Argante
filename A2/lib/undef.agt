@@ -1,0 +1,7 @@
+.code
+	call :cow
+	jmp :moon
+	call :dog
+	jmp :table
+	call :spoon
+	jmp :teacup

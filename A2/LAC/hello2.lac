@@ -1,0 +1,27 @@
+#include "display.lh"
+
+unsigned loop;
+loop=1000;
+
+func () RecursiveHello(unsigned loop) {
+	unsigned howdy;
+	loop-=1;
+	if loop < 1 goto Done;
+	IO_PUTINT[loop];
+	if loop > 1 goto Plural;
+	IO_PUTSTRING[" green bottle standing on the wall"];
+	goto Next;
+Plural:
+	IO_PUTSTRING[" green bottles standing on the wall"];
+Next:
+	IO_PUTCHAR['\n'];
+/*	howdy=loop;
+	howdy*=1700;
+	wait howdy; */
+	wait 17000;
+	RecursiveHello[loop];
+Done:
+	return;
+}
+
+RecursiveHello[loop];

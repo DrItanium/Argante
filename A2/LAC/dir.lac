@@ -1,0 +1,72 @@
+#include "display.lh"
+#include "fs.lh"
+
+func () ZeroBuf(@unsigned b, signed len) {
+zone:
+	@b=0x0a0a0a0a; /* \n\n\n\n */
+	len-=4;
+	if len < 1 goto end;
+	b+=1;
+	goto zone;
+end:
+	return;
+}
+
+func () Main() {
+	IO_PUTSTRING["Directory listing of: "];
+	IO_PUTSTRING["/ftp/"];
+	IO_PUTCHAR['\n'];
+	FS_WD_SET["/ftp/"];
+	IO_PUTCHAR['\n'];
+
+	unsigned fcount;
+	unsigned dhandl;
+	unsigned ret;
+	@unsigned buf;
+	unsigned bufsz;
+	unsigned filesize;
+
+	buf=straddr("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+	bufsz=strlen("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+	unfinalize(buf);
+
+	fcount=0;
+	[dhandl]=FS_OPEN_DIR[ignore, "."];
+loop:
+	[ignore, ignore, ret]=FS_READ_DIR[dhandl, buf, bufsz];
+	if ret < 1 goto end;
+	fcount+=1;
+	/* A dirty hack to ignore . files... if you want */
+/*	filesize=@buf;
+	filesize&=@straddr("\xff\x00\x00\x00");
+	filesize^=@straddr(".\x00\x00\x00");
+	if filesize == 0 goto loop; */
+
+	IO_PUTSTRING[buf, ret];
+	/* Line up the sizes using tabs. */
+	filesize=64;
+	filesize-=ret;
+	filesize/=8;
+	tabloop:
+	IO_PUTCHAR['\t'];
+	filesize-=1;
+	if filesize > 0 goto tabloop;
+	
+	/* Stat if we can, print 0 if not. */
+	filesize=0;
+	handler skipstat;
+	[ignore, filesize, ignore]=FS_STAT[buf, ret];
+	IO_PUTINT[filesize];
+skipstat:
+	IO_PUTCHAR['\n'];
+	ZeroBuf[buf, bufsz];
+	goto loop;
+end:
+	FS_CLOSE[dhandl];
+	IO_PUTCHAR['\n'];
+	IO_PUTSTRING["Total entries: "];
+	IO_PUTINT[fcount];
+	IO_PUTCHAR['\n'];
+}
+
+Main[];

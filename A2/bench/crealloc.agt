@@ -1,0 +1,19 @@
+.DATA
+.define INITSTACKSZ 1
+:regstack_ptr
+	INITSTACKSZ
+:regstack_size
+	INITSTACKSZ
+.CODE
+	alloc *:regstack_ptr, 3
+:stuff_and_nonsense
+	add *:regstack_size, 1
+	realloc *:regstack_ptr, *:regstack_size
+	mov u:r0, *:regstack_ptr
+	add u:r0, *:regstack_size
+	sub u:r0, 1
+#	syscall2 $IO_PUTINT, u:r0
+#	syscall2 $IO_PUTCHAR, 10
+#	syscall2 $IO_PUTINT, *u:r0
+#	syscall2 $IO_PUTCHAR, 10
+	jmp :stuff_and_nonsense

@@ -1,0 +1,38 @@
+#
+# Linker test, part 1. (from NAGT-for-Argante1)
+# compile with -c option!
+# run with $linktst1.img:linktst2.img
+#
+!SIGNATURE	"Linker test"
+!PRIORITY	0x2710
+
+.DATA
+:string1_2
+	"Local string, external code.\n"
+.CODE
+:code1_1
+	wait 100000
+{
+.DATA
+:string1_1
+	"Local string, local code.\n"
+# This Sub won't clash with another Sub
+# Of course, defining this symbol means %code1_1 will be 1,
+# not 6 like it would be without all these contexts. If there's
+# demand I'll fix this.
+.CODE
+:Sub
+	mov   u:r0,:string1_1
+	mov   u:r1,^string1_1
+}
+{
+:Sub
+	syscall   $IO_PUTSTRING
+	call :code2_1
+	halt
+}
+:code1_2
+	mov   u:r0,:string2_1
+	mov   u:r1,^string2_1
+	syscall   $IO_PUTSTRING
+	ret 0

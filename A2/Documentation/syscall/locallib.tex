@@ -1,0 +1,39 @@
+\begin{scmodule}{LOCALLIB}{\permz}{\perjsk}{Fri Jul 13 2001}
+Returns useful information on local system, and a few related utility functions.
+\end{scmodule}
+Known Issues:\\
+ERR\_GENERIC happens a bit too often. \FIXME\\
+RS\_STAT is Linux only and somewhat dusty anyway.\\
+VS\_STAT is Argante1 only.
+\begin{sccall}[]{LOCAL\_GETTIME}
+  Inputs: \scargs{}\\
+ Outputs: \scargs{unsigned seconds\_since\_epoch, unsigned $\mu{}$secs}\\
+  SideFx: None.\\
+   Other: N/A.
+\end{sccall}
+\begin{sccall}{LOCAL\_TIMETOSTR}
+  Inputs: \scargs{unsigned seconds\_since\_epoch, "writable buffer"}\\
+ Outputs: \scargs{ignore, ignore, unsigned bytes\_stored}\\
+  SideFx: 'ctime' into buffer.\\
+   Other: N/A.
+\end{sccall}
+\begin{sccall}[]{LOCAL\_GETHOSTNAME}
+  Inputs: \scargs{"writable buffer"}\\
+ Outputs: \scargs{ignore, unsigned bytes\_stored}\\
+  SideFx: None.\\
+   Other: Any hostname longer than 64 characters is 'bogus' in more ways than one.
+\end{sccall}
+\begin{sccall}[]{LOCAL\_GETRANDOM}
+  Inputs: \scargs{}\\
+ Outputs: \scargs{unsigned random\_integer}\\
+  SideFx: None.\\
+   Other: N/A.
+\end{sccall}
+\begin{sccall}[]{LOCAL\_RS\_STAT}
+  Inputs: \scargs{}\\
+ Outputs:\\
+\scargs{unsigned uptime, unsigned 5sec\_load\_average, unsigned total\_ram\_in\_K,
+ unsigned free\_ram, unsigned total\_swap, unsigned free\_swap, unsigned processes}\\
+  SideFx: None.\\
+   Other: N/A.
+\end{sccall}

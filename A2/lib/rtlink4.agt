@@ -1,0 +1,31 @@
+!SIGNATURE	"RTLinker test 3"
+!PRIORITY	0x2710
+
+{
+.DATA
+:file1
+	"nosyms.img"
+.CODE
+:main
+	wait 100000
+
+	mov u:r20, 1000
+
+	mov u:r0, :file1
+	mov u:r1, ^file1
+	syscall $ALIB_OPEN
+:loop1	
+	mov u:r21, u:r0
+
+	handler 0
+	mov u:r0, :file1
+	mov u:r1, ^file1
+	syscall $ALIB_OPEN
+
+	handler :handler
+	syscall2 $ALIB_CLOSE, u:r21
+:handler
+	loop u:r20, :loop1
+	syscall $ALIB_CLOSE
+	halt
+}

@@ -1,0 +1,12 @@
+SRCDIR=@srcdir@
+include @top_srcdir@/img.mk
+
+TARGETS=control integer memory fs rename
+all: $(foreach A,$(TARGETS),$A.img)
+
+clean:
+	$(RM) *.img
+	$(RM) fs/rename
+
+distclean maintainerclean: clean
+	$(RM) Makefile

@@ -1,0 +1,30 @@
+/*
+ * ALib demo. 
+ * Ensure you have alib2.img in the lib directory,
+ * and enjoy.
+ */
+#include "display.lh"
+#include "alib.lh"
+
+func (@unsigned) external_call (@unsigned str, unsigned len);
+
+func () main () {
+	@unsigned str;
+	unsigned len;
+	unsigned handle;
+
+	str=straddr("This string will be reversed");
+	len=strlen("This string will be reversed");
+	unfinalize(str);
+	
+	[handle]=ALIB_OPEN["alib2.img"];
+	
+	IO_PUTSTRING[str,len];
+	IO_PUTCHAR[10];
+	[str]=external_call[str, len];
+	IO_PUTSTRING[str,len];
+	IO_PUTCHAR[10];
+	ALIB_CLOSE[handle];
+}
+main[];
+

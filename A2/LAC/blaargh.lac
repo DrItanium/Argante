@@ -1,0 +1,31 @@
+#include "display.lh"
+
+func (unsigned, unsigned) call1 (unsigned asd, unsigned zxc);
+
+func (unsigned, unsigned) call1 (unsigned asd, unsigned zxc) {
+	@unsigned plugh;
+	plugh=straddr("Hello World");
+	unfinalize(plugh);
+	asd=@plugh;
+	@plugh=asd;
+	IO_PUTSTRING[plugh, 4];
+	IO_PUTSTRING["Hello World\n"];
+	/* Method of swapping 2 vars without intermediate */
+	asd^=zxc;
+	zxc^=asd;
+	asd^=zxc;
+	/* Another method :) actually this uses intermediates */
+	[asd,zxc];
+	[zxc,asd]=;
+	/* Some crap */
+	[ignore, ignore, asd];
+	[asd, ignore, zxc];
+	return;
+}
+
+@unsigned q;
+signed f;
+
+[q, f] = call1 [12, 300];
+
+IO_PUTSTRING["Goodbye Cruel World\n"];

@@ -1,0 +1,108 @@
+\begin{scmodule}{STRFD}{\perjsk}{\perjsk}{Sat 5 May 2002}
+The StrFD module allows manipulation of a block of memory using a read / write / seek
+paradigm and the Common File Descriptor operations set, and is probably the easiest
+way to access memory on a byte-by-byte basis.
+\end{scmodule}
+Known Issues:\\
+ERR\_STRFD\_BOUNDS occurs when the offset exceeds the allocated size.\\
+ERR\_STRFD\_SEARCHFAIL occurs when one of the search functions fail.
+The offset is also invalid when this occurs and should be reset.
+\begin{sccall}[]{STRFD\_OPEN}
+Inputs: \scargs{"existing buffer"}\\
+Outputs: \scargs{unsigned vfd\_handle}\\
+SideFx: Use this block as a static, unresizable StrFD.\\
+Other: N/A.
+\end{sccall}
+\begin{sccall}[]{STRFD\_CREATE}
+Inputs: \scargs{unsigned initial\_size}\\
+Outputs: \scargs{unsigned vfd\_handle}\\
+SideFx: Create a new memory block attached to a dynamically-grown StrFD.\\
+Other: N/A.
+\end{sccall}
+\begin{sccall}{STRFD\_CLOSE}
+Inputs: \scargs{unsigned vfd\_handle}\\
+Outputs: \scargs{}\\
+SideFx: Closes the given StrFD.\\
+Other: Does NOT free dynamically-allocated memory, so be sure to get the address first.
+\end{sccall}
+\begin{sccall}{STRFD\_GET\_OFFSET}
+Inputs: \scargs{unsigned vfd\_handle}\\
+Outputs: \scargs{unsigned offset}\\
+SideFx: None.\\
+Other: This returns the byte offset within the memory block for which the next
+read or write will start from.
+\end{sccall}
+\begin{sccall}{STRFD\_SET\_OFFSET}
+Inputs: \scargs{unsigned vfd\_handle, unsigned offset}\\
+Outputs: \scargs{}\\
+SideFx: None.\\
+Other: This sets the byte offset for which the next read or write will start from.
+\end{sccall}
+\begin{sccall}{STRFD\_GET\_ADDR}
+Inputs: \scargs{unsigned vfd\_handle}\\
+Outputs: \scargs{unsigned addr}\\
+SideFx: None.\\
+Other: This is most useful for accessing dynamically allocated strings outside
+the StrFD module.
+\end{sccall}
+\begin{sccall}{STRFD\_GET\_SIZE}
+Inputs: \scargs{unsigned vfd\_handle}\\
+Outputs: \scargs{unsigned size}\\
+SideFx: None.\\
+Other: This is the flip side of STRFD\_GET\_ADDR.
+\end{sccall}
+\begin{sccall}{STRFD\_READ}
+Inputs: \scargs{unsigned strfd\_handle, "writable buffer..."}\\
+Outputs: \scargs{ignore, unsigned @null\_after\_data, unsigned space\_left\_in\_buffer}\\
+SideFx: Reads up to r2 bytes from strfd\_handle and shifts the offset.\\
+Other: N/A.
+\end{sccall}
+\begin{sccall}{STRFD\_WRITE}
+Inputs: \scargs{unsigned strfd\_handle, "buffer..."}\\
+Outputs: \scargs{ignore, unsigned @null\_after\_data, unsigned bytes\_unwritten}\\
+SideFx: Writes up to r2 bytes from strfd\_handle and shifts the offset\\
+Other: N/A.
+\end{sccall}
+\begin{sccall}{STRFD\_GETCHAR}
+Inputs: \scargs{unsigned strfd\_handle}\\
+Outputs: \scargs{unsigned a\_byte}\\
+SideFx: Increments the offset.\\
+Other: N/A.
+\end{sccall}
+\begin{sccall}{STRFD\_SETCHAR}
+Inputs: \scargs{unsigned strfd\_handle, unsigned a\_byte}\\
+Outputs: \scargs{}\\
+SideFx: Writes the single byte and increments the offset.\\
+Other: N/A.
+\end{sccall}
+\begin{sccall}{STRFD\_STRCHR}
+Inputs: \scargs{unsigned strfd\_handle, signed shift\_val, unsigned needle}\\
+Outputs: \scargs{}\\
+SideFx: Shifts the offset until STRFD\_GETCHAR would return needle.\\
+Other: Throws ERR\_STRFD\_SEARCHFAIL if character not found.
+\end{sccall}
+\begin{sccall}{STRFD\_STRSTR}
+Inputs: \scargs{unsigned strfd\_handle, signed shift\_val, "needle"}\\
+Outputs: \scargs{}\\
+SideFx: Shifts the offset until STRFD\_READ would return needle.\\
+Other: Throws ERR\_STRFD\_SEARCHFAIL if string not found.
+\end{sccall}
+\begin{sccall}{STRFD\_STRCMP}
+Inputs: \scargs{unsigned strfd\_handle, "needle"}\\
+Outputs: \scargs{signed difference}\\
+SideFx: None - does not change offset.\\
+Other: Returns any differences between needle and the next r2 bytes of the StrFD, so
+could also be called strncmp or memcmp.
+\end{sccall}
+\begin{sccall}{STRFD\_SPN}
+Inputs: \scargs{unsigned strfd\_handle, "accept"}\\
+Outputs: \scargs{}\\
+SideFx: Increases offset until STRFD\_GETCHAR would return a character not in "accept".\\
+Other: Not Implemented. \FIXME
+\end{sccall}
+\begin{sccall}{STRFD\_CSPN}
+Inputs: \scargs{unsigned strfd\_handle, "reject"}\\
+Outputs: \scargs{}\\
+SideFx: Increases offset until STRFD\_GETCHAR would return a character in "reject".\\
+Other: Not Implemented. \FIXME
+\end{sccall}

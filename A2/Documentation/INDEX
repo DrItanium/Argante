@@ -1,0 +1,24 @@
+=== Documentation
+nagt.tex				Source for the "Assembly Tutorial", available on the
+					website. All of these .texs can be turned into into .dvis
+					with 'make dvi' and LaTeX or .pdfs with 'make pdf'.
+kdesign.tex				Kernel design manifest.
+syscall.tex				Source for "Syscall Reference" on website.
+syscall/*.tex				Individual modules included by syscall.tex.
+=== obsolete .txts which should be replaced
+kernel.txt				kernel developer's guide
+modules.txt				module developer's guide
+alib.txt				run-time linking
+native.txt				compilation to native C code
+=== Miscellaneous crud
+commentgrep				Binary of commentgrep.l. If you didn't build
+					it, I have a packaging problem.
+commentgrep.l				'commentgrep' lexer which dumps out comments
+					from .c files. To build, just type 'make commentgrep',
+					make can work out the rest...
+icons.rc				Rough icons for Windows.
+common.tex				Utility macros, not very informative.
+Makefile				Script for producing .pdfs and .dvis.
+INDEX					This file.
+
+

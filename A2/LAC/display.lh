@@ -1,0 +1,5 @@
+syscall () IO_PUTSTRING (@unsigned, unsigned);
+syscall () IO_PUTINT (unsigned);
+syscall () IO_PUTCHAR (unsigned);
+syscall () IO_PUTFLOAT (float);
+syscall () IO_PUTHEX (unsigned);

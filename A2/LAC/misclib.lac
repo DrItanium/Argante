@@ -1,0 +1,56 @@
+#include "display.lh"
+/* The LacMath library. Or whatever,
+   This is a file without any main code, so it's linkable without problems. */
+float LM_acceptable_error; /* = 0.0001 */
+
+/* LacMath: float^unsigned */
+func (float) LM_pow_fu(float num, unsigned power) { /* Negative powers? */
+	float ret;
+	unsigned curpow;
+	unsigned tmppow;
+	curpow=1;
+	ret=num;
+	/* Use a little binary powering to speed things up. */
+squarelooptop:
+	tmppow=curpow;
+	tmppow*=2;
+	if tmppow > power goto inclooptop;
+	curpow=tmppow;
+	ret*=ret;
+	goto squarelooptop;
+inclooptop:
+	/* Ok, we've come as far as we can without getting complicated.
+	   Use ordinary multiplication to get the rest of the power. */
+	if curpow < power goto incloopmain;
+	return [ret];
+incloopmain:
+	curpow+=1;
+	ret*=num;
+	goto inclooptop;
+}
+
+/* Square roots. */
+func (float) LM_sqrt_f(float num) {
+	/* Newtonian method, from R.G. Dromey, "How To Solve It By Computer" */
+	float g1;
+	float g2;
+	float diff;
+	g2=num;
+	g2/=2;
+looptop:
+	g1=g2;
+	g2=num;
+	g2/=g1;
+	g2+=g1;
+	g2/=2; /* g2 = (g1 + (m/g1))/2 */
+	if g1 < g2 goto diff2;
+	diff=g1;
+	diff-=g2;
+	goto donediff;
+diff2:	/* Don't make diff < 0 */
+	diff=g2;
+	diff-=g1;
+donediff:
+	if diff > LM_acceptable_error goto looptop;
+	return [g2];
+}

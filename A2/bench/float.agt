@@ -1,0 +1,29 @@
+!signature "float formatting tester"
+
+.define STR% u:r30
+.code
+	mov STR%, u:r0
+
+	mov f:r1, 1234.5678
+	mov u:r2, 2
+	mov u:r3, 0
+	syscall2 $CFD_WRITE_FLOAT, STR%
+	mov u:r1, 0xa
+	syscall2 $CFD_WRITE_CHAR, STR%
+
+	mov f:r1, 1234.5678
+	mov u:r2, 5
+	mov u:r3, 8
+	syscall2 $CFD_WRITE_FLOAT, STR%
+	mov u:r1, 0xa
+	syscall2 $CFD_WRITE_CHAR, STR%
+	
+	mov f:r1, 1234.5
+	mov u:r2, 2
+	mov u:r3, 3
+	syscall2 $CFD_WRITE_FLOAT, STR%
+	mov u:r1, 0xa
+	syscall2 $CFD_WRITE_CHAR, STR%
+
+	halt
+

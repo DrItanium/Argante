@@ -1,0 +1,17 @@
+
+syscall (signed, unsigned) LOCAL_GETTIME ();
+/* Bytes stored in r2 */
+syscall (unsigned, unsigned, unsigned) LOCAL_TIMETOSTR (signed time, @unsigned buf, unsigned bufsz);
+/* Bytes stored in r1 */
+syscall (unsigned, unsigned) LOCAL_GETHOSTNAME (@unsigned buf, unsigned bufsz);
+
+syscall (unsigned) LOCAL_GETRANDOM ();
+syscall (
+	unsigned, /* r0 - uptime */
+	unsigned, /* r1 - load average (5sec?); */
+	unsigned, /* r2 - total ram (K or something) */
+	unsigned, /* r3 - free ram */
+	unsigned, /* r4 - total swap */
+	unsigned, /* r5 - free swap */
+	unsigned /* r6 - processes */
+	) LOCAL_RS_STAT();

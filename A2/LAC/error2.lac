@@ -1,0 +1,60 @@
+/*
+ * A2 sample LAC code 
+ * (c) 2002 James Kehl <ecks@optusnet.com.au>
+ * (C) 2000 Michal Zalewski <lcamtuf@ids.pl>
+ *
+ * Demonstrate how exception handling works.
+ * (adapted from the Argante1 example error2.agt)
+ */
+
+/*
+ * Please note A2 exception handling differs substantially
+ * from Argante1: it's now like 'ON ERROR GOTO' if you speak
+ * BASIC (shame on you)
+ */
+
+#include "display.lh"
+
+IO_PUTSTRING["I am in main code - it will set up handler and call buggy subprocedure\n"];
+
+handler handler1;
+
+WhereOver[];
+
+func () WhereOver() {
+	
+	IO_PUTSTRING["Now I'm in the subprocedure with 2 errors\n"];
+	IO_PUTSTRING["First of all, I will set up local exception handler, then do something bad.\n"];
+	
+	handler handler2;
+
+badthing1:
+	@unsigned killme;
+	/* A LAC-style cast. I never thought I would ever get a compiler warning! */
+	[0xc001c0de]; [killme]=;
+	@killme=0xc001c0de;
+	
+badthing2:
+	[0xde4dc0de]; [killme]=;
+	@killme=0xde4dc0de;
+	return;
+
+handler2:
+	IO_PUTSTRING["I am in the subprocedure exception handler\n"];
+	IO_PUTSTRING["I got exception number "];
+	IO_PUTINT[errno];
+	IO_PUTCHAR['\n'];
+	IO_PUTSTRING["Guess badthing1 didn't work, I'll jump back to badthing2.\n"];
+	goto badthing2;
+}
+
+goto end;
+
+handler1:
+IO_PUTSTRING["I am in the top-level exception handler!\n"];
+IO_PUTSTRING["The sub-procedure handler got cancelled after catching one error.\n"];
+IO_PUTSTRING["Now I'll rethrow the second one because I don't know what to do with THAT sort...\n"];
+raise errno;
+
+end:
+

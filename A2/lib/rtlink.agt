@@ -1,0 +1,39 @@
+#
+# Linker test, part 3.
+#
+# We'll use the Alib syscalls, load the original
+# two linktests, and run them. Sounds like fun?
+#
+!SIGNATURE	"RTLinker test"
+!PRIORITY	0x2710
+
+{
+.DATA
+:file1
+	"linktst1.img"
+:file2
+	"linktst2.img"
+:file1hnd
+	0
+:file2hnd
+	0
+.CODE
+:main
+	wait 100000
+	mov u:r0, :file1
+	mov u:r1, ^file1
+	syscall $IO_PUTSTRING
+	syscall2 $IO_PUTCHAR, 10
+	syscall $ALIB_OPEN
+	mov *u::file1hnd, u:r0
+	
+	mov u:r0, :file2
+	mov u:r1, ^file2
+	syscall $IO_PUTSTRING
+	syscall2 $IO_PUTCHAR, 10
+	syscall $ALIB_OPEN
+	mov *u::file2hnd, u:r0
+
+	# This is easier than a LOOKUP
+	jmp :code1_1
+}

@@ -1,0 +1,87 @@
+
+#include "display.lh"
+
+/* Reverses a string using severe hackery. */
+func (@unsigned) external_call (@unsigned str, unsigned len) {
+	unsigned i;
+	unsigned j;
+	@unsigned src;
+	@unsigned dst;
+	
+	unsigned val1;
+	unsigned val2;
+	unsigned shift1;
+	unsigned shift2;
+	@unsigned mask;
+	@unsigned m2;
+	/* Swap the characters from start to end. */
+	/* Won't work on 64-bit, but is endian-neutral. */
+	mask=straddr("\x00\xff\xff\xff\xff\x00\xff\xff\xff\xff\x00\xff\xff\xff\xff\x00");
+
+	/* startup */
+	src=str;
+	i=0;
+	dst=str;
+	j=len;
+	j-=1;
+	j/=4;
+	dst+=j;
+	j=len;
+	j-=1;
+	j%=4;
+	
+loop1:
+/*	IO_PUTSTRING["I="];
+	IO_PUTINT[i];
+	IO_PUTCHAR[10];
+	IO_PUTSTRING["J="];
+	IO_PUTINT[j];
+	IO_PUTCHAR[10]; */
+
+	shift1=i;
+	shift1*=8;
+	shift2=j;
+	shift2*=8;
+
+	val1=@src;
+	val1>>=shift1;
+	val1&=0xff;
+	val1<<=shift2;
+
+	val2=@dst;
+	val2>>=shift2;
+	val2&=0xff;
+	val2<<=shift1;
+
+	/* Now swap 'em */
+	m2=mask;
+	m2+=i;
+	@src&=@m2;
+	@src|=val2;
+	m2=mask;
+	m2+=j;
+	@dst&=@m2;
+	@dst|=val1;
+
+/*	IO_PUTSTRING[str, len];
+	IO_PUTCHAR[10]; */
+	/* Next char! */
+	i+=1;
+	if i < 4 goto next1;
+	i=0;
+	src+=1;
+next1:
+	j-=1;
+	/* Unsigned wraparound... */
+	if j > 3 goto next2;
+	goto finis;
+next2:
+	j=3;
+	dst-=1;
+finis:
+	if src < dst goto loop1;
+	if i < j goto loop1;
+	
+	return [str];
+}
+

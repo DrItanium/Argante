@@ -1,0 +1,15 @@
+#include "display.lh"
+
+unsigned loop;
+
+loop=10;
+
+GoForIt:
+
+if loop < 1 goto Done;
+loop-=1;
+IO_PUTINT[loop];
+IO_PUTSTRING[" green bottles standing on the wall"];
+IO_PUTCHAR['\n'];
+goto GoForIt;
+Done:

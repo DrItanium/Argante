@@ -1,0 +1,10 @@
+!SIGNATURE "100% empty file"
+
+# It started out empty, but for leak detection it grew.
+.data
+:moocow
+	0
+	0
+.code
+	mov u:r0, u:r0
+	jmp :undefined

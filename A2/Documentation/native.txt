@@ -1,0 +1,23 @@
+A2-prealpha 'Rose' adds Native-Code (well, C source code anyway) compilation
+abilities. The required app is under compiler, it's called cify.
+
+./cify image.img hac.hac
+will dump to standard out, C source code equivalent to the image and the HAC.
+
+Compile it and link against system.a in the kernel dir and modload.a in the
+modules directory. You now have a standalone binary containing image.img and
+hac.hac.
+
+Or just try 'make image.native'
+
+BTW: If you're using dynamic, you should feed the binary the names of the
+modules to load on the command line.
+
+******************* Build0.005 addenum:
+If you're NOT using dynamic, it would be wise to compile your kernel with
+NO_ALIB. This will leave out the syscall module for run-time linking, and
+the stubs in the kernel that let compilation succeed if you don't.
+Run-time linking doesn't work too well with native code, so all leaving it
+in does is waste space :)
+
+

@@ -1,0 +1,10 @@
+# Benchmarking HAC. Everything is denied except for debug-display
+# functions and local_gettime etc.
+/display/	/write/		allow
+/console/	/		allow
+/localsys/	/time/get	allow
+/localsys/	/hostname/get	allow
+/localsys/	/random/get	allow
+# For FS tests only. Sorry
+/fs/	/	allow
+/localsys/	/time/tostr	allow

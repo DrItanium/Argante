@@ -1,0 +1,25 @@
+IT'S FINALLY HERE! DYNAMICALLY LINKED ARGANTE LIBRARIES - YES!
+
+You can:
+
+load (or LD_PRELOAD, even) libraries on the console:
+$image1:library1:library2:library3:...
+
+Load and unload libraries from A2 code with ALIB_* functions
+(images must be stored under /lib and HAC must allow 'load' on them)
+
+Yes, it even works in LACRETNI!
+
+--
+Issues:
+- This is not usable with native code. If you are using cify
+  please turn this feature off with NO_ALIB.
+- There is a small performance penalty involved in checking
+  when to change pages. If you don't need to load code libraries,
+  you can turn it off with NO_CODE_PAGES.
+- It currently requires free memory at the 'top' of address
+  space for the library's data blocks and contiguous space for
+  the code pages.
+  It takes an effort, but if the address space is sufficiently
+  fragmented this may be unavailable and loading will fail.
+  

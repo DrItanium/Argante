@@ -1,0 +1,29 @@
+CLEAN=core core.*
+DISTCLEAN=Makefile
+MAINTAINERCLEAN=cmdtabs.h lang2.h cmd.h opcodes.h xlist.h
+
+TARGETS=cmdtabs.h lang2.h cmd.h opcodes.h xlist.h
+
+VPATH=@srcdir@
+
+all: $(TARGETS)
+
+xlist.h: exception.h @srcdir@/xgen.pl
+	@srcdir@/xgen.pl < $< > $@
+
+# They're all produced at the same time
+lang2.h cmd.h opcodes.h: cmdtabs.h
+
+cmdtabs.h: @top_srcdir@/kernel/cmd.c @srcdir@/jitgen.pl
+	@srcdir@/jitgen.pl < $<
+
+FORCE:;
+
+clean: FORCE 
+	$(RM) $(CLEAN)
+
+distclean: FORCE 
+	$(RM) $(CLEAN) $(DISTCLEAN)
+	
+maintainerclean: FORCE 
+	$(RM) $(CLEAN) $(DISTCLEAN) $(MAINTAINERCLEAN)

@@ -1,0 +1,18 @@
+TARGETS=@A2_COMPAT_O@
+
+VPATH=@srcdir@
+
+CFLAGS+=-I.. -I@top_srcdir@ -I../include -I@top_srcdir@/include
+
+all: $(TARGETS)
+
+FORCE:;
+
+clean: FORCE
+	$(RM) $(TARGETS)
+
+distclean: FORCE
+	$(RM) $(TARGETS) Makefile
+
+maintainerclean: FORCE
+	$(RM) $(TARGETS) Makefile

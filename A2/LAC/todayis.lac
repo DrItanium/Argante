@@ -1,0 +1,43 @@
+
+#include "display.lh"
+#include "fs.lh"
+#include "local.lh"
+
+func () DoWork () {
+	unsigned timestrlen;
+	@unsigned timestraddr;
+	LOCAL_GETTIME[ ];
+	/* It's a cheap nasty way of acquiring buffers. Eh. */
+	timestrlen=strlen("1\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+	/* Yes it is a constant. So What? */
+	timestraddr=straddr("1\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+	unfinalize(timestraddr);
+	LOCAL_TIMETOSTR[ignore, timestraddr, timestrlen];
+	[ignore, ignore, timestrlen]=;
+	IO_PUTSTRING["Today is "];
+	IO_PUTSTRING[timestraddr, timestrlen];
+	IO_PUTCHAR['\n'];
+	/* Add a \n on to it */
+	timestrlen+=1;
+
+	/* Now open the file and write same. */
+	unsigned filehandle;
+	[filehandle]=FS_OPEN[0 /* Append */, "AddDateHere"];
+	/* We don't care about the answer, but it would be unfortunate
+	   to have a register overwritten or something */
+	[ignore, ignore, ignore]=FS_WRITE[filehandle, timestraddr, timestrlen];
+	FS_CLOSE[filehandle];
+}
+
+func() DoStat() {
+	unsigned fsize;
+	[ignore, fsize, ignore]=FS_STAT["AddDateHere"];
+	IO_PUTSTRING["File is "];
+	IO_PUTINT[fsize];
+	IO_PUTSTRING[" bytes big"];
+	IO_PUTCHAR['\n'];
+}
+
+DoWork[];
+DoStat[];
+

@@ -1,0 +1,50 @@
+#
+# Argante OS - sample RSIS/agtc code
+# (C) 2000 Michal Zalewski <lcamtuf@ids.pl>
+# (C) 2001 JSK
+#
+# Stress test VFD code
+#
+
+!DOMAINS	1
+!INITDOMAIN	1
+!SIGNATURE	"vfd tester"
+!PRIORITY 	100
+
+.DATA
+
+.define NUM 20
+:File
+	"/Oblivion"
+:Handles
+	0x0 repeat NUM
+.CODE
+  mov u:r20, 1
+  mov u:r1,:File
+  mov u:r2,^File
+
+:loop1
+  ifbel u:r20, NUM
+  jmp :run
+  halt
+#  ifabo u:r20, NUM
+#  halt
+:run
+  mov u:r19, :Handles
+  mov u:r18, u:r20
+:loop2a
+  syscall2 $FS_OPEN, 0
+  mov *u:r19,u:r0
+
+  add u:r19, 1
+  loop u:r18, :loop2a
+
+  mov u:r19, :Handles
+  mov u:r18, u:r20
+:loop2b
+  syscall2 $FS_CLOSE, *u:r19
+  add u:r19, 1
+  loop u:r18, :loop2b
+  add u:r20, 1
+  jmp :loop1
+.END

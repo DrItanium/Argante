@@ -1,0 +1,71 @@
+\begin{scmodule}{CFD}{\perjsk}{\perjsk}{Sat 25 May 2002}
+The Common File Descriptor operations module allows generic access to virtual
+file descriptors.
+\end{scmodule}
+Known Issues:\\
+Not all calls are implemented yet.
+\begin{sccall}{CFD\_CLOSE}
+Inputs: \scargs{unsigned vfd\_handle}\\
+Outputs: \scargs{}\\
+SideFx: Closes and invalidates vfd\_handle.\\
+Other: Throws ERR\_BAD\_FD if file descriptor does not support this operation.
+\end{sccall}
+\begin{sccall}{CFD\_READ}
+Inputs: \scargs{unsigned vfd\_handle, "writable buffer..."}\\
+Outputs: \scargs{ignore, unsigned @null\_after\_data, unsigned space\_left\_in\_buffer}\\
+SideFx: Reads up to r2 bytes from vfd\_handle\\
+Other: Throws ERR\_BAD\_FD if file descriptor does not support this operation.
+\end{sccall}
+\begin{sccall}{CFD\_WRITE}
+Inputs: \scargs{unsigned vfd\_handle, "buffer..."}\\
+Outputs: \scargs{ignore, unsigned @null\_after\_data, unsigned bytes\_unwritten}\\
+SideFx: Writes up to r2 bytes from vfd\_handle\\
+Other: Throws ERR\_BAD\_FD if file descriptor does not support this operation.
+\end{sccall}
+\begin{sccall}{CFD\_WRITE\_NT}
+Inputs: \scargs{unsigned vfd\_handle, "bufferbufferbuffer$\backslash$000"}\\
+Outputs: \scargs{ignore, unsigned @null\_after\_data, unsigned bytes\_unwritten}\\\
+SideFx: Writes r2 bytes or up to the first null, whatever comes first.\\
+Other: Throws ERR\_BAD\_FD if file descriptor does not support this operation.
+\end{sccall}
+\begin{sccall}{CFD\_WRITE\_CHAR}
+Inputs: \scargs{unsigned vfd\_handle, unsigned char}\\
+Outputs: \scargs{}\\
+SideFx: Writes low byte of char to VFD.\\
+Other: Throws ERR\_BAD\_FD if file descriptor does not support this operation.
+\end{sccall}
+\begin{sccall}{CFD\_WRITE\_FLOAT}
+Inputs: \scargs{unsigned vfd\_handle, float a, unsigned min\_digits,\\unsigned max\_digits}\\
+Outputs: \scargs{}\\
+SideFx: Writes a to VFD in "\%g" format.\\
+Other: Throws ERR\_BAD\_FD if file descriptor does not support this operation.\\
+Throws ERR\_ARG\_TOOLONG if string would be more than 32 characters, or max\_digits or min\_digits are larger than 8.
+\end{sccall}
+\begin{sccall}{CFD\_WRITE\_INT}
+Inputs: \scargs{unsigned vfd\_handle, signed a}\\
+Outputs: \scargs{}\\
+SideFx: Writes a to VFD as a signed int.\\
+Other: Throws ERR\_BAD\_FD if file descriptor does not support this operation.\\
+Throws ERR\_ARG\_TOOLONG if string would be more than 16 digits.
+\end{sccall}
+\begin{sccall}{CFD\_WRITE\_UINT}
+Inputs: \scargs{unsigned vfd\_handle, unsigned a}\\
+Outputs: \scargs{}\\
+SideFx: Writes a to VFD as a unsigned int.\\
+Other: Throws ERR\_BAD\_FD if file descriptor does not support this operation.\\
+Throws ERR\_ARG\_TOOLONG if string would be more than 16 digits.
+\end{sccall}
+\begin{sccall}{CFD\_WRITE\_HEX}
+Inputs: \scargs{unsigned vfd\_handle, unsigned a}\\
+Outputs: \scargs{}\\
+SideFx: Writes a to VFD in hexadecimal format.\\
+Other: Throws ERR\_BAD\_FD if file descriptor does not support this operation.\\
+Throws ERR\_ARG\_TOOLONG if string would be more than 16 digits.
+\end{sccall}
+\begin{sccall}{CFD\_WRITE\_OCT}
+Inputs: \scargs{unsigned vfd\_handle, unsigned a}\\
+Outputs: \scargs{}\\
+SideFx: Writes a to VFD in octal format.\\
+Other: Throws ERR\_BAD\_FD if file descriptor does not support this operation.\\
+Throws ERR\_ARG\_TOOLONG if string would be more than 16 digits.
+\end{sccall}

@@ -1,0 +1,24 @@
+
+syscall () CFD_CLOSE (unsigned vfd_handle);
+
+/* Sorry about the triple-ret ugliness. These return:
+   - a pointer to the dword containing the byte after the last read/written in
+     the SECOND (r1) register
+   - bytes NOT read/written in the THIRD (r2) register. */
+syscall (unsigned, @unsigned, unsigned) CFD_READ
+	(unsigned vfd_handle, @unsigned buf_addr, unsigned buf_sz);
+syscall (unsigned, @unsigned, unsigned) CFD_WRITE
+	(unsigned vfd_handle, @unsigned buf_addr, unsigned buf_sz);
+syscall (unsigned, @unsigned, unsigned) CFD_WRITE_NT
+	(unsigned vfd_handle, @unsigned buf_addr, unsigned buf_sz);
+
+syscall () CFD_WRITE_CHAR (unsigned vfd_handle, unsigned char);
+
+/* NOT YET IMPLEMENTED */
+syscall () CFD_WRITE_FLOAT (unsigned vfd_handle, float a,
+	unsigned min_digits, unsigned max_digits);
+syscall () CFD_WRITE_INT (unsigned vfd_handle, signed a);
+syscall () CFD_WRITE_UINT (unsigned vfd_handle, unsigned a);
+syscall () CFD_WRITE_HEX (unsigned vfd_handle, unsigned a);
+syscall () CFD_WRITE_OCT (unsigned vfd_handle, unsigned a);
+

@@ -1,0 +1,25 @@
+!signature "dynamic strfd tester"
+
+.define STR% u:r30
+.code
+	syscall2 $STRFD_CREATE, 0
+	mov STR%, u:r0
+	mov s:r3, 30 # Run *31* times.
+:L1
+	mov u:r1, :moocowmoo
+	mov u:r2, ^moocowmoo
+	syscall2 $CFD_WRITE_NT, STR%
+	loop s:r3, :L1
+	syscall2 $STRFD_GET_SIZE, STR%
+	mov u:r1, u:r0
+	syscall2 $IO_PUTINT, u:r1
+	syscall2 $IO_PUTCHAR, 10
+	syscall2 $STRFD_GET_ADDR, STR%
+	syscall $IO_PUTSTRING
+	syscall2 $IO_PUTCHAR, 10
+	halt
+.data
+# Give NAGT a kick in the arse.
+	"Leehehe"
+:moocowmoo
+	"moo, moo, moo!"

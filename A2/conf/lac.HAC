@@ -1,0 +1,9 @@
+/display/	/write/		allow
+/localsys/	/time/get	allow
+/localsys/	/time/tostr	allow
+# You know being excessively specific uses memory?
+# Oh. Whatever.
+/fs/AddDateHere	/open/write/append	allow
+/fs/AddDateHere	/stat	allow
+/fs/rename	/	allow
+/fs/ftp	/	allow

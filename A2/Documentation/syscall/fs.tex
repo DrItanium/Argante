@@ -1,0 +1,117 @@
+\begin{scmodule}{FS}{\perjsk}{\perjsk}{Fri Jul 13 2001}
+Interaction with filesystem and IO to real files.
+\end{scmodule}
+ERR\_ARG\_TOOLONG is thrown when a filename is larger than PATH\_MAX.\\
+ERR\_BAD\_FD occurs when you try and read or write something you didn't
+open for that (incl. directories).\\
+Known Issues:\\
+Does not support nonblocking IO.\\
+Open flags are possibly more confusing than real system's.\\
+Truncation doesn't happen yet. \FIXME\\
+Partial write/read only returns errors, doesn't throw them.\\
+ERR\_GENERIC happens a little too often.\FIXME
+\begin{sccall}{FS\_OPEN}
+  Inputs: \scargs{unsigned open\_mode, "filename"}\\
+ Outputs: \scargs{unsigned vfd\_handle}\\
+  SideFx: Creates file if not existing.\\
+   Other: Access modes:\\
+   	  0 - APPEND mode\\
+	  1 - READ flag\\
+	  2 - WRITE flag\\
+	  4 - FSEEK flag\\
+	  Opening a file for plain WRITE will truncate the file. (soon.)
+\end{sccall}
+\begin{sccall}{FS\_OPEN\_EXISTING}
+  Inputs: \scargs{unsigned access\_mode, "filename"}\\
+ Outputs: \scargs{unsigned vfd\_handle}\\
+  SideFx: Fails with ERR\_FILE\_NOT\_EXIST if not existant.\\
+   Other: Access modes as above.
+\end{sccall}
+\begin{sccall}{FS\_OPEN\_CREATE}
+  Inputs: \scargs{unsigned access\_mode, "filename"}\\
+ Outputs: \scargs{unsigned vfd\_handle}\\
+  SideFx: Creates file, fails with ERR\_FILE\_EXIST if file already exists.\\
+   Other: Access modes as above.
+\end{sccall}
+\begin{sccall}{FS\_READ}
+  Inputs: \scargs{unsigned vfd\_handle, "writable buffer..."}\\
+ Outputs: \scargs{ignore, unsigned @null\_after\_data, unsigned space\_left\_in\_buffer}\\
+  SideFx: Reads at most r2 bytes into buffer.\\
+   Other: N/A.
+\end{sccall}
+\begin{sccall}{FS\_WRITE}
+  Inputs: \scargs{unsigned vfd\_handle, "buffer to write..."}\\
+ Outputs: \scargs{ignore, unsigned @null\_after\_data, unsigned bytes\_unwritten}\\
+  SideFx: Writes r2 bytes to given file.\\
+   Other: N/A.
+\end{sccall}
+\begin{sccall}{FS\_FLUSH}
+  Inputs: \scargs{unsigned vfd\_handle}\\
+ Outputs: \scargs{}\\
+  SideFx: All bytes written are immediately stored, and any bytes written by another process are read (if applicable).\\
+   Other: N/A.
+\end{sccall}
+\begin{sccall}{FS\_SEEK}
+  Inputs: \scargs{unsigned vfd\_handle, unsigned new\_offset}\\
+ Outputs: \scargs{}\\
+  SideFx: Current file position (for reading/writing) or directory handle will be set to new\_offset. Sparse files may be created.\\
+   Other: Only does SEEK\_SET.
+\end{sccall}
+\begin{sccall}{FS\_TELL}
+  Inputs: \scargs{unsigned vfd\_handle}\\
+ Outputs: \scargs{unsigned file\_pos}\\
+  SideFx: None.\\
+   Other: May be used on directories, but value is not guaranteed to be consistent.
+\end{sccall}
+\begin{sccall}[]{FS\_WD\_GET}
+  Inputs: \scargs{"writable buffer for working directory"}\\
+ Outputs: \scargs{ignore, unsigned path\_length}\\
+  SideFx: Puts working directory path in buffer.\\
+   Other: N/A.
+\end{sccall}
+\begin{sccall}[]{FS\_WD\_SET}
+  Inputs: \scargs{"new working directory"}\\
+ Outputs: \scargs{}\\
+  SideFx: Changes working directory\\
+   Other: N/A.
+\end{sccall}
+\begin{sccall}[]{FS\_OPEN\_DIR}
+  Inputs: \scargs{ignore, "directory name"}\\
+ Outputs: \scargs{unsigned vfd\_handle}\\
+  SideFx: None past the obvious.\\
+   Other: N/A.
+\end{sccall}
+\begin{sccall}{FS\_READ\_DIR}
+  Inputs: \scargs{unsigned vfd\_handle, "writable buffer..."}\\
+ Outputs: \scargs{ignore, ignore, unsigned filename\_length}\\
+  SideFx: Puts the next filename in buf.\\
+   Other: N/A.
+\end{sccall}
+\begin{sccall}[]{FS\_MAKE\_DIR}
+  Inputs: \scargs{"filename"}\\
+ Outputs: \scargs{}\\
+  SideFx: You reckon?\\
+   Other: N/A.
+\end{sccall}
+\begin{sccall}[]{FS\_STAT}
+  Inputs: \scargs{"filename"}\\
+ Outputs: \scargs{unsigned file\_type, unsigned file\_size, unsigned mod\_time}\\
+  SideFx: None.\\
+   Other: Filetype is -\\
+           0 - error\\
+	   1 - regular file\\
+	   2 - directory\\
+	   3+- something else. (pipe?)
+\end{sccall}
+\begin{sccall}[]{FS\_RENAME}
+  Inputs: \scargs{"source filename", "destination filename"}\\
+ Outputs: \scargs{}\\
+  SideFx: One hopes so.\\
+   Other: Unlike C/Unix function of same name, fails if destination already exists.
+\end{sccall}
+\begin{sccall}[]{FS\_DELETE}
+  Inputs: \scargs{"filename"}\\
+ Outputs: None.\\
+  SideFx: File/(empty) directory liquidation.\\
+   Other: None.
+\end{sccall}

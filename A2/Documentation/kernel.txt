@@ -1,0 +1,237 @@
+==========================================
+Kernel notes - A2 pre-alpha "Rose"
+==========================================
+
+0. REENTRANCY AND MULTITHREADING.
+As of pre-alpha Rose, the kernel is multithreaded. This brings major
+simplicity and SMP speed gains but it also involves a fair few
+programming challenges, (not to mention the dreaded Portability).
+
+The overall thread architecture of A2 will be like so:
+<Manager thread> -> Interfaces with UI "agents" (if they ever arrive)
+  |                 Manages syscalls and module loading/unloading, including
+  |                 calling module_init and module_shutdown hooks.
+  |                 Starts CPU-threads when needed.
+  |
+  +-<CPU thread> -> Loads images, calls vcpu_start and vcpu_stop module hooks.
+  |                 Runs bytecode interpreter.
+  |                 Handles that CPU's exceptions.
+  +-<CPU thread> ...
+
+The Argante Application Developer should not pay the least concern to this (or
+for that matter anything else in the kernel notes.) From the image's point of
+view, everything is hunky dory, identical to AOSr1.
+
+The Argante Kernel Developer should be sweating profusely at this; you need to
+know PRECISELY what context your function will be running in and exactly what
+it is allowed to mess with.
+
+Your code will run in either manager or CPU context; to do both, your code
+must be exceptionally simple and basic (e.g. strlen) or conceptually flawed.
+(Or the basic kernel is itself conceptually flawed; but don't go there!)
+
+Failure to separate the contexts will result in RACES!, SECURITY FLAWS! and
+RANDOM CRASHES! Or at best, REALLY UGLY, TWISTED CODE. (often the same thing)
+
+Manager code:
++ doesn't need to worry about reentrancy; there's only one manager thread.
++ may modify nearly everything, but must ensure CPUs can't use it while
+  modification is happening.
++ CANNOT throw_except, and CANNOT call any functions which do. More
+  generally: cannot call CPU code. (doh)
+Functions which are manager code:
+register_syscall, unregister_syscall
+
+CPU code:
++ has to be really reentrancy-cautious; no modifying 'static' data, no reading
+  of static/global data without locking or equivalent guarantee.
++ NEVER affects anything outside curr_cpu. NEVER EVER so much as inspects
+  another cpu.
++ CAN throw_except. Can't call manager code (doh).
++ should be cancellation-safe. See "rose" addenum.
+Example functions which are cpu code:
+agt_syscall, do_code, pop_ip_off_stack, all JIT's and syscalls
+
+*********************
+"rose" addenum:
+`
+How does the kernel deal with unloading a module a CPU-thread may be in the
+middle of? Or loading a module and executing the vcpu_start code while
+the threads are blocked?
+
+In this release it's done with a fairly ugly hack: the CPU-threads are
+cancelled, the module modifications happen, and the VCPUs resume at
+the last instruction they were at.
+
+A lock should probably be added for this but at the moment your code should
+be atomic with respect to cancellations: either it gets cancelled before it's
+done anything, or it finishes and increments the IP.
+*********************
+==
+1. EXCEPTIONS.
+
+Away with the clunky old non_fatal and CHECK_FAILURE_FN. A2 has the
+throw_except(cpu, error) function, which longjmp's immediately back to a
+top-level exception handler.
+
+All that can be said for the new exceptions wrt. kernel is, provided that you
+haven't allocated any locks/files/memory when an exception happens, your life
+is breeezy.
+
+The Argante-side of exception handling stack is somewhat different too. That's
+discussed in other documentation. All the kernel has to do with that is
+keeping an exception-handler IP, and stacking it on calls and ret's just like
+execution IP. 0 is the 'undefined' handler address, which is ugly but hardly
+problematic.
+
+==
+2. NEW BYTECODE INTERPRETER (from OPCODE DEVELOPER's view)
+
+The greatest thing in A2 (IMHO) is the new, simplified typing system;
+instead of having 25 copies of effectively identical code, there are now only
+3 types to worry about: you only have 9 copies of effectively identical code.
+(IMMPTR's and UREG's are now resolved before they get to the opcode level.)
+
+9 copies sounds like a lot, but that's 14 less than before, and if you're
+really stingy you might combine some of the unsigned and signed versions - if
+you're 101% sure they're _exactly_ identical. I haven't bothered checking...
+
+The other great thing about the new typing system is that generally the only
+change you'll have to make to the code is changing .u to .s or .f. If you
+like, you can 'overload' opcodes, so that REALLOC x,u:1 does something
+completely different from REALLOC x,s:1... though it might be better to rename
+one to REPERM or something.
+
+Additionally, multithreadedness allows you to do blocking stuff in opcodes;
+though this is more significant for IO-syscall writers. You might want to be
+cautious that your blocking call is reentrant (SIGNALS!)
+
+All opcodes go into cmd.c. The JIT table (and compiler equivalent) is
+generated at compile-time by scanning this file for lines of the form:
+/*! OPCODE ARGS [TYPE1 PROT1 [TYPE2 PROT2]] = FUNC_NAME */
+OPCODE is the name you want to use for this opcode in assembler code.
+ARGS is the number of arguments this opcode takes: 0, 1, or 2.
+FUNC_NAME is the function that accepts that OPCODE with TYPE1 and TYPE2
+arguments.
+TYPE1 is the U S F type of the first argument to this function.
+PROT1 is the type of access required to the first argument - RO or RW,
+depending on what you want to do with it. (This is not type-specific). It's
+very important to get this right, because if you don't, YOUR OPCODE WILL ALLOW
+WRITING TO READ-ONLY MEMORY. Or it will stop anyone from using immediates
+where they should be able to.
+TYPE2 and PROT2 - like TYPE1/PROT1. And yes, there are ops which modify the
+second argument.
+
+*please* avoid create opcodes which modify specific registers. It's ugly; and
+seriously hurts compiler-writers. It's bad enough with specific registers in
+the syscalls, without the opcodes needing special provisions in register
+allocation. (The 8086 is the biggest example of why not to do this, ok?)
+
+Not that this is important, but it warrants mentioning: the image's bytecode
+is checked and validated at runtime, and a more efficient (and completely
+system-dependant) version calculated from it (as of writing, the offset into
+the JIT-table for each bytecode).
+
+==
+3. MEMORY ACCESS AND MANAGEMENT.
+
+For efficiency reasons there is no set_mem_value anymore. There are only
+mem_ro and mem_rw functions which return pointers; in the case of mem_rw you
+can modify the pointed-to value, thereby achieving a set_mem. There is no
+mem_writeonly; demands for write-only memory will probably be directed to the
+write-only device /dev/null unless there's a clear need for it.
+
+Another major difference is the complete absence of block numbers. Each
+memory block starts on a 'page boundary' and can extend up to the next
+'page'. Blocks can thereby be identified by an address into them; tracking the
+block id for realloc and free is unneeded.
+
+The block array is dynamically grown. Right now, it is not dynamically shrunk,
+but this should change...
+
+mmap'd memory is allowable and doesn't differ in use from normal memory except
+for realloc being disallowed. You'll need to create a function to destroy the
+mmap, too. XXX: this is ill-implemented especially WRT unloading modules and
+will change.
+
+There's a special function for copying a string in kernel memory to a buffer
+in Argante-space: kerntoa_strcpy. It returns the number of bytes copied.
+
+In the other direction, things aren't quite as simple. Casting a value-pointer
+into a char * is intimately dependant on the internal memory structures. The
+alternative is looping through the buffer with mem_ro and copying to an
+alloca()'d temporary; not elegant, but deals well with page boundaries and
+other rarities... choose your poison.
+
+==
+4. #HAC AND FILE UTILITY FUNCTIONS FOR MODULES
+
+fold(string) converts a string from an ugly, user-specified,
+security-attacking form (eg. /fs/../cow/moo/file/../moo) into what it really
+is (eg. /cow/moo/moo). It should be used on all paths that contain a
+user-specified component, before HAC-checking happens. It's defined in
+"file.h" and returns its answer in the same memory as the question.
+
+If you're going to use a user-specified string in a context in which ..'s and
+so have a special meaning, fold() the string to get rid of them before running
+them through HAC.
+
+#HAC functions are defined in "hhac.h".
+
+VALIDATE(dir, atype) is the usual way to check #HAC permissions; this macro
+requires curr_cpu to be in a variable called 'curr_cpu' of all things. If your
+syscalls etc. stick to SYSCALL_ARGS then you're set.
+
+If VALIDATE fails, it throws an exception. So don't malloc() or open a file or
+do anything that might not get cleaned up before you call it. alloca() is
+preferred over malloc() for just this reason. Beware, though, of alloca()'ing
+large chunks of memory; it apparently fails disasterously.
+
+If you can't use VALIDATE, validate_access(curr_cpu, dir, atype) is the
+underlying call. It returns nonzero on access failure.
+
+To differentiate entity types (the file 192.168.64.1/80 being quite, quite
+different to the socket of same), fold() the name if applicable, and stick a
+namespace prefix onto it. /fs/192.168.64.1/80 now cannot be confused with
+/socket/192.168.64.1/80.
+
+Make atype as simple as possible, as #HAC subdirectories are a bit of a memory
+hog; though grouping related entries is always a good idea and saves memory if
+permissions are specified for the whole directory. An example of what to avoid
+is "/fs/fops/create/file", because "/create/file" is quite clear enough, and
+your namespaces should do the rest.
+
+==
+5. #HAC - THE NITTY GRITTY INTERNALS
+
+#HAC is implemented as a (very wierd) nested hash sorta thing. It resembles a
+heirarchical filesystem with equally heirarchical ACL's more than anything
+else (especially AOSr1 HAC).
+
+There isn't a lot I can say about #HAC's internals that the code won't
+elaborate; but I'll try anyway. 
+
+#HAC doesn't deal with ..'s and .'s, and doesn't even disallow them (..LCK
+files being quite legitimate, AOSr1 people!) At one stage in development, it
+did handle ..'s and so-on, but it grew so complicated out of blocking security
+flaws that it was abandoned. 
+
+#HAC is one of those misty manager-CPU crossovers; because it uses per-CPU
+tables and the manager has to be able to change the table at runtime, there's
+a lock provided, and hac_load and hac_unload are equally safe in both
+contexts.
+
+But: internally there's no way of removing or altering #HAC entries; to change
+a table involves tearing the whole thing down and replacing it. There
+shouldn't be too much of a problem here; runtime #HAC alteration should be
+rare.
+
+One last thing: the unload function returns the amount of memory freed with
+the HAC tables. The actual amount of memory used will be higher due to malloc
+overhead and whatnot.
+
+ Readies a VCPU's #HAC table for use. 
+ Loads a new #HAC table from file, possibly unloading the old one. 
+ Unloads a #HAC table, possibly in preparation for VCPU shutdown 
+
+==

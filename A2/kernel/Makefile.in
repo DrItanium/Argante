@@ -1,0 +1,58 @@
+SYSTEM=bcode.@OBJEXT@ memory.@OBJEXT@ syscall.@OBJEXT@ hhac.@OBJEXT@ vfd.@OBJEXT@ file.@OBJEXT@ printk.@OBJEXT@
+OBJECTS=$(SYSTEM) cmd.@OBJEXT@ imageman.@OBJEXT@ symman.@OBJEXT@ manager.@OBJEXT@
+
+CLEAN=core core.* system.a a2 $(OBJECTS) hhactest foldtest
+DISTCLEAN=Makefile
+MAINTAINERCLEAN=
+
+VPATH=@srcdir@
+
+CFLAGS+=-I@top_srcdir@/include -I../include -I@top_srcdir@ -I..
+
+LOADLIBES+=@DL_LIBS@ @PTHREAD_LIBS@ @READLINE_LIBS@
+LOADLIBES+=$(foreach A,@A2_LIBOBJ_ALL@,../$A)
+LOADLIBES+=$(foreach A,@A2_LIBOBJ_KERNEL@,../$A)
+
+ifeq (@MODULES@,DYNAMIC)
+MODLOADER=../modules/dynamic.@OBJEXT@
+
+# Best guess is -rdynamic enables ld's --export-dynamic option
+LDFLAGS+=-rdynamic
+
+else
+MODLOADER=../modules/st_kern.a
+endif
+
+TARGETS=a2 system.a
+
+all: $(TARGETS)
+
+system.a: $(foreach A,$(SYSTEM),system.a($A))
+
+hhactest: hhactest.@OBJEXT@ hhac.@OBJEXT@
+foldtest: foldtest.@OBJEXT@ file.@OBJEXT@
+
+a2: $(OBJECTS) $(MODLOADER)
+	$(CC) $(LDFLAGS) $(CFLAGS) $^ $(LOADLIBES) -o $@
+
+manager.@OBJEXT@: @srcdir@/manager.c ../include/xlist.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+cmd.@OBJEXT@: @srcdir@/cmd.c $(A2LANGH)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(A2LANGH): cmd.c
+	$(MAKE) -C $(A2INCLUDE) cmdtabs.h
+
+FORCE:;
+
+clean: FORCE
+	$(RM) $(CLEAN)
+
+distclean: FORCE
+	$(RM) $(CLEAN) $(DISTCLEAN)
+	
+maintainerclean: FORCE
+	$(RM) $(CLEAN) $(DISTCLEAN) $(MAINTAINERCLEAN)
+
+

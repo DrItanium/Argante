@@ -1,0 +1,56 @@
+#
+# Linker test, part 4.
+#
+# Load and unload files several times, then run them.
+#
+!SIGNATURE	"RTLinker test 2"
+!PRIORITY	0x2710
+
+{
+.DATA
+:file1
+	"linktst1.img"
+:file2
+	"linktst2.img"
+:symbol
+	"code1_1"
+:file1hnd
+	0
+:file2hnd
+	0
+.CODE
+:main
+	wait 100000
+
+	mov u:r20, 10
+:loop1	
+	mov u:r0, :file1
+	mov u:r1, ^file1
+	syscall $ALIB_OPEN
+	syscall $ALIB_CLOSE
+	loop u:r20, :loop1
+
+	mov u:r20, 10
+:loop2
+	mov u:r0, :file2
+	mov u:r1, ^file2
+	syscall $ALIB_OPEN
+	syscall $ALIB_CLOSE
+	loop u:r20, :loop2
+
+:doit
+	mov u:r0, :file1
+	mov u:r1, ^file1
+	syscall $ALIB_OPEN
+	mov *u::file1hnd, u:r0
+	
+	mov u:r0, :file2
+	mov u:r1, ^file2
+	syscall $ALIB_OPEN
+	mov *u::file2hnd, u:r0
+	
+	mov u:r1, :symbol
+	mov u:r2, ^symbol
+	syscall2 $ALIB_LOOKUP, *u::file1hnd
+	jmp u:r0
+}

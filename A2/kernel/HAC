@@ -1,0 +1,25 @@
+#
+# An Excessively Large #HAC - for Testing
+#
+/fs/	/	deny
+/fs/tmp	/fs/	allow
+/fs/tmp	/fs/create/symlink deny
+/fs/a	/fs/create	allow
+/fs/a	/fs/write	allow
+/fs/b	/fs/delete	allow
+/fs/b	/fs/write	allow
+/fs/b	/fs/create/symlink	allow
+/fs/b	/fs/delete/symlink	deny
+/fs/1	/fs/write/append	allow
+/fs/2	/fs/write/overwrite	allow
+/fs/3	/fs/	allow
+/fs/4	/fs/arb1	allow
+/fs/4	/fs/arb2	allow
+/fs/4	/fs/arb3	allow
+/fs/4	/fs/arb4	allow
+/fs/4	/fs/arb5	allow
+/fs/4	/fs/arb6	allow
+/fs/5	/fs/	allow
+/fs/6	/fs/	allow
+/fs/7	/fs/	allow
+fs	dump	allow
