@@ -1,15 +1,15 @@
 
-ENDS=agtgtk agtcur
+ENDS=agtman xagtman
 
 all: $(ENDS)
 
-agtgtk: *.c
-	make -C gtk
+xagtman: *.c
+	cd gtk; make
 
-agtcur: *.c
-	make -C curses
+agtman: *.c
+	cd curses; make
 
 clean:
 	rm -f $(ENDS)
-	make -C gtk clean
-	make -C curses clean
+	cd gtk; make clean
+	cd curses; make clean

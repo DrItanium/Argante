@@ -1,51 +1,49 @@
 #!/bin/bash
+# This is still mega-ick.
+# Autoconf coming soon.
 
 SYS=`uname -s`
+# Even linux has gmake. I think.
+alias make=gmake
 
-echo "Building Argante for $SYS platform..."
-unset CFLAGS LIBS
+echo "Configuring Argante for $SYS platform..."
+rm -f conf.mk~ conf2.mk
+mv conf.mk conf.mk~ 
 
 echo
 echo " **********************************************************************"
 echo " * PLEASE READ Documentation/Portability REGARDING YOUR OPERATING     *"
 echo " * SYSTEM IF YOU NOTICE ANY COMPILATION TIME OR RUNTIME PROBLEMS      *"
 echo " **********************************************************************"
-echo ""
-
+echo 
+ 
 echo -n "Remaking symbolic links..."
 source ./make-links.sh
 echo "done."
-
-X=`cat kernel/.argbuild 2>/dev/null`
-let X=X+1
-echo $X >kernel/.argbuild
-ADDFLAGS=" -DBUILD=$X"
-
+ 
 if [ "$SYS" = "Linux" ]; then
-  if [ -f /usr/include/readline/readline.h ]; then
-    CFLAGS="-DHAVE_READLINE -D__USE_TERMCAP"
-    LIBS="-lreadline"
+  echo "SYS=Linux" >> conf.mk
+  echo "USE_PACKET=yes" >> conf.mk
+
+  LIBC6="`ls -l /lib/libc*|grep -F -- -2.1`"
+  LIBC6="$LIBC6`ls -l /lib/libc*|grep -F -- -2.2`"
+  if [ "$LIBC6" = "" ]; then
+    echo "WARNING: your libc subsystem is too old, reverting to old-style version."
+  elif [ ! -z "$NOREADLINE" ]; then
+    echo "NOTE: libreadline test disabled by user."
+  elif [ -f /usr/include/readline/readline.h ]; then
+    echo "USE_READLINE=yes" >> conf.mk
+  
     if [ -f /usr/lib/libtinfo.so ]; then
-    	LIBS="$LIBS -ltinfo"
-    else
-    	LIBS="$LIBS -ltermcap"
+        echo "USE_TINFO=yes" >> conf.mk
     fi
     echo "NOTE: libreadline detected, using it."
   else
     echo "NOTE: libreadline *NOT* detected, using old-style compilation."
   fi
-  LIBC6="`ls -l /lib/libc*|grep -F -- -2.1`"
-  LIBC6="$LIBC6`ls -l /lib/libc*|grep -F -- -2.2`"
-  if [ "$LIBC6" = "" ]; then
-    echo "WARNING: your libc subsystem is too old, reverting to old-style version."
-    unset CFLAGS LIBS
-  fi
-  test "$NOREADLINE" = "" || unset CFLAGS LIBS
-  CFLAGS="$CFLAGS $ADDFLAGS $OPT"
-  export CFLAGS LIBS
 
+  if [ -z "$NOSVGALIB" ]; then
   echo ">>> Performing svgalib compatibility test..."
-
   cat >.ctest.c <<_EOF_
 #include <vga.h>
 main() { vga_setmode(1); vga_ext_set(1,1); vga_hasmode(1); vga_setpalette(1,1,1,1);
@@ -62,59 +60,109 @@ _EOF_
 
   if [ ! -x .ctest ]; then
     echo ">>> Test failed, compiling without gfx module."
-    rm -f .ctest .ctest.c
-    make -f sysdep/Makefile.lnt "$@"
   else
     echo ">>> Test successful, compiling with gfx module."
-    rm -f .ctest .ctest.c
-    make -f sysdep/Makefile.lnx "$@"
+    echo "USE_SVGALIB=yes" >> conf.mk
   fi
-  exit $?
+  rm -f .ctest .ctest.c
+  else
+    echo "NOTE: SVGALib test disabled by user."
+  fi
 fi
 
 ISSOL=`echo $SYS|egrep -e 'Sun|Sola|Nis'`
 
 if [ ! "$ISSOL" = "" ]; then
-  echo
+  echo "SYS=Solaris" >> conf.mk
   PATH="/usr/local/gnu/bin/:/usr/local/bin:$PATH"
-  CFLAGS="$CFLAGS $ADDFLAGS"
-  export CFLAGS
-  make -f sysdep/Makefile.sol "$@"
-  exit $?
 fi
 
 ISBSD=`echo $SYS|grep 'BSD'`
 
 if [ ! "$ISBSD" = "" ]; then
-  test "$SYS" = "OpenBSD" || LIBS="-Xlinker -export-dynamic"
-  CFLAGS="$CFLAGS $ADDFLAGS"
-  export CFLAGS LIBS
-  gmake -f sysdep/Makefile.bsd "$@"
-  exit $?
+  echo "SYS=BSD" >> conf.mk
+  test "$SYS" = "OpenBSD" || echo "LDLIBS+=-Xlinker -export-dynamic" >> conf.mk
 fi
 
 ISIRX=`echo $SYS|grep 'IRIX'`
 
 if [ ! "$ISIRX" = "" ]; then
-  CFLAGS="$CFLAGS $ADDFLAGS"
-  export CFLAGS
-  gmake -f sysdep/Makefile.irx "$@"
-  exit $?
+  echo "SYS=IRIX" >> conf.mk
 fi
 
 ISAIX=`echo $SYS| grep 'AIX'`
 
 if [ ! "$ISAIX" = "" ]; then
-   CFLAGS="$CFLAGS $ADDFLAGS"
-  export CFLAGS
-  make -f sysdep/Makefile.aix "$@"
-  exit $?
+  echo "SYS=AIX" >> conf.mk
 fi
 
+if [ ! -e conf.mk ]; then
 echo 
 echo "ERROR:"
 echo "  Argante has not been tested with your system (`uname -s`)."
-echo "  You could try specific makefiles:"
-echo "    [g]make -f sysdep/Makefile.{sol|lnx|bsd|irx} [...parameters...]"
-echo
+echo "  Please run (g)make anyway, cross your fingers, and report this."
 exit 1
+fi
+
+# FIXME: SSL tests?
+
+# GTK test
+if [ -z "$NOGTK" ]; then
+  echo ">>> Performing GTK compatibility test..."
+  cat >.ctest.c <<_EOF_
+#include <gtk/gtk.h>
+main() { gtk_init(NULL, NULL); }
+_EOF_
+
+  rm -f .ctest
+  gcc `gtk-config --libs` `gtk-config --cflags` .ctest.c -o .ctest >/dev/null 2>&1
+
+  if [ ! -x .ctest ]; then
+    echo ">>> Test failed, compiling without GTK interface."
+  else
+    echo ">>> Test successful, compiling with GTK interface."
+    echo "USE_GTK=yes" >> conf.mk
+  fi
+  rm -f .ctest .ctest.c
+else
+    echo "NOTE: GTK test disabled by user."
+fi
+
+# ncurses test
+if [ -z "$NOCURSES" ]; then
+  echo ">>> Performing curses compatibility test..."
+  cat >.ctest.c <<_EOF_
+#include <curses.h>
+main() { initscr(); }
+_EOF_
+
+  rm -f .ctest
+  gcc -lcurses .ctest.c -o .ctest >/dev/null 2>&1
+
+  if [ ! -x .ctest ]; then
+    echo ">>> Test failed, compiling without curses interface."
+  else
+    echo ">>> Test successful, compiling with curses interface."
+    echo "USE_CURSES=yes" >> conf.mk
+  fi
+  rm -f .ctest .ctest.c
+else
+    echo "NOTE: Curses test disabled by user."
+fi
+
+# Has the config changed, and needs a cleanup?
+if [ -e conf.mk~ ]; then
+  if cmp conf.mk~ conf.mk; then
+    echo "Config files are identical!!!"
+  else
+    echo "Config files are different. Cleaning:"
+    mv conf.mk conf2.mk
+    mv conf.mk~ conf.mk
+    make clean
+    mv conf2.mk conf.mk
+  fi
+fi
+
+echo "Argante is now configured for your system. (I hope.)"
+echo "Just run (g)make now to build."
+
