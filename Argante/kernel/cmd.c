@@ -540,9 +540,12 @@ void cmd_sub_immptr_sreg (int c) {
 
 void cmd_sub_immptr_freg (int c) {
   int a1;
+  float f;
 
   	EVAL_A1;
-	set_mem_value(c,a1,get_mem_value(c,a1)-FREG(A2));
+	*((int *)&f)=get_mem_value(c,a1);
+	f-=FFREG(A2);
+	set_mem_value(c,a1,*((int *)&f));
 }
 
 void cmd_sub_immptr_immptr (int c) {
