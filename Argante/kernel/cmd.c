@@ -168,7 +168,7 @@ void cmd_mov_uptr_ureg (int c) {
 }
 
 void cmd_mov_uptr_sreg (int c) {
-	
+
 	set_mem_value(c,UREG(A1),SREG(A2));
 }
 
@@ -195,35 +195,31 @@ void cmd_mov_uptr_uptr (int c) {
 // cmd_mov_freg
 
 void cmd_mov_freg_immediate (int c) {
-
 	FREG(A1)=*((int*)&A2);
 }
 
 void cmd_mov_freg_ureg (int c) {
-
-	FFREG(A1)=(float)UREG(A2);
+	FFREG(A1)=UREG(A2);
 }
 
 void cmd_mov_freg_sreg (int c) {
-
-	FFREG(A1)=(float)SREG(A2);
+	FFREG(A1)=SREG(A2);
 }
 
 void cmd_mov_freg_freg (int c) {
-
 	FFREG(A1)=FFREG(A2);
 }
 
 void cmd_mov_freg_immptr (int c) {
   int a2;
-	
+
 	IMMPTRVAL(a2,A2);
 	FFREG(A1)=*((float *)&a2);
 }
 
 void cmd_mov_freg_uptr (int c) {
   int a2;
-  	
+
 	UPTRVAL(a2,A2);
 	FFREG(A1)=*((float *)&a2);
 }
@@ -412,12 +408,12 @@ void cmd_add_freg_immediate (int c) {
 
 void cmd_add_freg_ureg (int c) {
 
-	FFREG(A1)+=(float)UREG(A2);
+	FFREG(A1)+=UREG(A2);
 }
 
 void cmd_add_freg_sreg (int c) {
 
-	FFREG(A1)+=(float)SREG(A2);
+	FFREG(A1)+=SREG(A2);
 }
 
 
@@ -428,14 +424,14 @@ void cmd_add_freg_freg (int c) {
 
 void cmd_add_freg_immptr (int c) {
   int a2;
-	
+
 	IMMPTRVAL(a2,A2);
 	FFREG(A1)+=*((float *)&a2);
 }
 
 void cmd_add_freg_uptr (int c) {
   int a2;
-  	
+
 	UPTRVAL(a2,A2);
 	FFREG(A1)+=*((float *)&a2);
 }
