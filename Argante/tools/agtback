@@ -12,6 +12,14 @@
 #  Maintainer: Michal Zalewski <lcamtuf@ids.pl>
 #
 
+if [ -z "$LOGDIR" ]; then LOGDIR=/var/argante; fi
+mkdir $LOGDIR &>/dev/null
+
+if [ ! -w $LOGDIR ]; then
+	mkdir $HOME/tmp &>/dev/null
+	mkdir $HOME/tmp/argante &>/dev/null
+	LOGDIR=$HOME/tmp/argante
+fi;
 
 echo "Argante OS - background session initialization"
 
@@ -22,10 +30,9 @@ fi
 
 trap "" 1
 
-mkdir /var/argante &>/dev/null
-echo >/var/argante/ses-$$.in
+echo >$LOGDIR/ses-$$.in
 
-$1 $2 $3 $4 </var/argante/ses-$$.in >/var/argante/ses-$$.log 2>&1 &
+$1 $2 $3 $4 <$LOGDIR/ses-$$.in >$LOGDIR/ses-$$.log 2>&1 &
 
 echo "<=> Please wait..."
 
@@ -35,5 +42,5 @@ if [ -d /proc/$! ]; then
   echo "<+> Argante session launched. Use 'agtses $!' to re-attach it."
 else
   echo "<-> Argante session failed. Logfile:"
-  tail /var/argante/ses-$$.log
+  tail $LOGDIR/ses-$$.log
 fi

@@ -60,17 +60,25 @@ then {
 };
 fi
 
-AGTGTK="`$WHICH agtgtk 2>/dev/null`"
+if [ -z "$DISPLAY" ]; then
+	EXENAME='agtman'
+	BGIT=''
+else
+	EXENAME='xagtman'
+	BGIT=&
+fi;
+
+AGTGTK="`$WHICH $EXENAME 2>/dev/null`"
 
 if [ ! -x "$AGTGTK" ]; 
-then AGTGTK="./agtgtk"; fi
+then AGTGTK="./$EXENAME"; fi
 	
 if [ ! -x "$AGTGTK" ]; 
-then AGTGTK="./gtk/agtgtk"; fi
+then AGTGTK="./tools/$EXENAME"; fi
 
 if [ ! -x "$AGTGTK" ];
 then {
-	echo "Hmm, can't find agtgtk."
+	echo "Hmm, can't find $EXENAME."
 	echo "Try putting it in your PATH."
 	exit 1;
 };
@@ -78,7 +86,7 @@ fi
 
 for I in $AGTPID;
 do {
-	$AGTGTK $I &
+	$AGTGTK $I $BGIT
 };
 done;
 
