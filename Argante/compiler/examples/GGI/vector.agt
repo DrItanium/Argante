@@ -1,0 +1,346 @@
+# GGI Vector Drawing Example
+#
+# This example implements a simple (2D) vector drawing routine and draws
+# some vectors spelling out "Argante".
+
+!SIGNATURE      "GGI Vector Drawing Example"
+!PRIORITY       1000
+
+.DATA
+
+:Name   # Name of the visual.
+        "Demo"
+
+:ID     # Visual ID (for saving it)
+        0
+
+# This is the vector data to spell out "Argante" in cool letters. :-)
+# See the DrawVector routine for info on the layout.
+#
+# Note: This is one reason why agtc needs rewriting; every data dword
+#       *must* have a label. :-/ That's why all the __??? labels are
+#       there: to keep agtc happy. Ugly, yes.
+
+:bigA
+     0
+:__bA1
+    30
+:__bA2
+    10
+:__bA3
+    -30
+:__bA4
+    10
+:__bA5
+    30
+:__bA6
+    -10
+:__bA7
+    0
+:__bA8
+    0
+:__bA9
+    -10
+:__bA10
+    0
+:__bA11
+    10
+:__bA12
+    -10
+:__bA13
+    0
+
+:smallR
+    0
+:__sR01
+    20
+:__sR02
+    0
+:__sR03
+    10
+:__sR04
+    0
+:__sR05
+    -5
+:__sR06
+    5
+:__sR07
+    -5
+:__sR08
+    5
+:__sR09
+    0
+
+:smallG
+    10
+:__sG01
+    30
+:__sG02
+    -10
+:__sG03
+    0
+:__sG04
+    0
+:__sG05
+    -10
+:__sG06
+    10
+:__sG07
+    0
+:__sG08
+    0
+:__sG09
+    15
+:__sG10
+    -10
+:__sG11
+     0
+
+:smallA
+    10
+:__sA01
+    25
+:__sA02
+    -5
+:__sA03
+    5
+:__sA04
+    -5
+:__sA05
+    0
+:__sA06
+    0
+:__sA07
+    -10
+:__sA08
+    10
+:__sA09
+    0
+:__sA10
+    0
+:__sA11
+    10
+
+:smallN
+    0
+:__sN01
+    30
+:__sN02
+    0
+:__sN03
+    -10
+:__sN04
+    10
+:__sN05
+    0
+:__sN06
+    0
+:__sN07
+    10
+
+:smallT
+    0
+:__sT01
+    20
+:__sT02
+    10
+:__sT03
+    0
+:__sT04
+    -5
+:__sT05
+    0
+:__sT06
+    0
+:__sT07
+    -5
+:__sT08
+    0
+:__sT09
+    15
+:__sT10
+    5
+:__sT11
+    0
+
+:smallE
+    10
+:__sE01
+    30
+:__sE02
+    -10
+:__sE03
+    0
+:__sE04
+    0
+:__sE05
+    -10
+:__sE06
+    10
+:__sE07
+    0
+:__sE08
+    0
+:__sE09
+    5
+:__sE10
+    -5
+:__sE11
+    0
+
+.CODE
+        # Setup the visual and stuff.
+        call    :SetupGFX
+
+        # Setup color for drawing (blue)
+        mov     u1,0x0000
+        mov     u2,0x0000
+        mov     u3,0xFFFF
+        mov     u4,0xFFFF
+        syscall $GGI_MAPCOLOR
+        syscall $GGI_SETGCFOREGROUND
+
+        # Draw "A"
+        mov     u1,:bigA
+        mov     u2,14
+        mov     s1,100
+        mov     s2,100
+        call    :DrawVector
+
+        # Draw "r"
+        mov     u1,:smallR
+        mov     u2,10
+        mov     s1,125
+        mov     s2,100
+        call    :DrawVector
+
+        # Draw "g"
+        mov     u1,:smallG
+        mov     u2,12
+        mov     s1,140
+        mov     s2,100
+        call    :DrawVector
+
+        # Draw "a"
+        mov     u1,:smallA
+        mov     u2,12
+        mov     s1,155
+        mov     s2,100
+        call    :DrawVector
+
+        # Draw "n"
+        mov     u1,:smallN
+        mov     u2,8
+        mov     s1,170
+        mov     s2,100
+
+        # Draw "t"
+        call    :DrawVector
+        mov     u1,:smallT
+        mov     u2,12
+        mov     s1,185
+        mov     s2,100
+
+        # Draw "e"
+        call    :DrawVector
+        mov     u1,:smallE
+        mov     u2,12
+        mov     s1,200
+        mov     s2,100
+        call    :DrawVector
+
+        # Wait for a keypress before shutting down.
+        syscall $GGI_GETC
+        syscall $GGI_CLOSE
+        halt
+
+# Routine that draws a simple 2D vector.
+#
+# Inputs:  u0 - visual ID
+#          u1 - pointer to vector data
+#          u2 - length of vector data (in dwords; must be an even amount)
+#          s1 - initial x offset
+#          s2 - initial y offset
+# Outputs: none
+# Result:  Hopefully a correctly drawn vector. :-)
+#
+# The vector data consists of coordinates represented as pairs of dwords.
+# The first coordinate in the array is the offset to "move to" before
+# starting to draw. At each coordinate, a line is drawn from it to the
+# preceding coordinate in the data.
+
+:DrawVector
+        # Check if there is atleast two coordinate pairs
+        ifbel   u2,4
+        jmp     :DV_exit
+
+        # Calculate the initial coordinate by adding
+        # start offset to initial offset.
+        add     s1,*u1
+        add     u1,1
+        add     s2,*u1
+        add     u1,1
+        sub     u2,2
+
+:DV_loop
+        # Do we have 2 more coordinates?
+        ifbel   u2,2
+        jmp     :DV_exit
+
+        # Save the previous coordinates.
+        mov     s3,s1
+        mov     s4,s2
+
+        # Calculate the current coordinates.
+        add     s1,*u1
+        add     u1,1
+        add     s2,*u1
+        add     u1,1
+        sub     u2,2
+
+        syscall $GGI_DRAWLINE
+        jmp     :DV_loop
+
+:DV_exit
+        ret     0
+
+# Routine that sets up the visual.
+
+:SetupGFX
+        # Open the visual.
+        mov     u1,:Name
+        mov     u2,^Name
+        syscall $GGI_OPEN
+
+        # Save the ID.
+        mov     *:ID,u0
+
+        # Set the mode (only the resolution; we don't care about depth etc).
+        mov     u1,640
+        mov     u2,480
+        mov     u3,0
+        mov     u4,0
+        syscall $GGI_SETSIMPLEMODE
+
+        # Make sure we have a usable palette if in CLUT mode. Since this
+        # will fail (throw ERROR_GGI_CONTROL), we need to have an exception
+        # handler installed.
+        onfail  :Except
+        syscall $GGI_SETCOLORFULPALETTE
+        nofail
+
+        # Make a nice, black background.
+        mov     u1,0x0000
+        mov     u2,0x0000
+        mov     u3,0x0000
+        mov     u4,0xFFFF
+        syscall $GGI_MAPCOLOR
+        syscall $GGI_SETGCFOREGROUND
+        syscall $GGI_FILLSCREEN
+
+        ret     0
+
+# Minimal exception handler.
+
+:Except
+        ret     0

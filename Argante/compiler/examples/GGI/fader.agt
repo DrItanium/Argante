@@ -1,0 +1,64 @@
+# GGI Fader Example
+#
+# This example opens a default GGI visual and fades the screen
+# between some different colors. Works on all kinds of visuals,
+# but isn't optimal on CLUT visuals (where changing the palette
+# would be faster and smoother).
+
+!SIGNATURE      "GGI Fader Example"
+!PRIORITY       1000
+
+.DATA
+
+:Name   # Name of the visual.
+        "Demo"
+
+.CODE
+        # Open the visual.
+        mov     u1,:Name
+        mov     u2,^Name
+        syscall $GGI_OPEN
+
+        # Set a default mode; we don't care about resolution etc.
+        mov     u1,0
+        mov     u2,0
+        mov     u3,0
+        mov     u4,0
+        syscall $GGI_SETSIMPLEMODE
+
+        # Since the depth of the visual is unknown, make sure there's
+        # a usable palette if it isn't hi/true-color. Since this will
+        # fail (throw ERROR_GGI_CONTROL) on hi/true-color visuals we
+        # must handle that.
+        onfail  :except
+        syscall $GGI_SETCOLORFULPALETTE
+        nofail
+
+        # Set the starting color (-,G,B,A)
+        mov     u2,0x0000
+        mov     u3,0xFF00
+        mov     u4,0xFF00
+
+:loop
+        mov     u1,0x9900         # Is overwritten by GGI_MAPCOLOR,
+                                  # so we need to update it on each pass.
+        syscall $GGI_MAPCOLOR
+        syscall $GGI_SETGCFOREGROUND
+        syscall $GGI_FILLSCREEN
+
+        add     u2,0x0100         # Change the color slightly
+        sub     u3,0x0100
+
+        ifabo   u3,0
+        jmp     :loop
+
+        # Wait for a keypress before shutting down.
+        syscall $GGI_GETC
+        syscall $GGI_CLOSE
+
+        halt
+
+:except
+        ret     0
+
+.END
