@@ -1,0 +1,16 @@
+typedef z = { unsigned a1, signed s1, float f1 }
+
+funcdef main () =
+{
+	var unsigned d = 0xa;
+	var signed x=0;
+
+	p=(300 - 60) % 02;
+
+	while(d)
+	{
+		d=d-1;
+		x=x-sizeof(d);
+	}
+	return;
+}

@@ -2,6 +2,9 @@
 #include "string.h"
 #include "tree.h"
 
+void yyerror(char *);
+int yylex();
+
 AStm prog;
 %}
 %union {
@@ -22,19 +25,21 @@ AStm prog;
 %token GOTO RETURN RAISE
 %token SIZEOF NEW DESTROY RESIZE
 
+%type <uexpr> expr
 %token <uinum> V_INT
 %token <ufnum> V_FLOAT
 %token <ustring> V_STRING
 %nonassoc <ustring> ID
 
-%token '{' '}' '(' ',' ')' ';'
 %token '='
 
 %nonassoc '<' '>' LEQ GEQ EQ NEQ
 %token BOOL_AND BOOL_OR
 
+%token '{' '}' '(' ',' ')' ';'
 %left '='
 
+%left '%'
 %left '+' '-'
 %left '*' '/'
 
@@ -43,9 +48,6 @@ AStm prog;
 // Really, they're left-assoc, but !! expr is a retarded thing to do
 %nonassoc UMINUS '~' '!'
 
-// Precedence rules
-%left CALL
-
 //%token type
 %type <uinum> '+' '-' '*' '/' '|' '&'
 // '~' '!' '=' ';' '{' '}' '(' ')'
@@ -53,9 +55,12 @@ AStm prog;
 %type <utype> type
 %type <ustmt> stm stmlist prog
 
-%type <ustring> ID
 %type <uexprlist> arglist
 %type <uparmlist> parmlist1 parmlist
+
+/* If ( isn't the highest class token, then a(x)
+   becomes two expressions instead of a call. */
+%left '('
 
 %start prog
 %%
@@ -84,9 +89,11 @@ stmlist: IF '(' expr ')' stm ELSE stm { $$=StmIfElse($3, $5, $7); }
 */
 stm:	DESTROY ID ';' { $$=StmDestroy($2); }
 stm:	RESIZE '(' ID ',' type ')' ';' { $$=StmResize($3, $5); }
-stm:	RETURN expr ';' { $$=StmReturn($2); }
-stm:	RAISE expr ';' { $$=StmRaise($2); }
+
 stm:	GOTO ID ';' { $$=StmGoto($2); }
+stm:	RETURN expr ';' { $$=StmReturn($2); }
+	| RETURN ';' { $$=StmReturn(NULL); }
+stm:	RAISE expr ';' { $$=StmRaise($2); }
 
 /* int main(int argc) */
 parmlist1: parmlist ',' type ID { $$=ParmListAdd($1, $3, $4); }
@@ -110,20 +117,20 @@ stm:	FUNCDEF type ID parmlist ERRHANDLER ID '=' stm
 	| FUNCDEF ID parmlist '=' stm
 		{ $$=FuncGen($2, NULL, $3, NULL, $5); }
 
-type: UNSIGNED { $$=Type(T_UNSIGNED); }
-	| SIGNED { $$=Type(T_SIGNED); }
-	| FLOAT { $$=Type(T_FLOAT); }
-	| STRING { $$=Type(T_STRING); }
+type: UNSIGNED { $$=Type(TUnsigned); }
+	| SIGNED { $$=Type(TSigned); }
+	| FLOAT { $$=Type(TFloat); }
+	| STRING { $$=Type(TString); }
 	| POINTERARRAY type { $$=TypePointerArray($2); }
 	| POINTER type { $$=TypePointer($2); }
-	| ARRAY type SIZE V_INT { $$=TypeArray($2, $4); }
+	| ARRAY type SIZE expr { $$=TypeArray($2, $4); }
 	| ID { $$=TypeID($1); }
 
 expr: CAST type expr { $$=ExprCast($3, $2); }
 expr: '(' expr ')' { $$=$2; }
 
-expr:	V_INT { $$=ExprValue($1, T_SIGNED); }
-	| V_FLOAT { $$=ExprValue($1, T_FLOAT); }
+expr:	V_INT { $$=ExprValue($1, Type(TSigned)); }
+	| V_FLOAT { $$=ExprValue($1, Type(TFloat)); }
 	| V_STRING { $$=ExprString($1); }
 
 expr:	expr '+' expr { $$=ExprBinOp($1, $3, '+'); }
@@ -132,6 +139,7 @@ expr:	expr '+' expr { $$=ExprBinOp($1, $3, '+'); }
 	| expr '*' expr	{ $$=ExprBinOp($1, $3, '*'); }
 	| expr '&' expr	{ $$=ExprBinOp($1, $3, '&'); }
 	| expr '|' expr	{ $$=ExprBinOp($1, $3, '|'); }
+	| expr '%' expr	{ $$=ExprBinOp($1, $3, '%'); }
 expr:	expr '<' expr { $$=ExprBinOp($1, $3, '<'); }
 	| expr '>' expr { $$=ExprBinOp($1, $3, '>'); }
 	| expr LEQ expr { $$=ExprBinOp($1, $3, LEQ); }
@@ -141,15 +149,15 @@ expr:	expr '<' expr { $$=ExprBinOp($1, $3, '<'); }
 expr:	ID '=' expr { $$=ExprAssign($1, $3); }
 
 /* Erk. sizeof types may well be out, sorry. */
-expr:	SIZEOF '(' ID ')' { $$=ExprSizeof($3); }
+expr:	SIZEOF '(' expr ')' { $$=ExprSizeof($3); }
 expr:	NEW '(' type ')' { $$=ExprNew($3); }
 
-expr:	ID '(' ')' %prec CALL { $$=ExprCall($1, NULL); }
-	| ID '(' arglist ')' %prec CALL { $$=ExprCall($1, $3); }
+expr:	ID '(' ')' { $$=ExprCall($1, NULL); }
+	| ID '(' arglist ')' { $$=ExprCall($1, $3); }
 
 /* Using (-a) is nicer looking code. And, unlike Visual Basic,
    there's no overhead in excess braces. Why not just use it? */
-expr:	'(' '-' expr ')' { $$=ExprUnOp($2, '-'); }
+expr:	'(' '-' expr ')' { $$=ExprUnOp($3, '-'); }
 	| '!' expr { $$=ExprUnOp($2, '!'); }
 	| '~' expr { $$=ExprUnOp($2, '~'); }
 

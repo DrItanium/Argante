@@ -6,6 +6,7 @@
 #include "tree.h"
 #include "i.tab.h"
 
+void yyerror(char *);
 /*
 typedef union {
 	int uinum;
@@ -44,7 +45,7 @@ eol		\n
 white 		[ \t]+
 id		[[:alpha:]][[:alpha:][:digit:]_]*
 float		[[:digit:]]+\.[[:digit:]]+("E"(\+|\-)?[[:digit:]]+)?
-keys		[\{\}\(\,\);=<>\+\-\*/\|&!~]
+keys		[\{\}\(\,\);=<>\+\-\*/\|&!~%]
 %%
 
 <*>{eol}		{ADJ; EM_LineNo++; EM_TokPos=0; }
