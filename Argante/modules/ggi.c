@@ -21,73 +21,7 @@
       real memory into Argante space, I have to mangle the structures.
       Either I won't implement this, or it'll be a slightly different
       interface than GGI uses.
-
-    CHANGELOG:
-
-    Changes from 0.3 to 0.4 (26-02-2001):
-    + Fixed bug in the string-handling in OPEN (access-object string
-      would get chopped of).
-
-    Changes from 0.2 to 0.3 (25-02-2001):
-    + Changed all coordinate parameters to use signed registers, since
-      it makes sense to have negative coordinates in some cases.
-      Also, GGI itself uses signed integers.
-    + Wrote a lot of documentation.
-    + Reworked the HAC rules one again. All syscalls are now grouped
-      into three categories: "control" (changes a visuals options in
-      some way, eg. changes screenmode), "output" (writes to and reads
-      from the screen/memory buffers) and "input" (input event handling).
-      This can be used to separate input processing and drawing securely
-      into two separate processes (for example).
-    + Added three new exceptions (GGI_CONTROL, GGI_OUTPUT and GGI_INPUT).
-    + Implemented an IO handler for GGI_GETC. Hopefully works, too. :-)
-    + Changed KBDHIT to KBHIT, which is more correct.
-    + All syscalls now throw an exception if the GGI function reported
-      failure.
-    + Fixed casting of float arguments in SETGAMMA and GETGAMMA.
-    + Implemented some more syscalls (GETMODE, SETMODE, CHECKMODE,
-      CHECKSIMPLEMODE, SETTEXTMODE, CHECKTEXTMODE, SETGRAPHMODE,
-      CHECKGRAPHMODE, SETGAMMAMAP, GETGAMMAMAP, SETPALETTE,
-      GETPALETTE, PACKCOLORS, UNPACKPIXELS, EVENTSQUEUED,
-      EVENTREAD, EVENTSEND).
-
-    Changes from 0.1 to 0.2 (15-02-2001):
-    + Implemented a bunch of syscalls (PUTBOX, DRAWBOX, PUTS, PUTHLINE,
-      PUTVLINE, GETHLINE, GETVLINE, FLUSH, FLUSHREGION, CROSSBLIT,
-      GETGCFOREGROUND, GETGCBACKGROUND, KBDHIT, SETORIGIN, GETORIGIN,
-      SETGCCLIPPING, GETGCCLIPPING, UNMAPPIXEL, SETGAMMA, GETGAMMA,
-      SETDISPLAYFRAME, GETDISPLAYFRAME, SETREADFRAME, GETREADFRAME,
-      SETWRITEFRAME, GETWRITEFRAME, GETFLAGS, SETFLAGS, ADDFLAGS,
-      REMOVEFLAGS, SETEVENTMASK, GETEVENTMASK, ADDEVENTMASK and
-      REMOVEEVENTMASK).
-    + Implemented shared visuals. If a already opened visual has the
-      name passed to OPEN, it's open count will be incremented and it's
-      ID returned. CLOSE simply decrements the open count and only
-      closes the visual if the count is 0.
-    + Fixed arguments of PUTC (expected coordinates in s0 and s1,
-      as opposed to u1 and u2 like all other syscalls).
-    + Reworked the HAC rules a bit to comply more what is said in
-      the documentation. For example, "ggi/visual/open" is now
-      "ggi/open/visual" and "ggi/color/map" is now "ggi/map/color".
-      Also, the HAC object string for each visual is now saved so it
-      doesn't have to be built each syscall (should give a bit speedup).
-    + Open visuals are now closed and memory freed when the module is
-      unloaded.
-
-    Changes from 0.0 to 0.1 (14-02-2001):
-    + Implemented support for multiple visuals.
-    + Added HAC rules for all syscalls.
-    + Visuals are now named, which allows one to restrict access
-      to them by name. For example, you can have these rules:
-          1233:0   ggi/visual/special     ggi/visual/open     allow
-          0:0      ggi/visual             ggi/visual/open     deny
-      Now, the only visual that can be opened must be named "special"
-      and can only be opened by process 1233.
-    + Implemented some more syscalls (PUTPIXEL, GETPIXEL, COPYBOX, DRAWBOX).
-    + Added validation of visuals.
 */
-
-#include <endian.h>
 
 #include <ggi/ggi.h>
 
@@ -100,6 +34,10 @@
 #include "syscall.h"
 #include "acman.h"
 #include "evaluate.h"
+
+// This should really be in an include file (evaluate.h?)
+extern struct vcpu_struct *curr_cpu_p;
+extern int curr_cpu;
 
 /*** Defines *****************************************************************/
 
