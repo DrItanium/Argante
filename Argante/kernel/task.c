@@ -334,11 +334,81 @@ task_check_bcode(void *code,int code_len) {
     return 1;
 }
 
-
 #include "bformat.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
+
+/* For endian-swap; if problematic define NO_ENDIAN_SWAP */
+#ifndef NO_ENDIAN_SWAP
+/* Concept and original implementation by Peter Turczak */
+#include <byteswap.h>
+
+/* Will be mostly optimized out. */
+#define bswap_gen(x) \
+	if (sizeof(x)==2) x=bswap_16(x); \
+	if (sizeof(x)==4) x=bswap_32(x); \
+	if (sizeof(x)==8) x=bswap_64(x);
+
+/* Format conversions can be guaranteed to work;
+ * all data is infinitely predictable.
+ * Bytecode conversion is much harder. */
+static void fmtswap (struct bformat *FMT)
+{
+	printk("-> Doing swap-endian...\n");
+	
+	bswap_gen(FMT->magic1);
+	
+	bswap_gen(FMT->flags);
+	bswap_gen(FMT->priority);
+	bswap_gen(FMT->ipc_reg);
+	bswap_gen(FMT->init_IP);
+	bswap_gen(FMT->current_domain);
+	bswap_gen(FMT->domain_uid);
+	bswap_gen(FMT->bytesize);
+	bswap_gen(FMT->memflags);
+	bswap_gen(FMT->datasize);
+	
+	bswap_gen(FMT->magic2);
+}
+
+/* Large changes by shykta. This does not (yet)
+ * fix swap-endian atad; this should be dealt with
+ * in get/set_mem_value. */
+
+/* This is according to README */
+struct _bcode_op {
+	char bcode;
+	char t1;
+	char t2;
+	char rsrvd;
+	long a1;
+	long a2;
+};
+
+static void swapcode(void *code, int datasize)
+{
+	int x; 
+	struct _bcode_op *op;
+	
+	op=code;
+	
+	for (x=0;x<datasize;x+=sizeof(struct _bcode_op)) {
+		/* Chars need no swap */
+		bswap_gen(op->a1);
+		bswap_gen(op->a2);
+		op++;
+	}
+	printk("OK: code conversion done...");
+}
+#else
+void fmtswap (struct bformat *FMT)
+{
+	printk("+> Compiled without swap-endian support; nothing done.\n");
+}
+
+void swapcode(void *code, int datasize) {}
+#endif
 
 void load_image(char* fn, int debugging) {
   int x;
@@ -346,6 +416,7 @@ void load_image(char* fn, int debugging) {
   int got=0;
   struct bformat FMT;
   char* respawn_it=0;
+  int swapendian=0;
 
   if (debugging==LOAD_RESPAWN) {
     debugging=0;
@@ -376,6 +447,11 @@ void load_image(char* fn, int debugging) {
   bzero(&FMT,sizeof(FMT));
   read(f,&FMT,sizeof(FMT));
 
+  /* Try bswapping it...? */
+  if (FMT.magic1!=BFMT_MAGIC1) {
+	  fmtswap(&FMT);
+	  swapendian=1;
+  }
   if (FMT.magic1!=BFMT_MAGIC1) {
     printk("-> ERROR: Bad bformat.magic1 value.\n");
     return;
@@ -512,6 +588,7 @@ void load_image(char* fn, int debugging) {
 
   used_bytecode+=cpu[x].bytecode_size;
 
+  if (swapendian) swapcode(cpu[x].bytecode, nn);
 
   if (!task_check_bcode(cpu[x].bytecode,nn/12)) {
     destroy_task(x);
