@@ -1270,7 +1270,7 @@ void cmd_jmp_uptr () {
 
 void cmd_call_immediate () {
 
-	push_on_stack();
+	push_ip_on_stack();
 	CHECK_EXCEPT;
 	curr_cpu_p->IP=A1;
 	change=0;
@@ -1278,7 +1278,7 @@ void cmd_call_immediate () {
 
 void cmd_call_ureg () {
 
-	push_on_stack();
+	push_ip_on_stack();
 	CHECK_EXCEPT;
 	curr_cpu_p->IP=UREG(A1);
 	change=0;
@@ -1288,7 +1288,7 @@ void cmd_call_immptr () {
   int work;
 	
 	IMMPTRVAL(work,A1);
-	push_on_stack();
+	push_ip_on_stack();
 	CHECK_EXCEPT;
 	curr_cpu_p->IP=work;
 	change=0;
@@ -1298,7 +1298,7 @@ void cmd_call_uptr () {
   int work;
 
 	UPTRVAL(work,A1);
-	push_on_stack();
+	push_ip_on_stack();
 	CHECK_EXCEPT;
 	curr_cpu_p->IP=work; 
 	change=0;
@@ -1418,8 +1418,7 @@ void cmd_ret_immediate () {
 	if (curr_cpu_p->in_handler<0) curr_cpu_p->in_handler=0;
 
 	for (work=0;work<a1;work++) {
-		curr_cpu_p->IP=pop_from_stack()+1;
-		change=0;
+		pop_ip_from_stack();
 
 		if (curr_cpu_p->handling_failure && (curr_cpu_p->IP-1==curr_cpu_p->first_except_ip)) {
 				curr_cpu_p->handling_failure=0;
@@ -1444,8 +1443,7 @@ void cmd_ret_ureg () {
 	if (curr_cpu_p->in_handler<0) curr_cpu_p->in_handler=0;
 
 	for (work=0;work<a1;work++) {
-		curr_cpu_p->IP=pop_from_stack(curr_cpu)+1;
-		change=0;
+		pop_ip_from_stack();
 
 		if (curr_cpu_p->handling_failure && (curr_cpu_p->IP-1==curr_cpu_p->first_except_ip)) {
 				curr_cpu_p->handling_failure=0;
@@ -1469,9 +1467,8 @@ void cmd_ret_immptr () {
 	if (curr_cpu_p->in_handler<0) curr_cpu_p->in_handler=0;
 
 	for (work=0;work<a1;work++) {
-		curr_cpu_p->IP=pop_from_stack()+1;
-		change=0;
-
+		pop_ip_from_stack();
+		
 		if (curr_cpu_p->handling_failure && (curr_cpu_p->IP-1==curr_cpu_p->first_except_ip)) {
 				curr_cpu_p->handling_failure=0;
 		}
@@ -1495,9 +1492,8 @@ void cmd_ret_uptr () {
 	if (curr_cpu_p->in_handler<0) curr_cpu_p->in_handler=0;
 
 	for (work=0;work<a1;work++) {
-		curr_cpu_p->IP=pop_from_stack()+1;
-		change=0;
-
+		pop_ip_from_stack();
+		
 		if (curr_cpu_p->handling_failure && (curr_cpu_p->IP-1==curr_cpu_p->first_except_ip)) {
 				curr_cpu_p->handling_failure=0;
 		}
