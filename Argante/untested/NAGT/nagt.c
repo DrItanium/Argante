@@ -17,7 +17,7 @@
 #include "config.h"
 #include "bcode.h"
 #include "bformat.h"
-#include "language.h"
+#include "lang2.h"
 
 /* Syscalls */
 struct sdes {
@@ -40,47 +40,20 @@ struct defines {
 
 struct defines 		*defined = NULL;
 
+#include "symtab.h"
+#include "bcode_op.h"
 
 /*
  * Syntax:
  * exactly like the old one(!)
  * 
  * Extensions:
- * !VERSION 2 enables NAG extensions. These are fancies like auto/reent
- * context data. And they don't work yet.
+ * NONE. I've given up on 'embracing + extending' assembly language. :)
  *
- * Contexts are supported irrelevant of version, they're really important
- * for namespace cleaning & therefore linking. { } opens/closes context bracket.
+ * Despite this, contexts are staying in. They are the best way I can
+ * see of keeping the namespace clean, which is essential for successful
+ * linking.
  */
-
-#define REF_PTR 1
-#define REF_SIZE_CHAR 2
-#define REF_SIZE_DWORD 3
-
-typedef struct _depend depend;
-struct _depend {
-	char reftype;
-	char stortype;
-	off_t location;
-	depend *next;
-};
-
-typedef struct _symbol symbol;
-struct _symbol {
-	char name[62];
-	char stortype;
-	char defined;
-	int location;
-	int size;
-	depend *dep;
-	symbol *next;
-};
-
-typedef struct _context context;
-struct _context {
-	symbol *syms;
-	context *prev;
-};
 
 context *context_head;
 symbol *curr_symbol=NULL;
@@ -88,21 +61,12 @@ context *curr_symbol_context;
 
 FILE *in, *out_bcode, *out_data, *out_pure, *out_syms;
 
-#define STATE_OPTION 0
-#define STATE_DATA 1
-#define STATE_CODE 2
-
-#define DATA_ALLOC 0x10
-#define DATA_REENT 0x20
-#define CODE_RET 0x10
-#define CODE_JMP 0x20
-
 struct bformat bfmt;
-int state=0;
+int state=STATE_OPTION;
 int lineno=0;
 int version=1;
 
-int linking=1;
+int linking=0;
 
 #define WHITESPACE " \t\n\r"
 #define my_isspace(a) strchr(WHITESPACE, a)
@@ -173,9 +137,6 @@ void add_depend(int type, int loc, symbol *to)
 {
 	depend *new;
 
-#ifdef NORELOC
-	if (to->defined) return;
-#endif
 	new=malloc(sizeof(new));
 	if (!new) error("Malloc failure (out of memory!)");
 	
@@ -238,7 +199,7 @@ void define_symbol()
 	if (!curr_symbol) return;
 	
 	curr_symbol->stortype=state;
-	if ((curr_symbol->stortype==STATE_CODE))
+	if ((curr_symbol->stortype & STATE_CODE))
 		sz=ftello(out_bcode) / 12;
 	else
 	{
@@ -257,6 +218,11 @@ void define_symbol()
 		}
 	}
 	
+	/* Brown paper bag mistake: linker needs to relocate every symbol.
+	 * However, it needs to not clash symbols in contexts. */
+	if (curr_symbol_context->prev)
+		curr_symbol->stortype|=SYM_NO_CLASH;
+
 	curr_symbol->size=sz-curr_symbol->location;
 
 	if (!find_symbol(curr_symbol->name))
@@ -272,20 +238,18 @@ void define_symbol()
 	} else {
 		depend *d, *n;
 		/* Arrrrrgh. Kernel braindeath. */
-		if (curr_symbol->stortype==STATE_DATA)
+		if (curr_symbol->stortype & STATE_DATA)
 			curr_symbol->location/=4;
 
 		curr_symbol->defined=1;
-	//	fprintf(stderr, "<-> defining %s @ %d, %d long...\n", curr_symbol->name, curr_symbol->location, curr_symbol->size);
 		/* Hunt for refs. */
 		d=curr_symbol->dep;
 		while (d)
 		{
 			int i;
 			FILE *f;
-	//		fprintf(stderr, "<-> ... %s adjusting %d %d %d\n", curr_symbol->name, d->location, d->stortype, d->reftype);
 			n=d->next;
-			f=(d->stortype==STATE_CODE) ? out_bcode : out_data;
+			f=(d->stortype & STATE_CODE) ? out_bcode : out_data;
 			fseek(f, d->location, SEEK_SET);
 			switch(d->reftype)
 			{
@@ -321,16 +285,10 @@ void symbol_track(symbol *s)
 	depend *r;
 	const int n1=-1;
 	const char c1=-1;
-	/* Kinda FIXME: We don't store context symbols because
-	 * it'll confuse the linker. But we want to keep them
-	 * for the debugger.
-	 * Any ideas anyone?
-	 */
-	if (curr_symbol_context->prev) return;
-
+	
 	if (!out_syms) return;
 
-	fprintf(stderr, "<.> storing symbol %s, %s\n", s->name, (s->defined) ? "defined" : "undef");
+//	fprintf(stderr, "<.> storing symbol %s, %s %s\n", s->name, (s->defined) ? "defined" : "undef", (s->stortype & SYM_NO_CLASH) ? "private": "public");
 	
 	/* NAME (dynamic len), ADDRESS, SIZE, TYPE.
 	 * Size is zero for undefined symbols, of course. */
@@ -353,25 +311,6 @@ void symbol_track(symbol *s)
 	fwrite(&c1, sizeof(r->stortype), 1, out_syms);
 	fwrite(&n1, sizeof(r->location), 1, out_syms);
 }
-
-/* Context Data - TODO (sorry) 
- *
- * If there are flagged data symbols, all jumps and rets are intercepted
- * and made to to reference #j<addr>. At context end, (if there are any
- * such #j symbols) we write
- * JMP :##
- * :#j<addr>
- * FREE :kevin
- * JMP <addr>
- * :##
- *
- * If it happens that the :<addr> occurs within the same context, we wait
- * until context end, cry "oops" and define :#j<addr> as :<addr>.
- * 
- * Because it would be just too hard to allocate data at the start of the
- * context if the declaration is in the middle of the code, we shouldn't
- * trap JMP's before data is allocated. (It may happen for debugging)
- */
 
 void begin_context()
 {
@@ -491,8 +430,8 @@ void do_symbol(char *ln)
 	curr_symbol->name[sizeof(curr_symbol->name) - 1]=0; /* It's easier if it's null-terminated */
 
 	curr_symbol->defined=0;
-	curr_symbol->location=ftello((state==STATE_CODE) ? out_bcode : out_data)
-		/ ((state==STATE_CODE) ? 12 : 1);
+	curr_symbol->location=ftello((state & STATE_CODE) ? out_bcode : out_data)
+		/ ((state & STATE_CODE) ? 12 : 1);
 }
 
 void do_option(char *ln)
@@ -561,11 +500,6 @@ void do_option(char *ln)
 			tmp=strtok(NULL, " \t,");
 			itmp++;
 		}
-	}
-	else if (!strcasecmp(ln, "VERSION"))
-	{
-		version=atoi(arg2);
-		warn("version is currently a no-op");
 	}
 	else
 		error("Unknown option");
@@ -676,7 +610,6 @@ char *do_data(char *ln)
 		}
 		ln++;
 		/* Recurse; we may have "stuff" 0x81 "stuff" to deal with */
-//		puts(ln); // XXX DEBUG
 		return ln;
 	}
 
@@ -696,7 +629,6 @@ char *do_data(char *ln)
 	if (!strcasecmp(ln, "REPEAT"))
 	{
 		int sz, ct, z;
-		FILE *ft;
 		/* Now we have multi-element data symbols, so the whole deal of what
 		 * 'repeat' does is kinda thorny.
 		 * 
@@ -717,12 +649,10 @@ char *do_data(char *ln)
 		
 		next=malloc(sz);
 		/* Read data... */
-		ft=fopen("nag_data.tmp", "rb");
-		if (!ft) { perror("fopen(r)"); exit(1); }
-		fseek(ft, rep_data_offs, SEEK_SET);
-		if ((z=fread(next, sizeof(char), sz, ft)) < sz)
+		fseek(out_data, rep_data_offs, SEEK_SET);
+		if ((z=fread(next, sizeof(char), sz, out_data)) < sz)
 			perror("fread");
-		fclose(ft);
+		fseek(out_data, 0, SEEK_END);
 		
 		/* Ok, we recovered the data to repeat... repeat it */
 		while(ct > 0)
@@ -836,16 +766,6 @@ void arg_parse(char *ln, long *out, char *type, int offs)
 	if (ret==z) error("Garbage numeric.");
 }
 
-/* Stuff from task.c */
-struct _bcode_op {
-	char bcode;
-	char t1;
-	char t2;
-	char rsrvd;
-	long a1;
-	long a2;
-};
-
 /*
  * DANGER: EARTHMOVING IN PROGRESS
  * Beware of flying debris.
@@ -872,11 +792,10 @@ void do_code(char *ln)
 	arg1=strtok(tmp, ",");
 	arg2=strtok(NULL, ",");
 
-//	fprintf(stderr, "-%s-%s-%s-\n", ln, arg1, arg2);
 	/* Ok, we now have mnem in ln, and the args. */
 	/* Try and comprehend the args. */
 	ict=0;
-	bop.t1=bop.t2=-1;
+	bop.t1=bop.t2=0;
 	/* Clear the struct properly. Oops. */
 	bop.rsrvd=bop.a1=bop.a2=0;
 	if (arg1) {
@@ -909,41 +828,12 @@ void do_code(char *ln)
 	}
 	if (itmp>=OPS) error("Unknown mnemonic!");
 
-	/* Check types. Ick; this should have been a bytearray. */
-	if (
-	( bop.t1==TYPE_IMMEDIATE && !op[itmp].imm1) ||
-	( bop.t2==TYPE_IMMEDIATE && !op[itmp].imm2))
-		error("Type mismatch with immediate.");
+	/* Check types. */
+	if (ict > 0 && !((1 << bop.t1) & op[itmp].tparam1))
+		error("Type mismatch for argument 1");
 
-	if (
-	( bop.t1==TYPE_UREG && !op[itmp].ureg1) ||
-	( bop.t2==TYPE_UREG && !op[itmp].ureg2))
-		error("Type mismatch with ureg.");
-
-	if (
-	( bop.t1==TYPE_SREG && !op[itmp].sreg1) ||
-	( bop.t2==TYPE_SREG && !op[itmp].sreg2))
-		error("Type mismatch with sreg.");
-
-	if (
-	( bop.t1==TYPE_FREG && !op[itmp].freg1) ||
-	( bop.t2==TYPE_FREG && !op[itmp].freg2))
-		error("Type mismatch with freg.");
-
-	if (
-	( bop.t1==TYPE_IMMPTR && !op[itmp].immptr1) ||
-	( bop.t2==TYPE_IMMPTR && !op[itmp].immptr2))
-		error("Type mismatch with immptr.");
-
-	if (
-	( bop.t1==TYPE_UPTR && !op[itmp].uptr1) ||
-	( bop.t2==TYPE_UPTR && !op[itmp].uptr2))
-		error("Type mismatch with uptr.");
-
-	/* It seems that the Kernel does not like invalid
-	 * types even for unused parms. Sigh. */
-	if (bop.t1==-1) bop.t1=0;
-	if (bop.t2==-1) bop.t2=0;
+	if (ict > 1 && !((1 << bop.t2) & op[itmp].tparam2))
+		error("Type mismatch for argument 2");
 
 	/* Phew. */
 	fwrite(&bop, sizeof(bop), 1, out_bcode);
@@ -953,28 +843,40 @@ int main(int argc, char *argv[])
 {
 	char *inl, *o;
 	size_t n;
-	int z;
+	int z=1;
 	char *ln, *tmp;
 	
 	if (argc < 3)
 	{
-		fprintf(stderr, "Usage: nag filename.in filename.out [filename.sym]\n");
+		fprintf(stderr, 
+			"NAGT - RSIS assembler. (C) 2001 James Kehl <ecks@optusnet.com.au>\n"
+			"No warranty yada yada yada.\n\n");
+
+		fprintf(stderr, "Usage: %s [-c] filename.in filename.out\n", argv[0]);
 		exit(1);
 	}
 
-	in=fopen(argv[1], "r");
-	if (!in) { perror("fopen(r)"); return 1; }
-	out_bcode=fopen("nag_bcode.tmp", "wb");
-	out_data=fopen("nag_data.tmp", "wb");
-	out_pure=fopen(argv[2], "wb");
-	
-	if (argc == 4) 
+	if (!strcmp(argv[1], "-c"))
 	{
-		out_syms=fopen(argv[3], "wb");
-		if (!out_syms) perror("error opening syms file");
-	} else {
-		out_syms=fopen("nag_syms.tmp", "wb");
-		if (!out_syms) perror("error opening syms file");
+		linking=1;
+		z++;
+	}
+	
+	fprintf(stderr, "<-> Producing %s from %s in %s mode.\n", argv[z+1], argv[z], linking ? "object" : "standalone"); 
+
+	in=fopen(argv[z], "r");
+	if (!in) { perror("fopen(r)"); return 1; }
+	z++;
+	
+	out_bcode=tmpfile(); //fopen("nag_bcode.tmp", "wb+");
+	out_data=tmpfile(); //fopen("nag_data.tmp", "wb+");
+	out_syms=tmpfile(); //fopen("nag_syms.tmp", "wb+");
+
+	out_pure=fopen(argv[z], "wb");
+
+	if (!out_syms) {
+		perror("error opening syms file");
+		if (linking) exit(-1);
 	}
 	
 	if (!out_bcode || !out_data || !out_pure) { perror("fopen(w)"); return 1; }
@@ -1014,10 +916,10 @@ int main(int argc, char *argv[])
 			*tmp=0;
 			tmp--;
 		}
-		if (tmp==ln) continue; /* Eh? Blank line? */
+		if (!*ln) continue; /* Eh? Blank line? */
 
 		rep_data_offs=ftello(out_data);
-		
+	
 		/* Parse the Code!!! */
 		if (ln[0] == '!') {
 			define_symbol();
@@ -1053,7 +955,7 @@ int main(int argc, char *argv[])
 	end_context();
 
 	/* Finished, at last. Merge files into one. */
-	fseek(out_bcode, 0, SEEK_END);
+	fseek(out_bcode, 0, SEEK_END); /* This also flushes the stream */
 	fseek(out_data, 0, SEEK_END);
 	/* Calculate data and code sizes */
 	bfmt.datasize=ftello(out_data) / 4;
@@ -1064,20 +966,14 @@ int main(int argc, char *argv[])
 	fwrite(&bfmt, sizeof(bfmt), 1, out_pure);
 	
 	/* The rest */
-	fclose(out_bcode); 
-	fclose(out_data); 
-	fclose(out_syms); 
-	out_bcode=fopen("nag_bcode.tmp", "rb");
-	out_data=fopen("nag_data.tmp", "rb");
 
+	/* Now we open files w+, so just seek to start and get reading */
+	fseek(out_bcode, 0, SEEK_SET);
+	fseek(out_data, 0, SEEK_SET);
+	fseek(out_syms, 0, SEEK_SET);
+	
 	/* Stick reloc table at EOF. Argante complains but will
 	 * still run the image. */
-	if (argc == 4) 
-		out_syms=fopen(argv[3], "rb");
-	else
-		out_syms=fopen("nag_syms.tmp", "rb");
-
-	if (!out_bcode || !out_data || !out_syms) { perror("fopen(r)"); return 1; }
 
 	while (fread(&z, sizeof(z), 1, out_bcode) > 0) 
 		fwrite(&z, sizeof(z), 1, out_pure);

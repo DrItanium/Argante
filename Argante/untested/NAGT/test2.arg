@@ -13,8 +13,10 @@
 	syscall   $IO_PUTSTRING
 	twait   0x7d0
 	mov   u0,:string2_2
+{
+:Sub # Testing for context protection
 	mov   u1,^string2_2
 	syscall   $IO_PUTSTRING
 	call :code1_2
 	ret 0
-
+}

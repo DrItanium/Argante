@@ -5,10 +5,7 @@
  * Single relocatable Argante image.
  * 
  * Output:
- * Lotsa warnings :)
- * 
- * When relocatable images come around, we might be able to 
- * rename this the DCE - E for Eliminator.
+ * Image that's mostly free of unreachable code.
  *
  * I'm also tempted to do Dead Data Analysis; but that involves lots of
  * knowledge about syscalls. Ick.
@@ -24,24 +21,16 @@
 #include "bcode.h"
 #include "bformat.h"
 
-/*
-struct sdes{
-    char* name;
-    int num;
-};
-struct sdes sys[]={
-#include "autogen-debug.h"
-};
-#define SCNUM (sizeof(sys)/sizeof(struct sdes))
-*/
-
 struct bformat header;
-unsigned char *bytecode, *data;
-unsigned char *bcode_tmp;
+
+#include "bcode_op.h"
+
+struct _bcode_op *bytecode, *bcode_tmp;
+long *data;
 
 typedef struct _dpoint dpoint;
 struct _dpoint {
-	int loc;
+	long loc;
 	dpoint *next;
 };
 
@@ -61,10 +50,10 @@ dpoint *dphead=NULL;
  * Then it's easy to spot dead code - it's anything other than HALT :)
  */    
 
-int pop_off_dpoint()
+long pop_off_dpoint()
 {
 	dpoint *d;
-	int r;
+	long r;
 	
 	if (!dphead) return -1;
 	
@@ -75,7 +64,7 @@ int pop_off_dpoint()
 	return r;
 }
 
-void push_on_dpoint(int loc)
+void push_on_dpoint(long loc)
 {
 	dpoint *d;
 	
@@ -86,21 +75,21 @@ void push_on_dpoint(int loc)
 }
 
 /* returns next address */
-int follow(int loc)
+int follow(long loc)
 {
 	char op;
-	int a1;
+	long a1;
 
 	if (loc<0 || loc>header.bytesize)
 	{
 		a1=pop_off_dpoint();
-		fprintf(stderr, "I just fell off the edge of the world!\nWas at %d, now going to %d\n", loc, a1);
+		fprintf(stderr, "<!> Code branched to nonexistant address %ld (last address %ld)\n", loc, a1);
 		return a1;
 	}
 
-	op=bcode_tmp[loc * 12];
-	a1=*((int *) &bytecode[loc * 12 + 4]);
-	bcode_tmp[loc * 12] = CMD_HALT; /* Prevent loops, erase everything :) */
+	op=bcode_tmp[loc].bcode;
+	a1=bytecode[loc].a1;
+	bcode_tmp[loc].bcode = CMD_HALT; /* Prevent loops, erase everything :) */
 	
 	switch(op) {
 	case CMD_RET:
@@ -141,16 +130,16 @@ void fixup(int inloc, int outloc)
 {
 	achain *a;
 	char op;
-	int *a1;
+	long *a1;
 
 	if (inloc<0 || inloc>header.bytesize)
 	{
-		fprintf(stderr, "Fell off the edge of the world during fixup!\n");
+		fprintf(stderr, "<!> Fell off the edge of the world during fixup!\n");
 		exit(-1);
 	}
 	if (outloc<0 || outloc>header.bytesize)
 	{
-		fprintf(stderr, "Jumped off the edge of the world during fixup!\n");
+		fprintf(stderr, "<!> Jumped off the edge of the world during fixup!\n");
 		exit(-1);
 	}
 
@@ -166,7 +155,7 @@ void fixup(int inloc, int outloc)
 		if (a->target == inloc)
 		{
 			/* Ok, target found, adjust it */
-			*((int *)&bytecode[a->loc * 12 + 4])=outloc;
+			bytecode[a->loc].a1=outloc;
 //			fprintf(stderr, "<.> Repairing %x -> %x\n", a->loc, outloc); 
 			/* Throw it away now */
 			if (a->prev)
@@ -184,16 +173,15 @@ void fixup(int inloc, int outloc)
 	}
 	
 	/* Don't put memcpy to the test */
-	if (inloc != outloc) memcpy(&bytecode[outloc * 12], &bytecode[inloc * 12], 12);
+	if (inloc != outloc) memcpy(&bytecode[outloc], &bytecode[inloc], sizeof(struct _bcode_op));
 	
-	op=bytecode[inloc * 12];
+	op=bytecode[inloc].bcode;
 	/* We have a rather large scratch space in bcode_tmp.
 	 * Seeing as we've already tested the inloc contents,
 	 * store the outloc over them */
-	a1=(int *) &bcode_tmp[inloc * 12];
-	*a1=outloc;
+	bcode_tmp[inloc].a1=outloc;
 	/* Get a pointer to a1 */
-	a1=(int *) &bytecode[outloc * 12 + 4];
+	a1=&(bytecode[outloc].a1);
 
 	switch(op) {
 	case CMD_JMP:
@@ -203,7 +191,7 @@ void fixup(int inloc, int outloc)
 		if (*a1 <= inloc)
 		{
 			/* There has to be a better way than this, but I'm too dumb */
-			*a1=*((int *)&bcode_tmp[*a1 * 12]);
+			*a1=bcode_tmp[*a1].a1;
 		}
 		else /* or if not save it for later */
 		{
@@ -226,65 +214,86 @@ int main(int argc, char **argv)
 	int ldba; /* LastDeadByteAddress */
 	FILE *in, *out;
 
-	printf("\nDead Code Analyser - (C) 2001 James Kehl <ecks@optusnet.com.au>\n");
-	printf("based on Disassembler - (C) 2000 Maurycy Prodeus <z33d@eth-security.net>\n");
-	printf("for %s ver %d.%03d (C) 2000 Michal Zalewski <lcamtuf@tpi.pl>\n\n",
-              SYSNAME,SYS_MAJOR,SYS_MINOR);
-	
-	if (argc!=2 && argc!=3){
+	if (argc!=2 && argc!=3)
+	{
+		fprintf(stderr, 
+			"Dead Code Remover.    (C) 2001 James Kehl <ecks@optusnet.com.au>\n"
+			"based on Disassembler (C) 2000 Maurycy Prodeus <z33d@eth-security.net>\n"
+			"No warranty yada yada yada.\n\n");
+
 	    printf("Usage: %s <input.img> [output.img]\n",argv[0]);
 	    exit(-1);
 	}
 
+	
 	in=fopen(argv[1],"rb");
 	if (!in){
-	    perror("open input file");
+	    perror("<!> open input file");
 	    exit(-1);
 	}	
 	if (argc==3)
 	{
 		out=fopen(argv[2],"wb");
 		if (!out){
-		    perror("open output file");
+		    perror("<!> open output file");
 		    exit(-1);
 		}
-	} else out=NULL;
+		fprintf(stderr, "<-> Producing %s from %s\n", argv[2], argv[1]); 
+	} else {
+		out=NULL;
+		fprintf(stderr, "<-> Analysing %s\n", argv[1]); 
+	}
+
 	
 	/* Simple tests to verify image... Endian Fixme! */
 	if(fread(&header,sizeof(header), 1, in)!=1){
-	    printf("%s is broken.\n",argv[1]);
-	    exit(-1);
+		perror("<!> fread");
+		fprintf(stderr, "<!> %s has no header. Aborting\n", argv[1]);
+		exit(-1);
 	}
-	if (header.magic1 != BFMT_MAGIC1 || header.magic2 != BFMT_MAGIC2){
-	    printf("%s: invalid header.\n",argv[1]);
-	    exit(-1);
+	
+	if (header.magic1 != BFMT_MAGIC1 || header.magic2 != BFMT_MAGIC2)
+	{
+		fprintf(stderr, "<!> %s is corrupted or not native to this platform. Aborting\n", argv[1]);
+		exit(-1);
 	}
 
 	/* Load 2 copies of bytecode. */
-	bytecode=malloc(header.bytesize*12);
-	bcode_tmp=malloc(header.bytesize*12);
+	bytecode=malloc(header.bytesize * sizeof(struct _bcode_op));
+	bcode_tmp=malloc(header.bytesize * sizeof(struct _bcode_op));
 	
 	if ((!bytecode || !bcode_tmp) && header.bytesize>0){
-	    printf("Not enough memory!\n");
-	    exit(-1);
+		perror("<!> malloc");
+		fprintf(stderr, "<!> Malloc failed\n");
+		exit(-1);
 	}
-	if(fread(bytecode, header.bytesize*12, 1, in)!=1){
-	    printf("I can't read %s.\n",argv[1]);
-	    exit(-1);
+	
+
+	i=fread(bytecode, sizeof(struct _bcode_op), header.bytesize, in);
+	if(i != header.bytesize)
+	{
+		perror("<+> fread");
+		fprintf(stderr, "<+> Could only read %d of %d bytecode packets from %s.\n", i, header.bytesize, argv[1]);
 	}
 
-	memcpy(bcode_tmp, bytecode, header.bytesize * 12);
+	memcpy(bcode_tmp, bytecode, header.bytesize * sizeof(struct _bcode_op));
 
 	/* Load data */
-	data=(char*) malloc(header.datasize*4);
+	data=malloc(header.datasize * sizeof(int));
+	
 	if (!data && header.datasize>0){
-	    printf("Not enough memory!\n");
-	    exit(-1);
+		perror("<!> malloc");
+		fprintf(stderr, "<!> Malloc failed\n");
+		exit(-1);
 	}
-	if (fread(data, header.datasize*4, 1, in)!=1 && header.datasize!=0){
-	    printf("I can't read %s.\n",argv[1]);
-	    exit(-1);
+
+	i=fread(data, sizeof(int), header.datasize, in);
+	if(i != header.datasize)
+	{
+		perror("<+> fread");
+		fprintf(stderr, "<+> Could only read %d of %d data packets from %s.\n", i, header.datasize, argv[1]);
 	}
+	
 	/* We've finished with the input image */
 	fclose(in);
 
@@ -297,7 +306,7 @@ int main(int argc, char **argv)
 	/* Ok, check for leftovers */
 	for(i=0;i<header.bytesize;i++)
 	{
-		if (bcode_tmp[i * 12] != CMD_HALT)
+		if (bcode_tmp[i].bcode != CMD_HALT)
 		{
 			dbc++;
 			if (ldba < 0) ldba=i;
@@ -312,9 +321,9 @@ int main(int argc, char **argv)
 	}
 	/* In case I stuff up */
 	if (ubc != header.bytesize - dbc)
-		fprintf(stderr, "<!> Mismatch! Expected used bytes: %d\n", header.bytesize - dbc);
+		fprintf(stderr, "<+> Mismatch! Expected used bytes: %d\n", header.bytesize - dbc);
 
-	fprintf(stderr, "<+> Bytecode packets: %d unused, %d used\n", dbc, ubc);
+	fprintf(stderr, "<-> Bytecode packets: %d unused, %d used\n", dbc, ubc);
 	
 	/* Now translate code if we have an output file */
 	if (out)
@@ -325,7 +334,7 @@ int main(int argc, char **argv)
 		
 		for(dbc=0;dbc<header.bytesize;dbc++)
 		{
-			if (bcode_tmp[dbc * 12] == CMD_HALT)
+			if (bcode_tmp[dbc].bcode == CMD_HALT)
 			{
 				fixup(dbc, ubc);
 				ubc++;
@@ -336,15 +345,15 @@ int main(int argc, char **argv)
 		header.bytesize=i;
 		
 		if(fwrite(&header, sizeof(header), 1, out)!=1){
-			perror("fwrite");
+			perror("<!> fwrite");
 			exit(-1);
 		}
-		if(fwrite(bytecode, header.bytesize * 12, 1, out)!=1){
-			perror("fwrite");
+		if(fwrite(bytecode, sizeof(struct _bcode_op), header.bytesize, out)!=header.bytesize){
+			perror("<!> fwrite");
 			exit(-1);
 		}
-		if(fwrite(data, header.datasize * 4, 1, out)!=1){
-			perror("fwrite");
+		if(fwrite(data, sizeof(int), header.datasize, out)!=header.datasize){
+			perror("<!> fwrite");
 			exit(-1);
 		}
 		fclose(out);

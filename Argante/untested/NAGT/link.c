@@ -22,52 +22,11 @@
 #include "config.h"
 #include "bformat.h"
 
-/* Yes these are the same as NAGT's.
- * Yes, they should be in a common header. */
-#define REF_PTR 1
-#define REF_SIZE_CHAR 2
-#define REF_SIZE_DWORD 3
-
-typedef struct _depend depend;
-struct _depend {
-	char reftype;
-	char stortype;
-	off_t location;
-	depend *next;
-};
-
-typedef struct _symbol symbol;
-struct _symbol {
-	char name[62];
-	char stortype;
-	char defined;
-	int location;
-	int size;
-	depend *dep;
-	symbol *next;
-};
-
-typedef struct _context context;
-struct _context {
-	symbol *syms;
-	context *prev;
-};
-
-#define STATE_DATA 1
-#define STATE_CODE 2
+#include "symtab.h"
+#include "bcode_op.h"
 
 symbol *sym_top=NULL;
 struct bformat header;
-
-/* Stuff from task.c */
-struct _bcode_op {
-	char bcode;
-	char t1;
-	char t2;
-	char rsrvd;
-	long a1;
-	long a2;
-};
 
 struct _bcode_op *bytecode;
 int *data;
@@ -81,7 +40,7 @@ symbol *find_symbol(char *symname)
 	x=sym_top;
 	while (x)
 	{
-		if (!strncmp(x->name, symname, sizeof(x->name)))
+		if (!(x->stortype & SYM_NO_CLASH) && !strncmp(x->name, symname, sizeof(x->name)))
 			return x;
 		x=x->next;
 	}
@@ -143,7 +102,6 @@ void read_syms(FILE *sym)
 			break;
 		}
 		ct++;
-		fprintf(stderr, "reading %s\n", sym_tmp.name);
 
 		/* Read in symbol specs */
 		if (
@@ -162,7 +120,18 @@ void read_syms(FILE *sym)
 		 * If we find one, amalgamate them if possible or abort if not.
 		 * If it's new, duplicate sym_tmp.
 		 */
-		s=find_symbol(sym_tmp.name);
+
+		if (!(sym_tmp.stortype & SYM_NO_CLASH)) {
+			s=find_symbol(sym_tmp.name);
+		} else {
+			if (!sym_tmp.defined)
+			{
+				fprintf(stderr, "<!> Symbol %s undefined and undefinable. Image corrupted, aborting.\n", sym_tmp.name);
+				exit(-1);
+			}
+
+			s=NULL;
+		}
 
 		if (!s) /* Phew, new one. */
 		{
@@ -179,7 +148,7 @@ void read_syms(FILE *sym)
 			{ /* Merge or conflict? */
 				if (s->defined)
 				{ /* Conflict */
-					fprintf(stderr, "<+> Symbol %s doubly defined. Aborting\n", s->name);
+					fprintf(stderr, "<!> Symbol %s doubly defined. Aborting\n", s->name);
 					exit(-1);
 				}
 				/* Merge */
@@ -228,10 +197,23 @@ int main(int argc, char **argv)
 
 	if (argc == 1)
 	{
+		fprintf(stderr,
+			"Link - Argante static linker. (C) 2001 James Kehl <ecks@optusnet.com.au>\n"
+			"No warranty yada yada yada.\n\n");
+
 		fprintf(stderr, "usage: %s <main.img> [2.img] [3.img] ...\nProduces lout.img\n", argv[0]);
 		exit(-1);
 	}
+	
+	fprintf(stderr, "<-> Producing lout.img\n"); 
+
 	out=fopen("lout.img", "wb");
+	if (!out)
+	{
+		perror("<!> fopen");
+		fprintf(stderr, "<!> Couldn't open output file. Aborting\n");
+	}
+
 
 	for(i=1;i<argc;i++)
 	{
@@ -240,6 +222,7 @@ int main(int argc, char **argv)
 		/* Some basic sanity checks */
 		if(fread(&bfmt, sizeof(bfmt), 1, in) != 1)
 		{
+			perror("<!> fread");
 			fprintf(stderr, "<!> %s has no header. Aborting\n", argv[i]); 
 			exit(-1);
 		}
@@ -270,19 +253,27 @@ int main(int argc, char **argv)
 		}
 
 		/* Just check if malloc worked... */
-		if (!data || !bytecode)
+		/* It's forgivable to have an empty section for the first file */
+		if ((!data && header.datasize > 0) || (!bytecode && header.bytesize > 0))
 		{
+			perror("<!> malloc");
 			fprintf(stderr, "<!> Malloc/realloc failed. Either %s or your memory is broken.\n", argv[i]);
 			exit(-1);
 		}
 		/* Load in the data + bytecode */
 		l=fread(&bytecode[this_bsec], sizeof(struct _bcode_op), bfmt.bytesize, in);
 		if(l != bfmt.bytesize)
+		{
+			perror("<!> fread");
 			fprintf(stderr, "<+> Could only read %d of %d bytecode packets from %s.\n", l, bfmt.bytesize, argv[i]);
+		}
 		
 		l=fread(&data[this_dsec], sizeof(int), bfmt.datasize, in);
 		if(l != bfmt.datasize)
+		{
+			perror("<!> fread");
 			fprintf(stderr, "<+> Could only read %d of %d data packets from %s.\n", l, bfmt.datasize, argv[i]);
+		}
 
 		/* Load in reloc table. Ick! */
 		read_syms(in);
@@ -296,14 +287,12 @@ int main(int argc, char **argv)
 	{
 		if (!s->defined)
 		{
-			fprintf(stderr, "<+> %s: unresolved symbol\n", s->name);
+			fprintf(stderr, "<!> %s: unresolved symbol\n", s->name);
 			exit(-1);
 		}
-		fprintf(stderr, "<.> %s: location %x size %x\n", s->name, s->location, s->size);
 		r=s->dep;
 		while (r)
 		{
-			fprintf(stderr, "<.> dep location %x stortype %d\n", r->location, r->stortype);
 			switch(r->reftype)
 			{
 				case REF_PTR:
@@ -322,42 +311,49 @@ int main(int argc, char **argv)
 				*((int *) &(((char *) data)[r->location]))=i;
 			else if (r->stortype & STATE_CODE)
 				*((int *) &(((char *) bytecode)[r->location]))=i;
-			else fprintf(stderr, "<!> Umm... wierd stuff happened\n");
+			else fprintf(stderr, "<+> Unknown storage type for symbol dependency.\n");
 			
 			r=r->next;
 		}
 		s=s->next;
 	}
 
+#define xfwrite(a, b, c, d) if (fwrite(a,b,c,d) != c) goto writerror
+	
 	/* Write compound image */
-	fwrite(&header, sizeof(header), 1, out);
-	fwrite(bytecode, sizeof(struct _bcode_op), header.bytesize, out);
-	fwrite(data, sizeof(int), header.datasize, out);
+	xfwrite(&header, sizeof(header), 1, out);
+	xfwrite(bytecode, sizeof(struct _bcode_op), header.bytesize, out);
+	xfwrite(data, sizeof(int), header.datasize, out);
 	/* Write reloc symbols. Recursive linking, anyone? */
 	s=sym_top;
 	while (s)
 	{
-		fwrite(&s->name, strlen(s->name) + 1, 1, out);
-		fwrite(&s->location, sizeof(s->location), 1, out);
-		fwrite(&s->size, sizeof(s->size), 1, out);
-		fwrite(&s->stortype, sizeof(s->stortype), 1, out);
+		xfwrite(&s->name, strlen(s->name) + 1, 1, out);
+		xfwrite(&s->location, sizeof(s->location), 1, out);
+		xfwrite(&s->size, sizeof(s->size), 1, out);
+		xfwrite(&s->stortype, sizeof(s->stortype), 1, out);
 		r=s->dep;
 		while (r)
 		{
-			fwrite(&r->reftype, sizeof(r->reftype), 1, out);
-			fwrite(&r->stortype, sizeof(r->stortype), 1, out);
-			fwrite(&r->location, sizeof(r->location), 1, out);
+			xfwrite(&r->reftype, sizeof(r->reftype), 1, out);
+			xfwrite(&r->stortype, sizeof(r->stortype), 1, out);
+			xfwrite(&r->location, sizeof(r->location), 1, out);
 			r=r->next;
 		}
 		/* -1 for reftype terminates the chain. */ 
-		fwrite(&c1, sizeof(r->reftype), 1, out);
-		fwrite(&c1, sizeof(r->stortype), 1, out);
-		fwrite(&n1, sizeof(r->location), 1, out);
+		xfwrite(&c1, sizeof(r->reftype), 1, out);
+		xfwrite(&c1, sizeof(r->stortype), 1, out);
+		xfwrite(&n1, sizeof(r->location), 1, out);
 		
 		s=s->next;
 	}
 
 	fprintf(stderr, "<-> Linking complete.\n");
 	return 0;
+
+writerror:
+	perror("<!> fwrite");
+	fprintf(stderr, "<!> Production of output image failed. \n");
+	return -1;
 }
 
