@@ -21,13 +21,13 @@ else
 all: warn ripcd
 endif
 
-ripcd: ripcd.c
-	$(CC) $(CFLAGS) -DCFGFILE='"r1"' -c $^ -o $@.o
+ripcd: ripcd.c ssl.h
+	$(CC) $(CFLAGS) -DCFGFILE='"r1"' -c $< -o $@.o
 	$(CC) $(CFLAGS) $@.o $(LDLIBS) -o $@
 	ln -sf ripc-daemon/$@ ../.
 
-ripcd.c: ssl.h
-	@echo "" >ssl.h
+ssl.h:
+	@echo "/*** Auto-generated file. Do not edit! ***/" >ssl.h
 	@echo "#include \""$(word 1,$(shell locate ssl/ssl.h))"\"" >>ssl.h
 	@echo "#include \""$(word 1,$(shell locate ssl/err.h))"\"" >>ssl.h
 
