@@ -567,26 +567,55 @@ void cmd_sub_immptr_uptr (int c) {
 
 // cmd_sub_uptr
 
-void cmd_sub_uptr (int c) {
-  int work2;
-  int a1,a2;
-  int t2;
+void cmd_sub_uptr_immediate (int c) {
+  int a1;
 
-	EVAL_A2_T2;
-         if (t2 == TYPE_IMMEDIATE) { work2=a2; } else
-         if (t2 == TYPE_UREG) { UREGVAL(work2,a2) } else
-         if (t2 == TYPE_SREG) { SREGVAL(work2,a2) } else
-         if (t2 == TYPE_FREG) { FREGVAL(work2,a2) } else
-         if (t2 == TYPE_IMMPTR) { IMMPTRVAL(work2,a2) } else
-         if (t2 == TYPE_UPTR)  { UPTRVAL(work2,a2) } else {
-           non_fatal(ERROR_BAD_PARAM,"SUB: Bad parameter #2",c);
-           return;
-         }
-
-	 EVAL_A1;
-	 set_mem_value(c,UREG(a1),get_mem_value(c,UREG(a1))-work2);
+	UREGVAL(a1,A1);
+	set_mem_value(c,a1,get_mem_value(c,a1)-A2);
 }
 
+void cmd_sub_uptr_ureg (int c) {
+  int a1;
+
+	UREGVAL(a1,A1);
+	set_mem_value(c,a1,get_mem_value(c,a1)-UREG(A2));
+}
+
+void cmd_sub_uptr_sreg (int c) {
+  int a1;
+
+  	UREGVAL(a1,A1);
+	set_mem_value(c,a1,get_mem_value(c,a1)-SREG(A2));
+}
+
+void cmd_sub_uptr_freg (int c) {
+  int a1;
+  float f;
+
+	UREGVAL(a1,A1);
+	*((int *)&f)=get_mem_value(c,a1);
+	f-=FFREG(A2);
+	set_mem_value(c,a1,*((int *)&f));
+}
+
+void cmd_sub_uptr_immptr (int c) {
+  int a1,a2;
+
+  	IMMPTRVAL(a2,A2);
+	UREGVAL(a1,A1);
+	set_mem_value(c,a1,get_mem_value(c,a1)-a2);
+}
+
+void cmd_sub_uptr_uptr (int c) {
+  int a1,a2;
+  
+  	UPTRVAL(a2,A2);
+	UREGVAL(a1,A1);
+	set_mem_value(c,a1,get_mem_value(c,a1)-a2);
+}
+
+
+// cmd_sub_freg
 
 void cmd_sub_freg (int c) {
   int work2;

@@ -665,7 +665,6 @@ void jit_init() {
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_SUB*36+(TYPE_FREG+1)+6*i]=cmd_sub_freg;
-		JIT[CMD_SUB*36+(TYPE_UPTR+1)+6*i]=cmd_sub_uptr;
 	}
 
 	JITS(CMD_SUB,TYPE_UREG,TYPE_IMMEDIATE)=cmd_sub_ureg_immediate;
@@ -675,19 +674,26 @@ void jit_init() {
 	JITS(CMD_SUB,TYPE_UREG,TYPE_IMMPTR)=cmd_sub_ureg_immptr;
 	JITS(CMD_SUB,TYPE_UREG,TYPE_UPTR)=cmd_sub_ureg_uptr;
 
-	JITS(CMD_SUB,TYPE_SREG,TYPE_IMMEDIATE)=cmd_sub_ureg_immediate;
-	JITS(CMD_SUB,TYPE_SREG,TYPE_UREG)=cmd_sub_ureg_ureg;
-	JITS(CMD_SUB,TYPE_SREG,TYPE_SREG)=cmd_sub_ureg_sreg;
-	JITS(CMD_SUB,TYPE_SREG,TYPE_FREG)=cmd_sub_ureg_freg;
-	JITS(CMD_SUB,TYPE_SREG,TYPE_IMMPTR)=cmd_sub_ureg_immptr;
-	JITS(CMD_SUB,TYPE_SREG,TYPE_UPTR)=cmd_sub_ureg_uptr;
+	JITS(CMD_SUB,TYPE_SREG,TYPE_IMMEDIATE)=cmd_sub_sreg_immediate;
+	JITS(CMD_SUB,TYPE_SREG,TYPE_UREG)=cmd_sub_sreg_ureg;
+	JITS(CMD_SUB,TYPE_SREG,TYPE_SREG)=cmd_sub_sreg_sreg;
+	JITS(CMD_SUB,TYPE_SREG,TYPE_FREG)=cmd_sub_sreg_freg;
+	JITS(CMD_SUB,TYPE_SREG,TYPE_IMMPTR)=cmd_sub_sreg_immptr;
+	JITS(CMD_SUB,TYPE_SREG,TYPE_UPTR)=cmd_sub_sreg_uptr;
 
-	JITS(CMD_SUB,TYPE_IMMPTR,TYPE_IMMEDIATE)=cmd_sub_ureg_immediate;
-	JITS(CMD_SUB,TYPE_IMMPTR,TYPE_UREG)=cmd_sub_ureg_ureg;
-	JITS(CMD_SUB,TYPE_IMMPTR,TYPE_SREG)=cmd_sub_ureg_sreg;
-	JITS(CMD_SUB,TYPE_IMMPTR,TYPE_FREG)=cmd_sub_ureg_freg;
-	JITS(CMD_SUB,TYPE_IMMPTR,TYPE_IMMPTR)=cmd_sub_ureg_immptr;
-	JITS(CMD_SUB,TYPE_IMMPTR,TYPE_UPTR)=cmd_sub_ureg_uptr;
+	JITS(CMD_SUB,TYPE_IMMPTR,TYPE_IMMEDIATE)=cmd_sub_immptr_immediate;
+	JITS(CMD_SUB,TYPE_IMMPTR,TYPE_UREG)=cmd_sub_immptr_ureg;
+	JITS(CMD_SUB,TYPE_IMMPTR,TYPE_SREG)=cmd_sub_immptr_sreg;
+	JITS(CMD_SUB,TYPE_IMMPTR,TYPE_FREG)=cmd_sub_immptr_freg;
+	JITS(CMD_SUB,TYPE_IMMPTR,TYPE_IMMPTR)=cmd_sub_immptr_immptr;
+	JITS(CMD_SUB,TYPE_IMMPTR,TYPE_UPTR)=cmd_sub_immptr_uptr;
+
+	JITS(CMD_SUB,TYPE_UPTR,TYPE_IMMEDIATE)=cmd_sub_uptr_immediate;
+	JITS(CMD_SUB,TYPE_UPTR,TYPE_UREG)=cmd_sub_uptr_ureg;
+	JITS(CMD_SUB,TYPE_UPTR,TYPE_SREG)=cmd_sub_uptr_sreg;
+	JITS(CMD_SUB,TYPE_UPTR,TYPE_FREG)=cmd_sub_uptr_freg;
+	JITS(CMD_SUB,TYPE_UPTR,TYPE_IMMPTR)=cmd_sub_uptr_immptr;
+	JITS(CMD_SUB,TYPE_UPTR,TYPE_UPTR)=cmd_sub_uptr_uptr;
 
 	printf(".");
 	fflush(stdout);

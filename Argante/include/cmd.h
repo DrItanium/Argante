@@ -107,7 +107,13 @@ extern void cmd_sub_immptr_freg (int c);
 extern void cmd_sub_immptr_immptr (int c);
 extern void cmd_sub_immptr_uptr (int c);
 
-extern void cmd_sub_uptr (int c);
+extern void cmd_sub_uptr_immediate (int c);
+extern void cmd_sub_uptr_ureg (int c);
+extern void cmd_sub_uptr_sreg (int c);
+extern void cmd_sub_uptr_freg (int c);
+extern void cmd_sub_uptr_immptr (int c);
+extern void cmd_sub_uptr_uptr (int c);
+
 extern void cmd_sub_freg (int c);
 
 extern void cmd_mul_ureg (int c);
