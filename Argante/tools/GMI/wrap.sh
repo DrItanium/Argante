@@ -1,4 +1,15 @@
 #!/bin/bash
+#
+#  Argante virtual OS
+#  ------------------
+#
+#  GMI wrapper script
+#
+#  Status: done
+#
+#  Author:     James Kehl <ecks@optusnet.com.au>
+#  Maintainer: James Kehl <ecks@optusnet.com.au>
+#
 
 # My which insists on printing an error message.
 # This shuts it up.
