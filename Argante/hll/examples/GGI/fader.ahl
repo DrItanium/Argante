@@ -1,0 +1,62 @@
+/*
+    Argante Virtual OS
+    ------------------
+
+    GGI Fader Example
+
+    This example opens a default GGI visual and fades the screen
+    between some different colors. Works on all kinds of visuals,
+    but isn't optimal on CLUT visuals (where changing the palette
+    would be faster and smoother).
+*/
+
+#include "include/stdinc.ahh"
+#include "include/ggi.ahh"
+
+#cstring visualname "Demo"
+
+type color is structure {
+    red   : unsigned;
+    green : unsigned;
+    blue  : unsigned;
+    alpha : unsigned;
+}
+
+procedure Main() {
+    local {
+        name   : String;
+        visual : ggi_visual;
+        error  : unsigned;
+        pvalue : ggi_pixel;
+        cvalue : color := { 0x9900, 0x0000, 0xFF00, 0xFFFF, }
+        char   : Character;
+    }
+
+    name.data   := address visualname;
+    name.length := visualname_bytelength;
+
+    ggiOpen( name, visual );
+    ggiSetSimpleMode( visual, 0, 0, 0, 0, error );
+
+    guard {
+        ggiSetColorfulPalette( visual, error );
+    }
+
+    while cvalue.blue > 0 {
+        ggiMapColor( visual, cvalue.red, cvalue.green, cvalue.blue, cvalue.alpha, pvalue );
+        ggiSetGCForeground( visual, pvalue, error );
+        ggiFillscreen( visual, error );
+
+        cvalue.green += 0x0100;
+        cvalue.blue  -= 0x0100;
+    }
+
+    // Wait for a keypress before shutting down.
+    ggiGetc( visual, char );
+    ggiClose( visual, error );
+
+    // Just a minimal exception handler.
+    exception {
+        case default; ignore;  // We don't care. :-)
+    }
+}
