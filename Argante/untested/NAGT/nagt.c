@@ -110,6 +110,36 @@ void warn(char *message)
 	fprintf(stderr, "<+> Line %d: %s\n", lineno, message);
 }
 
+void end_context()
+{
+	symbol *s, *d;
+	context *x;
+	int count;
+	s=context_head->syms;
+	count=0;
+	while(s)
+	{
+		d=s->next;
+		if (!s->defined)
+		{
+			fprintf(stderr, "<+> Symbol %s undefined\n", s->name);
+			count++;
+		} else
+			free(s);
+		s=d;
+	}
+
+	if (count)
+	{
+		fprintf(stderr, "<!> Line %d: %d symbols are undefined at context termination\n", lineno, count);
+		exit(1);
+	}
+
+	x=context_head->prev;
+	free(context_head);
+	context_head=x;
+}
+
 /* BlEh! Defines. A Hack... */
 int subst_define(char *in, char *s1, char *s2, char **ret)
 {
@@ -259,7 +289,7 @@ void define_symbol()
 		curr_symbol->location=0;
 		curr_symbol->defined=0;
 	} else {
-		depend *d;
+		depend *d, *n;
 		/* Arrrrrgh. Kernel braindeath. */
 		if (curr_symbol->stortype==STATE_DATA)
 			curr_symbol->location/=4;
@@ -273,6 +303,7 @@ void define_symbol()
 			int i;
 			FILE *f;
 	//		fprintf(stderr, "<-> ... %s adjusting %d %d %d\n", curr_symbol->name, d->location, d->stortype, d->reftype);
+			n=d->next;
 			f=(d->stortype==STATE_CODE) ? out_bcode : out_data;
 			fseek(f, d->location, SEEK_SET);
 			switch(d->reftype)
@@ -292,8 +323,11 @@ void define_symbol()
 			fwrite(&i, sizeof(int), 1, f);
 			fseek(f, 0, SEEK_END);
 
-			d=d->next;
+			/* Free deps & clear chain */
+			free(d);
+			d=n;
 		}
+		curr_symbol->dep=NULL;
 	}
 	curr_symbol=NULL;
 }
@@ -484,7 +518,12 @@ char *do_data(char *ln)
 
 	if(*ln==0)
 		return NULL;
-	
+
+	/* Is it a special op? */
+	if (!strcmp(ln, "block "))
+		return NULL; /* Abandon it. We are in block mode always. I think. */
+	if (!strcmp(ln, "repeat "));
+
 	/* Is it a string? */
 	if(ln[0]=='"')
 	{
@@ -815,6 +854,8 @@ int main(int argc, char *argv[])
 
 	/* Just in case */
 	define_symbol();
+	end_context();
+
 	/* Finished, at last. Merge files into one. */
 	fseek(out_bcode, 0, SEEK_END);
 	fseek(out_data, 0, SEEK_END);
