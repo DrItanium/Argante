@@ -1,0 +1,62 @@
+Globalization and precalculation [chodorowski]
+==============================================
+
+I was digging aroung in the kernel the other day, and came up with
+something that should improve the performance a bit.
+
+Apart from making some variables global (like 'c' and others) to improve
+performance, it also makes sense to precalculate some things; namely the
+initial bytecode offset. Take for example cmd_add_sreq_immptr, which
+looks like this:
+
+void cmd_add_sreg_immptr( int c ) {
+    int a2;
+
+    IMMPTRVAL(a2,A2);
+    SREG(A1)+=a2;
+}
+
+Let us expand the macros (ignoring IMMPTRVAL and SREG, since they are
+quite trivial), and we get the following:
+
+void cmd_add_sreg_immptr( int c ) {
+    int a2;
+
+    IMMPTRVAL(a2,*(((int*)&cpu[c].bytecode[cpu[c].IP*12+4])+1));
+    SREG(*((int*)&cpu[c].bytecode[cpu[c].IP*12+4]))+=a2;
+}
+
+We see that the initial offset into the bytecode array (ie. the index
+for the current instruction) is calculated twice. And with a lot of
+operations! If we would calculate &cpu[c].bytecode[cpu[c].IP*12] and
+store it in a global variable (say "bytecode_addr"), we could rewrite
+the function as:
+
+void cmd_add_sreg_immptr (int c) {
+    int a2;
+
+    IMMPTRVAL(a2, *(bytecode_addr+8));
+    SREG( *(bytecode_addr+4) ) += a2;
+}
+
+This would save quite some operations. You might argue however, that a
+smart compiler should optimize these operations away, but IMHO we really
+can't rely on that in such performance-sensitive areas.
+
+Another idea I got right now is that you can simplify the calculation of
+bytecode_addr as long as the IP increases linearly. Ie, you could do...
+
+bytecode_addr += 12;
+
+...instead of...
+
+bytecode_addr = &cpu[c].bytecode[cpu[c].IP*12];
+
+...which should improve performance. This breakes down when you use opcodes
+that change the IP explicitly (CALL, JMP, RET, etc), but these opcodes
+could update bytecode_addr themselves (just like they have to do with the
+IP). Overall this should still give increased performance.
+
+BTW: I'm going to write some simple benchmarks so we can actually test how
+different algorithms influence the number of opcodes executed per second
+(as oposed to saying that do_cycles takes some % of the execution time).
