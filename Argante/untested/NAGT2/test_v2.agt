@@ -1,5 +1,6 @@
 !SIGNATURE	"Argante v2 test"
 !PRIORITY	0x2710
+!DOMAINS	1,2,3,4,5
 
 # Some various data items with Endianness data
 .DATA
@@ -9,7 +10,7 @@
 	s:10000
 	u:010000
 	u:0x10101
-	u:"FOOF"
+	t:"FOOF" repeat 20
 :float_array
 	0.12
 	0.121
@@ -19,7 +20,7 @@
 .DATA
 :fake
 # CR-LF, as a string
-	t:0x1310
+	t:0x0d0a
 .CODE
 	mov	u:r1, s:100
 	mov	u:r0, 10000
@@ -31,6 +32,7 @@
 	div	f:r1, *f:%float_array
 	mov	u:r0, f:r1
 	sub	u:r0, *u:^fake
-	mul	*u::fake, :non_existent_addy
+	mul	*u::fake, *u::int_array 
+	syscall $IO_Putstring
 	halt
 }

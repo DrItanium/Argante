@@ -26,6 +26,8 @@
  * -------------------------------------------------------------------------
  * 19/06/01: shykta
  * - change everything in NAGT1 for AOSr2 bformat.
+ * 24/06/01: shykta
+ * - tiny change to use 'anyval' unions like my proposed kernel
  *
  */
 #define _GNU_SOURCE
@@ -70,37 +72,7 @@ struct defines {
 
 static struct defines	*defined = NULL;
 
-#include "bcode_op.h"
-#include "data_blk.h"
-
-#define STATE_OPTION 0
-#define STATE_DATA 1
-#define STATE_CODE 2
-
-typedef struct _symbol symbol;
-typedef struct _areloc areloc;
-
-struct _symbol {
-	struct stable s;
-	symbol *next;
-	areloc *reloc;
-};
-
-struct _areloc {
-	struct reloc r;
-	areloc *next;
-};
-
-typedef struct _context context;
-struct _context {
-	symbol *syms;
-	context *prev;
-};
-
-/* Note that reloc entries always come just after their respective symbol. */
-#define RELOC_ADDR		1
-#define RELOC_SIZE_DWORD	2
-#define RELOC_SIZE_BYTE		3
+#include "nagt.h"
 
 /*
  * Syntax:
@@ -279,6 +251,11 @@ static void define_symbol()
 
 	curr_symbol->s.size=sz-curr_symbol->s.addr;
 
+	/* XXX: What does this do?
+	 * Apparently it adds the symbol if a symbol with that name
+	 * (hopefully the same symbol) can already be found. I hope.
+	 * Does it work?
+	 */
 	if (!find_symbol(curr_symbol->s.fn))
 	{
 		curr_symbol->next=curr_symbol_context->syms;
@@ -325,7 +302,7 @@ static void define_symbol()
 					(*(int *) (&((char *) blobstak_data(code_segment))[d->r.addr])),
 					i); */
 
-				*(int *) (&((char *) blobstak_data(code_segment))[d->r.addr])=i;
+				((anyval *) (&((char *) blobstak_data(code_segment))[d->r.addr]))->val.u=i;
 			}
 
 			d=d->next;
@@ -363,13 +340,13 @@ static void end_context()
 	symbol *s, *d;
 	context *x;
 	int count;
-	s=context_head->syms;
-	count=0;
 
 	/* Symbols shouldn't finish in a higher context than they started in
 	 * (other way round is OK) */
 	define_symbol();
-	
+	s=context_head->syms;
+	count=0;
+
 	x=context_head->prev;
 	while(s)
 	{
@@ -474,7 +451,7 @@ static void do_symbol(char *ln)
 
 static void do_option(char *ln)
 {
-	char *tmp, *arg2;
+	char *tmp, *arg2, *ret;
 	int itmp, itmp2;
 	
 	if (state != STATE_OPTION)
@@ -512,11 +489,14 @@ static void do_option(char *ln)
 	}
 	else if (!strcasecmp(ln, "PRIORITY"))
 	{
-		pspec.priority=atoi(arg2);
+		/* Erm... hehehe, I really didn't see this one... */
+		pspec.priority=strtoul(arg2, &ret, 0);
+		if (*ret) error("Trailing garbage.");
 	}
 	else if (!strcasecmp(ln, "INITDOMAIN"))
 	{
-		pspec.init_domain=atoi(arg2);
+		pspec.init_domain=strtoul(arg2, &ret, 0);
+		if (*ret) error("Trailing garbage.");
 	}
 	else if (!strcasecmp(ln, "DOMAINS"))
 	{
@@ -526,7 +506,8 @@ static void do_option(char *ln)
 		tmp=strtok(arg2, " \t,");
 		while(tmp && itmp < MAX_DOMAINS)
 		{
-			pspec.domains[itmp]=atoi(tmp);
+			pspec.domains[itmp]=strtoul(tmp, &ret, 0);
+			if (*ret) error("Trailing garbage.");
 			if (!pspec.domains[itmp]) warn("Domains listed after zero will be ignored");
 			tmp=strtok(NULL, " \t,");
 			itmp++;
@@ -683,6 +664,15 @@ static char *do_data(char *ln)
 			}
 		}
 		ln++;
+		/* ummm - duh... */
+		if (n) {
+			/* Fill the rest of the packet with NUL's */
+			while(n % sizeof(pkt.u.dt_string)) {
+				pkt.u.dt_string[n]=0;
+				n++;
+			}
+			blobstak_pkt_add(&dataseg_now, &pkt);
+		}
 		/* Recurse; we may have "stuff" 0x81 "stuff" to deal with */
 		return ln;
 	}
@@ -764,7 +754,7 @@ static char *do_data(char *ln)
 }
 
 /* ICK #2 */
-static void arg_parse(char *ln, unsigned long *out, char *type, int offs)
+static void arg_parse(char *ln, anyval *out, char *type, int offs)
 {
 	int i;
 	char *z, *ret;
@@ -805,11 +795,9 @@ static void arg_parse(char *ln, unsigned long *out, char *type, int offs)
 	if((ln[strlen(z)]=='f' && strncmp(ln, "0x", 2)) || strchr(ln, '.'))
 	{
 		float f;
-		long *z;
 		if (sizeof(float) != sizeof(long)) error("sizeof(float) is somewhat odd");
 		f=strtod(ln, &ret);
-		z=(long *) &f;
-		*out=*z;
+		out->val.f=f;
 
 		if (!type_set) *type=TYPE_FLOAT;
 		type_high|=TYPE_IMMEDIATE;
@@ -828,7 +816,7 @@ static void arg_parse(char *ln, unsigned long *out, char *type, int offs)
 			{
 				if (!strcasecmp(z,sys[i].name))
 				{
-					*out=sys[i].num;
+					out->val.u=sys[i].num;
 					*type|=type_high; return;
 				}
 			}
@@ -840,7 +828,7 @@ static void arg_parse(char *ln, unsigned long *out, char *type, int offs)
 
 			s=find_symbol_f(z);
 			add_depend( RELOC_ADDR, blobstak_size(code_segment) + offs, s);
-			*out=s->s.addr;
+			out->val.u=s->s.addr;
 			*type|=type_high; return;
 		case '^': /* char size */
 			if (!type_set) *type=TYPE_UNSIGNED;
@@ -848,7 +836,7 @@ static void arg_parse(char *ln, unsigned long *out, char *type, int offs)
 			
 			s=find_symbol_f(z);
 			add_depend( RELOC_SIZE_BYTE, blobstak_size(code_segment) + offs, s);
-			*out=s->s.size * sizeof(int);
+			out->val.u=s->s.size * sizeof(int);
 			*type|=type_high; return;
 		case '%': /* dword size */
 			if (!type_set) *type=TYPE_UNSIGNED;
@@ -856,7 +844,7 @@ static void arg_parse(char *ln, unsigned long *out, char *type, int offs)
 
 			s=find_symbol_f(z);
 			add_depend( RELOC_SIZE_DWORD, blobstak_size(code_segment) + offs, s);
-			*out=s->s.size;
+			out->val.u=s->s.size;
 			*type|=type_high; return;
 		case 'r': /* Cool, registers. */
 			// if (type_high & TYPE_POINTER)
@@ -874,14 +862,13 @@ static void arg_parse(char *ln, unsigned long *out, char *type, int offs)
 	
 	 /* Convert an integer (this applies to the 15 in r15 too) */
 	if (type_set && *type & TYPE_SIGNED && !(type_high & TYPE_REGISTER))
-		i=strtol(z, &ret, 0);
+		out->val.s=strtol(z, &ret, 0);
 	else
 	{
 		if (!type_set) *type=TYPE_UNSIGNED;
-		i=strtoul(z, &ret, 0);
+		out->val.u=strtoul(z, &ret, 0);
 	}
 
-	*out=i;
 	if (ret==z) error("Garbage numeric.");
 
 	*type|=type_high;
@@ -922,7 +909,7 @@ static void do_code(char *ln)
 		ict=1;
 		while (*arg1 && my_isspace(*arg1))
 			arg1++;
-		arg_parse(arg1, &bop.a1, &t1, 4);
+		arg_parse(arg1, &bop.a1, &t1, 4); /* Fingers crossed! */
 		bop.type|=TYPE_A1(t1);
 	} 
 	if (arg2) {
@@ -991,6 +978,12 @@ int main(int argc, char *argv[])
 	int z=1;
 	char *ln, *tmp;
 
+	if (sizeof(anyval) != sizeof(int))
+	{
+		fprintf(stderr, "Nasty architecture you have there.\n");
+		exit(-1);
+	}
+	
 	if (argc < 3)
 	{
 		fprintf(stderr, 
