@@ -17,7 +17,7 @@ MODULES = modules/display.so modules/fs.so modules/ipc.so modules/network.so \
 	  modules/advmem.so modules/access.so modules/locallib.so modules/math.so \
           modules/packet.so modules/gfx.so
 
-TOOLS	= tools/actest tools/binedit tools/disasm tools/vcpucons tools/agtexe
+TOOLS	= tools/actest tools/binedit tools/disasm tools/vcpucons tools/agtexe guis
 
 CMPLR	= compiler/agtc
 
@@ -48,8 +48,7 @@ ${MODULES}:
 $(OFILE): $(MAIN) $(OBJECTS) ${MODULES}
 	$(CC) $(LIBS) $(CFLAGS) $(MAIN) -o $(OFILE) $(OBJECTS) -D IDSTR=\"$(IDSTR)\" 
 	strip $(OFILE)
-	cd tools/ripc-daemon; test -f /usr/include/openssl/ssl.h && make -f Makefile.ssl || true
-	cd tools/ripc-daemon; test -f /usr/include/openssl/ssl.h || make -f Makefile.nossl
+	cd tools/ripc-daemon; make
 
 compiler: $(CMPLR)
 
@@ -94,6 +93,3 @@ install: clean all
 	cp compiler/agtc /usr/bin/
 	cp hll/ahlt hll/elim hll/acc /usr/bin/
 	cp Documentation/man/* /usr/man/man1
-
-gtkagt:
-	test -f /usr/include/gtk/gtk.h && ( cd tools/gtkagt;make );true

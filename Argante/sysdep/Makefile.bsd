@@ -49,8 +49,7 @@ $(OFILE): $(MAIN) $(OBJECTS) modules
 	  $(CC) -shared $(CFLAGS) modules/$$i.c -o modules/$$i.so; \
 	  strip modules/$$i.so; \
 	done
-	cd tools/ripc-daemon; test -f /usr/include/openssl/ssl.h && make -f Makefile.ssl || true
-	cd tools/ripc-daemon; test -f /usr/include/openssl/ssl.h || make -f Makefile.nossl
+	cd tools/ripc-daemon; make
 
 
 compiler: $(CMPLR)
