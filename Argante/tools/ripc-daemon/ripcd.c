@@ -1,6 +1,6 @@
 
-/* 
-Argante rIPC daemon v0.5 
+/*
+Argante rIPC daemon v0.5
 
 todo:
 - primary: make this code understandable (rewrite this from scratch ;P)
@@ -9,7 +9,7 @@ todo:
 - add some security features (DoS protections especially)
 - clean up awful error handling
 
-Marcin Dawcewicz 
+Marcin Dawcewicz
 
 */
 
@@ -28,6 +28,7 @@ Marcin Dawcewicz
 #include <fcntl.h>
 #include <errno.h>
 #include <syslog.h>
+#include <string.h>
 
 char* CONFIG=CFGFILE;
 
