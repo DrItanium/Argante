@@ -12,7 +12,7 @@
 
 .DATA
 
-.define     TIMES   9999999 # Execute loop body 10000000 times.
+.define     TIMES   10000000 # Execute loop body this many times.
 
 :sNL
     "\n"
