@@ -1,0 +1,73 @@
+# Flow control benchmark
+#
+# This is a simple benchmarking program that tests the performance
+# of various flow control related opcodes. The following tests are
+# performed:
+#
+# + Function call overhead, ie. CALL and RET.
+#
+
+!SIGNATURE      "Flow control benchmark"
+!PRIORITY       10000
+
+.DATA
+
+.define     TIMES   9999999 # Execute loop body 10000000 times.
+
+:sNL
+    "\n"
+:sFunctionCalls
+    "Function calls / second: "
+
+.CODE
+    twait   2000            # Wait for the prompt so it doesn't screw
+                            # our output later on.
+
+    mov     u0,:sFunctionCalls
+    mov     u1,^sFunctionCalls
+    syscall $IO_PUTSTRING
+
+    mov     s0,TIMES        # Initialize loop counter
+
+    syscall $LOCAL_GETTIME
+    mov     u4,u0           # Save the seconds
+    mov     u5,u1           # Save the microseconds
+
+:loop
+    call    :func
+    loop    :loop
+
+    syscall $LOCAL_GETTIME
+    sub     u0,u4           # Calculate seconds elapsed
+    mov     u4,u0           # Save the result
+
+    mov     s0,u1           # Convert microseconds to signed
+    sub     s0,u5           # Calculate microsecond difference
+    ifabo   s0,0            # Do we need to compensate?
+    jmp     :skip
+
+    sub     u4,1            # Subtract one second
+    add     s0,1000000      # Compensate the microseconds
+    mov     u5,s0           # Save the result
+
+:skip
+    mov     f1,u4           # Convert seconds to float
+    mov     f2,u5           # Convert microseconds to float
+    div     f2,1000000.0    # Recalculate microseconds to seconds
+    add     f1,f2           # Add them together
+
+    mov     u0,TIMES
+    add     u0,1            # Compensate
+    mov     f0,u0           # Convert to float
+    div     f0,f1           # Calculate function calls / second
+
+    syscall $IO_PUTFLOAT
+
+    mov     u0,:sNL
+    mov     u1,^sNL
+    syscall $IO_PUTSTRING
+
+    halt
+
+:func
+    ret     0               # Return immediately
