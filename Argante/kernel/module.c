@@ -74,8 +74,6 @@ void load_module(char* path) {
     return;
   }
 
-  usleep(100000);
-
   bzero(&mod[n],sizeof(struct sysentry));
   x=dlopen(path,RTLD_LAZY|RTLD_GLOBAL);
 

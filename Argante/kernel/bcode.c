@@ -32,6 +32,9 @@
 #include "debugger.h"
 #include "cmd.h"
 
+extern int curr_cpu;
+extern struct vcpu_struct *curr_cpu_p;
+
 void * JIT [(1+CMD_INVALID)*36];
 
 #define JITS(cmd,t1,t2)	JIT[cmd*36+(t1+1)+6*(t2)]
@@ -54,55 +57,57 @@ int got_nonfatal_round=0;
 void non_fatal(int,char*,int);
 extern int failure;
 
-inline void push_on_stack(int c,unsigned int x) {
+// Pushes current VCPU's (curr_cpu, curr_cpu_p) IP onto the top of it's stack.
+
+inline void push_on_stack() {
   CHECK_FAILURE_FN;
 
-  if (cpu[c].stack_ptr>=MAX_STACK) {
-    non_fatal(ERROR_STACK_OVER,"Cannot push - stack overflow",c);
+  if (curr_cpu_p->stack_ptr>=MAX_STACK) {
+    non_fatal(ERROR_STACK_OVER,"Cannot push - stack overflow",curr_cpu);
     return;
   }
   
-  if (cpu[c].stack_ptr>=cpu[c].dssiz) {
+  if (curr_cpu_p->stack_ptr>=curr_cpu_p->dssiz) {
     void* q;
-    cpu[c].dssiz+=STACK_GROW;
-    q=realloc(cpu[c].stack,4*cpu[c].dssiz);
+    curr_cpu_p->dssiz+=STACK_GROW;
+    q=realloc(curr_cpu_p->stack,4*curr_cpu_p->dssiz);
     if (!q) {
-      non_fatal(ERROR_STACK_OVER,"Cannot resize stack",c);
+      non_fatal(ERROR_STACK_OVER,"Cannot resize stack",curr_cpu);
       return;
     }
-    cpu[c].stack=q;
-    q=realloc(cpu[c].ex_st,4*(cpu[c].dssiz+1));
+    curr_cpu_p->stack=q;
+    q=realloc(curr_cpu_p->ex_st,4*(curr_cpu_p->dssiz+1));
     if (!q) {
-      non_fatal(ERROR_STACK_OVER,"Cannot resize exception stack",c);
+      non_fatal(ERROR_STACK_OVER,"Cannot resize exception stack",curr_cpu);
       return;
     }
-    cpu[c].ex_st=q;
+    curr_cpu_p->ex_st=q;
   }
   
-  (*cpu[c].stack)[cpu[c].stack_ptr++]=x;
-  (*cpu[c].ex_st)[cpu[c].stack_ptr]=0;
+  (*curr_cpu_p->stack)[curr_cpu_p->stack_ptr++]=curr_cpu_p->IP;
+  (*curr_cpu_p->ex_st)[curr_cpu_p->stack_ptr]=0;
 }
 
+// Pops an address from the current VCPU's (curr_cpu, curr_cpu_p) call stack.
 
-inline unsigned int pop_from_stack(int c) {
+inline unsigned int pop_from_stack() {
   unsigned int ret;
 
   CHECK_FAILURE_FN2;
 
-  if (cpu[c].stack_ptr>0) ret=(*cpu[c].stack)[--cpu[c].stack_ptr]; else {
-    non_fatal(ERROR_STACK_UNDER,"Attempt to pop from empty stack",c);
+  if (curr_cpu_p->stack_ptr>0) ret=(*curr_cpu_p->stack)[--curr_cpu_p->stack_ptr]; else {
+    non_fatal(ERROR_STACK_UNDER,"Attempt to pop from empty stack",curr_cpu);
     return 0;
   }
 
-  if (cpu[c].saved_ex)
-    if (cpu[c].stack_ptr==cpu[c].ex_at) {
-//    printk("RET - Restoring saved_ex %d\n",cpu[c].saved_ex);
-      (*cpu[c].ex_st)[cpu[c].stack_ptr]=cpu[c].saved_ex;
-      cpu[c].saved_ex=0;
+  if (curr_cpu_p->saved_ex)
+    if (curr_cpu_p->stack_ptr==curr_cpu_p->ex_at) {
+//    printk("RET - Restoring saved_ex %d\n",curr_cpu_p->saved_ex);
+      (*curr_cpu_p->ex_st)[curr_cpu_p->stack_ptr]=curr_cpu_p->saved_ex;
+      curr_cpu_p->saved_ex=0;
     }
 
   return ret;
-
 }
 
 inline void set_mem_value(int c,unsigned int addr,int value);
@@ -430,7 +435,7 @@ void non_fatal(int code,char* desc,int c) {
     cpu[c].saved_ex=(*cpu[c].ex_st)[x];
     cpu[c].ex_at=cpu[c].stack_ptr;
     (*cpu[c].ex_st)[x]=0;
-    push_on_stack(c,cpu[c].IP);
+    push_on_stack();
     nofatalinside=0;
     cpu[c].IP=cpu[c].saved_ex; 
     change=0;
@@ -515,12 +520,10 @@ void jit_init() {
 	printf("Seeding JIT table: ");
 	printf(".");
 	fflush(stdout);
-	usleep(100);
 
   	for (i=0;i<=36;i++) { JIT[CMD_NOP+i]=cmd_nop; }
 	printf(".");
 	fflush(stdout);
-	usleep(100);
 
 
 	for (i=0;i<6;i++) {
@@ -531,9 +534,7 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
 
-	
 	for (i=0;i<6;i++) {
 		JIT[CMD_IFEQ*36+(TYPE_IMMEDIATE+1)+6*i]=cmd_ifeq_immediate;
 		JIT[CMD_IFEQ*36+(TYPE_UREG+1)+6*i]=cmd_ifeq_ureg;
@@ -544,8 +545,6 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_IFNEQ*36+(TYPE_IMMEDIATE+1)+6*i]=cmd_ifneq_immediate;
@@ -557,8 +556,6 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_IFABO*36+(TYPE_IMMEDIATE+1)+6*i]=cmd_ifabo_immediate;
@@ -570,8 +567,6 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_IFBEL*36+(TYPE_IMMEDIATE+1)+6*i]=cmd_ifbel_immediate;
@@ -583,8 +578,6 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_CALL*36+(TYPE_IMMEDIATE+1)+6*i]=cmd_call_immediate;
@@ -594,8 +587,6 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_RET*36+(TYPE_IMMEDIATE+1)+6*i]=cmd_ret_immediate;
@@ -605,14 +596,10 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
   	for (i=0;i<=36;i++) { JIT[CMD_HALT*36+i]=cmd_halt; }
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_SYSCALL*36+(TYPE_IMMEDIATE+1)+6*i]=cmd_syscall_immediate;
@@ -622,8 +609,6 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	JITS(CMD_ADD,TYPE_UREG,TYPE_IMMEDIATE)=cmd_add_ureg_immediate;
 	JITS(CMD_ADD,TYPE_UREG,TYPE_UREG)=cmd_add_ureg_ureg;
@@ -662,8 +647,6 @@ void jit_init() {
 
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_SUB*36+(TYPE_FREG+1)+6*i]=cmd_sub_freg;
@@ -699,8 +682,6 @@ void jit_init() {
 
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_MUL*36+(TYPE_UREG+1)+6*i]=cmd_mul_ureg;
@@ -711,8 +692,6 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_DIV*36+(TYPE_UREG+1)+6*i]=cmd_div_ureg;
@@ -723,8 +702,6 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_MOD*36+(TYPE_UREG+1)+6*i]=cmd_mod_ureg;
@@ -734,8 +711,6 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_XOR*36+(TYPE_UREG+1)+6*i]=cmd_xor_ureg;
@@ -745,9 +720,7 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
 
-	
 	for (i=0;i<6;i++) {
 		JIT[CMD_NOT*36+(TYPE_UREG+1)+6*i]=cmd_not_ureg;
 		JIT[CMD_NOT*36+(TYPE_SREG+1)+6*i]=cmd_not_sreg;
@@ -756,9 +729,7 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
 
-	
 	for (i=0;i<6;i++) {
 		JIT[CMD_AND*36+(TYPE_UREG+1)+6*i]=cmd_and_ureg;
 		JIT[CMD_AND*36+(TYPE_SREG+1)+6*i]=cmd_and_sreg;
@@ -767,9 +738,7 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
 
-	
 	for (i=0;i<6;i++) {
 		JIT[CMD_OR*36+(TYPE_UREG+1)+6*i]=cmd_or_ureg;
 		JIT[CMD_OR*36+(TYPE_SREG+1)+6*i]=cmd_or_sreg;
@@ -778,48 +747,44 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
 
-	
 	JITS(CMD_MOV,TYPE_UREG,TYPE_IMMEDIATE)=cmd_mov_ureg_immediate;
 	JITS(CMD_MOV,TYPE_UREG,TYPE_UREG)=cmd_mov_ureg_ureg;
 	JITS(CMD_MOV,TYPE_UREG,TYPE_SREG)=cmd_mov_ureg_sreg;
 	JITS(CMD_MOV,TYPE_UREG,TYPE_FREG)=cmd_mov_ureg_freg;
 	JITS(CMD_MOV,TYPE_UREG,TYPE_IMMPTR)=cmd_mov_ureg_immptr;
 	JITS(CMD_MOV,TYPE_UREG,TYPE_UPTR)=cmd_mov_ureg_uptr;
-	
+
 	JITS(CMD_MOV,TYPE_SREG,TYPE_IMMEDIATE)=cmd_mov_sreg_immediate;
 	JITS(CMD_MOV,TYPE_SREG,TYPE_UREG)=cmd_mov_sreg_ureg;
 	JITS(CMD_MOV,TYPE_SREG,TYPE_SREG)=cmd_mov_sreg_sreg;
 	JITS(CMD_MOV,TYPE_SREG,TYPE_FREG)=cmd_mov_sreg_freg;
 	JITS(CMD_MOV,TYPE_SREG,TYPE_IMMPTR)=cmd_mov_sreg_immptr;
 	JITS(CMD_MOV,TYPE_SREG,TYPE_UPTR)=cmd_mov_sreg_uptr;
-	
+
 	JITS(CMD_MOV,TYPE_FREG,TYPE_IMMEDIATE)=cmd_mov_freg_immediate;
 	JITS(CMD_MOV,TYPE_FREG,TYPE_UREG)=cmd_mov_freg_ureg;
 	JITS(CMD_MOV,TYPE_FREG,TYPE_SREG)=cmd_mov_freg_sreg;
 	JITS(CMD_MOV,TYPE_FREG,TYPE_FREG)=cmd_mov_freg_freg;
 	JITS(CMD_MOV,TYPE_FREG,TYPE_IMMPTR)=cmd_mov_freg_immptr;
 	JITS(CMD_MOV,TYPE_FREG,TYPE_UPTR)=cmd_mov_freg_uptr;
-	
+
 	JITS(CMD_MOV,TYPE_IMMPTR,TYPE_IMMEDIATE)=cmd_mov_immptr_immediate;
 	JITS(CMD_MOV,TYPE_IMMPTR,TYPE_UREG)=cmd_mov_immptr_ureg;
 	JITS(CMD_MOV,TYPE_IMMPTR,TYPE_SREG)=cmd_mov_immptr_sreg;
 	JITS(CMD_MOV,TYPE_IMMPTR,TYPE_FREG)=cmd_mov_immptr_freg;
 	JITS(CMD_MOV,TYPE_IMMPTR,TYPE_IMMPTR)=cmd_mov_immptr_immptr;
 	JITS(CMD_MOV,TYPE_IMMPTR,TYPE_UPTR)=cmd_mov_immptr_uptr;
-	
+
 	JITS(CMD_MOV,TYPE_UPTR,TYPE_IMMEDIATE)=cmd_mov_uptr_immediate;
 	JITS(CMD_MOV,TYPE_UPTR,TYPE_UREG)=cmd_mov_uptr_ureg;
 	JITS(CMD_MOV,TYPE_UPTR,TYPE_SREG)=cmd_mov_uptr_sreg;
 	JITS(CMD_MOV,TYPE_UPTR,TYPE_FREG)=cmd_mov_uptr_freg;
 	JITS(CMD_MOV,TYPE_UPTR,TYPE_IMMPTR)=cmd_mov_uptr_immptr;
 	JITS(CMD_MOV,TYPE_UPTR,TYPE_UPTR)=cmd_mov_uptr_uptr;
-	
+
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_SLEEPFOR*36+(TYPE_IMMEDIATE+1)+6*i]=cmd_sleepfor_immediate;
@@ -830,8 +795,6 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_WAITTILL*36+(TYPE_IMMEDIATE+1)+6*i]=cmd_waittill_immediate;
@@ -842,8 +805,6 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_ALLOC*36+(TYPE_IMMEDIATE+1)+6*i]=cmd_alloc_immediate;
@@ -854,8 +815,6 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_REALLOC*36+(TYPE_IMMEDIATE+1)+6*i]=cmd_realloc_immediate;
@@ -866,8 +825,6 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_DEALLOC*36+(TYPE_IMMEDIATE+1)+6*i]=cmd_dealloc_immediate;
@@ -878,8 +835,6 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_CMPCNT*36+(TYPE_IMMEDIATE+1)+6*i]=cmd_cmpcnt_immediate;
@@ -890,8 +845,6 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_CPCNT*36+(TYPE_IMMEDIATE+1)+6*i]=cmd_cpcnt_immediate;
@@ -902,8 +855,6 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_ONFAIL*36+(TYPE_IMMEDIATE+1)+6*i]=cmd_onfail_immediate;
@@ -913,14 +864,10 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
   	for (i=0;i<=36;i++) { JIT[CMD_NOFAIL*36+i]=cmd_nofail; }
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_LOOP*36+(TYPE_IMMEDIATE+1)+6*i]=cmd_loop_immediate;
@@ -930,8 +877,6 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_RAISE*36+(TYPE_IMMEDIATE+1)+6*i]=cmd_raise_immediate;
@@ -941,8 +886,6 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_LDB*36+(TYPE_UREG+1)+6*i]=cmd_ldb_ureg;
@@ -953,8 +896,6 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_SETSTACK*36+(TYPE_IMMEDIATE+1)+6*i]=cmd_setstack_immediate;
@@ -964,8 +905,6 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_PUSHS*36+(TYPE_IMMEDIATE+1)+6*i]=cmd_push_immediate;
@@ -977,8 +916,6 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_POPS*36+(TYPE_UREG+1)+6*i]=cmd_pop_ureg;
@@ -989,8 +926,6 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
-
 
 	for (i=0;i<6;i++) {
 		JIT[CMD_STOB*36+(TYPE_UREG+1)+6*i]=cmd_stob_ureg;
@@ -1000,14 +935,13 @@ void jit_init() {
 	}
 	printf(".");
 	fflush(stdout);
-	usleep(100);
 
 	for (i=0;i<CMD_INVALID*36;i++) {
 		if (JIT[i]==NULL) JIT[i]=cmd_invalid;
 	}
 
 	printf(" OK\n");
-	
+
 
 }
 

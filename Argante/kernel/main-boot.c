@@ -26,6 +26,8 @@
 #define DARK "\x1b[2m"
 #define NORM "\x1b[0m"
 
+#define FAST 1
+
 void boot_system(void) {
   printk(DARK "               \"[We] use bad software and bad machines for "
               "the wrong things.\"\n");
@@ -36,12 +38,19 @@ void boot_system(void) {
          "   |___| |     |___| |___| |   | |__ |___.\n"
          "               .___|\n\n");
 
+#ifndef FAST
   usleep(1000000);
+#endif
+
   printk(NORM "Booting " BRI "%s" NORM " [version %d.%03d build %04d]...\n",SYSNAME,SYS_MAJOR,SYS_MINOR,BUILD);
   printk(DARK "(C) 2000, 2001 Michal Zalewski <lcamtuf@ids.pl>\n");
   printk(     "(C) 2000, 2001 Argante Development Team <argante@cgs.pl>\n\n");
   printk(NORM "Compiled by %s.\n\n", IDSTR);
+
+#ifndef FAST
   usleep(1000000);
+#endif
+
   init_taskman();
   jit_init();
   load_rules(-2);
@@ -54,7 +63,7 @@ int main(int argc,char* argv[]) {
     if (chdir(argv[2])) {
       perror("set_root_directory");
       exit(1);
-    } 
+    }
   console_setup();
   boot_system();
   return 1;
