@@ -1,0 +1,20 @@
+!SIGNATURE	"Linker test part 2"
+!PRIORITY	0x2710
+
+.DATA
+:string2_1
+	"External string, local code.\n"
+:string2_2
+	"External string, external code.\n"
+.CODE
+:code2_1
+	mov   u0,:string1_2
+	mov   u1,^string1_2
+	syscall   $IO_PUTSTRING
+	twait   0x7d0
+	mov   u0,:string2_2
+	mov   u1,^string2_2
+	syscall   $IO_PUTSTRING
+	call :code1_2
+	ret 0
+
