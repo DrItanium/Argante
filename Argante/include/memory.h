@@ -29,8 +29,8 @@ struct memarea {
 
 #ifndef __HAVE_MY_OWN_MEMORY_MANAGEMENT
 
-void push_on_stack(int c,unsigned int x);
-unsigned int pop_from_stack(int c);
+void push_on_stack();
+unsigned int pop_from_stack();
 int get_mem_value(int c,unsigned int addr);
 int mem_alloc(int c,unsigned int size,unsigned int flags);
 void mem_dealloc(int c,int h);
