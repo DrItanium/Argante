@@ -1,0 +1,141 @@
+>> Kinda tough... try to find books about compilers...
+>> Got one @TPI and i'm reading it right now (but don't remember
+>> title/autor) but there should be some online papers.
+>> Just didn't have enough time to look for any
+>
+> Ok, cool, got myself a good book (with Lex + Yacc example code!
+> hurrah!). It's due back on the 11th of May, so I'm gonna be working
+> overtime.
+>
+> Now, as for the language I'm going to implement, I have _no_ idea.
+> Suggestions, anyone? I'm biased towards C syntax, but you could easily
+> turn me towards Algol or AHL or whatever. Name your feature!
+
+Since we now have like 4 people thinking about doing their own language for
+Argante, how about pooling our resources and do only one, great language
+together? It seems like a good idea, somehow. ;-) Damn, I still have 4
+weeks of school left... :-/
+
+Anyway, I thought I'd share some of my ideas for the language. The most
+important thing is actually the semantics; the syntax isn't that important
+(although it would be nice to have good syntax rules). My personal
+preference of syntax is something that mixes the best elements from Python,
+AmigaE and Java (basically since that's the languages I've used the most).
+
+I've been thinking about some kind of "pure" OO language. With "pure" I mean
+that it should have the following characteristics:
+* All data-types are objects/classes; there are no "primitive data-types"
+  like in C++ or Java. This means that it should for example be possible to
+  subclass the "integer" class. Note: This is what the user sees, actually
+  giving each "integer" it own run-time class data would really suck
+  performance-wise, so some kind of nifty hacks are needed.
+* It is not possible to program non-OO in the language. Ie, no weird mix of
+  non-OO and OO like in C++, Python and (to a much lesser degree) Java.
+  There are no functions that are not methods, and no (class-) static
+  methods.
+
+The following features should be supported:
+* Multiple inheritance (and normal inheritance too :-))
+* Abstract classes (aka interfaces)
+* Data hiding and powerful handling of attributes
+* Method overloading
+* Operator overloading
+* Reflection (ie. inspecting its own object for attributes/methods/etc)
+* Powerful commands for working with objects
+* ..and probably some more I've forgotten.
+
+
+Data Hiding
+-----------
+
+The way data hiding and attributes (aka member variables) are handled in
+most OO languages is IMHO broken and not flexible enough. Most languages
+basically support the notion of three access-levels: public, protected and
+private. The problem is that they only define visibility, not what you can
+do to them. It is in most cases totally impossible to have a publicly
+visible variable that is read-only for the public but read-write for the
+methods of that object.
+
+Basically, I would like the ability to set "access flags" for each
+visibility level. It could look something like this:
+
+class Node:
+    integer n_Priority : public[R-], private[RW], protected[RW]
+
+This would mean that n_Priority is read-write for methods of Node and it's
+subclasses, but read-only for all other. Yeah, the syntax sucks but that's
+a different matter. :-)
+
+I also want to be able to overload the access to these
+attributes. I don't like the practice of using get/set methods; attributes
+should behave like attributes, not methods. Basically, you should be able
+to specify a custom getter or setter for a specific attribute, which will
+be used transparantly.
+
+class Node:
+    integer n_Priority : public[R-], private[RW], protected[RW]
+
+    public integer __get__n_Priority():
+        // do some calculations instead
+        return n_Priority * 42
+
+    protected integer __set__n_Priority( integer value ):
+        // this has side-effects
+        n_Priority = value
+        rehashPriorities()    // Or whatever
+
+Now, you still access n_Priority like you always do:
+
+    pri = currentNode.n_Priority
+
+But instead of directly accessing n_Priority, __get__n_Priority() is called.
+
+Operator Overloading
+--------------------
+
+Whatever people say, operator overloading is very useful if used sanely. It
+makes very good sense for a subclass of "integer" to overload +-*/ or for
+"string" to overload [], for example. Also, I would like to have support
+for "exotic" operators, like ^ for power.
+
+Reflection
+----------
+
+This is very useful in some problem domains, and makes it possible for a
+superclass to look at itself and see what attributes and methods have been
+defined by a subclass. Basically, it allows the superclass to call methods
+and access attributes that have been defined in a subclass.
+
+Powerful commands for objects-handling
+--------------------------------------
+
+Most OO languages lack the kind of powerfull constructs for objects that are
+available for primitive data-types. One example would be "switch", which
+often makes long rows if if ... else if ... else if ... else if much more
+readable but that can only be used on integers. I want to be able to use it
+on objects in some smart way:
+
+switch object.class:    // .class is a class-identifier
+    case integer:
+        // Do some calculations
+    case string:
+        // Print it out
+
+This also goes for for-loops:
+
+for element in some_linkedlist:
+    // do something with element
+
+or:
+
+for element in some_array:
+    // do something with element
+
+
+Summary
+-------
+
+That's about what I've come up with so far. I have some other ideas also,
+but I haven't thought them through properly yet. I'll get back to you about
+them.
+
