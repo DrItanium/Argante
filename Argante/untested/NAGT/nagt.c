@@ -92,7 +92,7 @@ int subst_define(char *in, char *s1, char *s2, char **ret)
 	*ret=malloc(strlen(in) - strlen(s1) + strlen(s2) + 1);
 	memcpy(*ret, in, t-in);
 	l=*ret+(t-in);
-	memcpy(l, s2, strlen(s2));
+	memcpy(l, s2, strlen(s2) + 1);
 	l+=strlen(s2);
 	memcpy(l, t+strlen(s1), strlen(t) - strlen(s1));
 
@@ -678,7 +678,7 @@ char *do_data(char *ln)
 	else
 	{
 		int i;
-		i=strtol(ln, &ret, 0);
+		i=strtoul(ln, &ret, 0);
 		fwrite(&i, sizeof(int), 1, out_data);
 	}
 
@@ -686,7 +686,7 @@ char *do_data(char *ln)
 	return next;
 }
 
-void arg_parse(char *ln, long *out, char *type, int offs)
+void arg_parse(char *ln, unsigned long *out, char *type, int offs)
 {
 	int i;
 	char *z, *ret;
@@ -697,7 +697,8 @@ void arg_parse(char *ln, long *out, char *type, int offs)
 	
 	/* While all immediates are integers, for some reason
 	 * that doesn't stop us using floating immediates. Hmm. */
-	if(z[strlen(z)-1]=='f' || strchr(z, '.'))
+	/* 0xf is not a float... DOH! */
+	if((z[strlen(z)-1]=='f' && strncmp(ln, "0x", 2)) || strchr(z, '.'))
 	{
 		float f;
 		long *z;
@@ -761,8 +762,9 @@ void arg_parse(char *ln, long *out, char *type, int offs)
 	}
 	
 	 /* Convert an integer (this applies to the 15 in u15 too) */
-	i=strtol(z, &ret, 0);
+	i=strtoul(z, &ret, 0);
 	*out=i;
+	printf("'%s' -> 0x%lx\n", z, *out);
 	if (ret==z) error("Garbage numeric.");
 }
 
