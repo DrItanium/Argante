@@ -184,13 +184,14 @@ inline void get_mem_block(int c,char* dest,unsigned int addr, unsigned int cnt) 
               non_fatal(ERROR_PROTFAULT,"Attempt to read protected memory",c);
               return;
             }
-#ifndef NO_SWAP_ENDIAN
+#ifdef NO_SWAP_ENDIAN
             memcpy(dest,&(*cpu[c].mem)[x].real_memory[addr-(*cpu[c].mem)[x].map_addr],cnt*4);
 #else
 	    if ((*cpu[c].mem)[x].flags & MEM_FLAG_SWAPENDIAN)
 	    {
 		    int *d, *s;
-		    d=dest; s=&(*cpu[c].mem)[x].real_memory[addr-(*cpu[c].mem)[x].map_addr];
+		    d=(int *) dest;
+		    s=(int *) &(*cpu[c].mem)[x].real_memory[addr-(*cpu[c].mem)[x].map_addr];
 		    while(cnt > 0)
 		    {
 			    *d=bswap_32(*s);
@@ -226,13 +227,14 @@ inline void set_mem_block(int c,char* src,unsigned int addr, unsigned int cnt) {
               non_fatal(ERROR_PROTFAULT,"Attempt to read protected memory",c);
               return;
             }
-#ifndef NO_SWAP_ENDIAN
+#ifdef NO_SWAP_ENDIAN
             memcpy(&(*cpu[c].mem)[x].real_memory[addr-(*cpu[c].mem)[x].map_addr],src,cnt*4);
 #else
 	    if ((*cpu[c].mem)[x].flags & MEM_FLAG_SWAPENDIAN)
 	    {
 		    int *d, *s;
-		    s=src; d=&(*cpu[c].mem)[x].real_memory[addr-(*cpu[c].mem)[x].map_addr];
+		    s=(int *) src;
+		    d=(int *) &(*cpu[c].mem)[x].real_memory[addr-(*cpu[c].mem)[x].map_addr];
 		    while(cnt > 0)
 		    {
 			    *d=bswap_32(*s);
