@@ -266,8 +266,8 @@ unsigned lid_getdata(unsigned lid, const char **filename, const char **otherdesc
 	if (lid >= mentcount) {
 		return -1;
 	}
-	*filename=ments[lid].filename;
-	*otherdesc=ments[lid].otherdesc;
+	if (filename) *filename=ments[lid].filename;
+	if (otherdesc) *otherdesc=ments[lid].otherdesc;
 	return lid;
 }
 

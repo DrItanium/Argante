@@ -2,7 +2,10 @@ SRCDIR=@srcdir@
 include @top_srcdir@/img.mk
 
 TARGETS=control integer memory fs rename
-all: $(foreach A,$(TARGETS),$A.img)
+all: $(foreach A,$(TARGETS),$A.img) control-test integer-test fs-test rename-test
+
+%-test: %.img
+	../a2 -s modules/modules.scr -a conf/bench.HAC -t bench/$<
 
 clean:
 	$(RM) *.img

@@ -22,15 +22,16 @@ and I haven't even tried to tag the changes.
 #include "anyval.h"
 #include "bcode_op.h"
 #include <setjmp.h>
-#include "compat/semaphr.h"
 
-#define STATUS_UNUSED		0
-#define STATUS_STOPPED		1
-#define STATUS_RUN		2
-#define STATUS_STEP		3
-#define STATUS_TWAIT		4
-#define STATUS_CWAIT		5
-#define STATUS_IOWAIT		6
+/* Ugly but workable.
+ * However, you _must_ not leave before except_end... */
+#define EXCEPT_CATCH(curr_cpu, exceptid) { \
+	jmp_buf _ex_curr, *_ex_last; \
+	_ex_last=curr_cpu->onexcept; \
+	curr_cpu->onexcept=&_ex_curr; \
+	if ((exceptid=setjmp(*curr_cpu->onexcept)) == 0)
+#define EXCEPT_END(curr_cpu) curr_cpu->onexcept=_ex_last; \
+	}
 
 struct codepage {
 	struct bcode_op *bcode;
@@ -43,11 +44,12 @@ struct codepage {
  * I know the Linux Kernel people have to try to fit related bits of
  * structs within the same page or some cache...? */
 struct vcpu {
-  unsigned int status;		/* Task status */
-
   unsigned priority;		/* You guessed it */
+
   unsigned int ip;		/* Instruction pointer */
   unsigned int next_ip;
+  unsigned int prev_ip;		/* For debugging */
+  
   struct codepage cp_curr;	/* Current code page data */
   unsigned int cp_curr_id;	/* Which page is 'current' */ 
   
@@ -67,7 +69,7 @@ struct vcpu {
   unsigned int mstack_ptr;	/* Metastack pointer */
   unsigned int mstack_size;	/* Metastack size */
 
-  jmp_buf onexcept;		/* Place to go when an exception happens */
+  jmp_buf *onexcept;		/* Place to go when an exception happens */
 
   /* IOhandler not needed for MT. And are domain/uid/etc needed when we have per-CPU HAC? */
   unsigned int domain;		/* Execution domain */
@@ -84,7 +86,6 @@ struct vcpu {
   unsigned int syms;		/* Symbol table size */
 
   struct hactable *hac;		/* hac table */
-  sem_t	hac_semaphore;		/* mutex for accessing it */
 
   struct codepage *cp_all;	/* All code pages */
   unsigned int cp_count;	/* Number of code pages */

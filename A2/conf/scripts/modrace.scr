@@ -3,46 +3,46 @@
 | 
 | I don't know what good the w's do. If you know better, remove 'em.
 ~ Running MixModule test:
-^LAC/lac-HAC
+^conf/lac.HAC
 $LAC/hello2.img
 !
 <2
 w0 1
->modules/fs.so
+>fs.so
 w0 1
 <2
 w0 1
->modules/fs.so
+>fs.so
 w0 1
 <2
 w0 1
->modules/fs.so
+>fs.so
 w0 1
 <2
 w0 1
->modules/fs.so
+>fs.so
 w0 1
 <2
 w0 1
->modules/fs.so
+>fs.so
 w0 1
 <2
 w0 1
->modules/fs.so
+>fs.so
 w0 1
 <2
 w0 1
->modules/fs.so
+>fs.so
 w0 1
 <2
 w0 1
->modules/fs.so
+>fs.so
 w0 1
 <2
 w0 1
->modules/fs.so
+>fs.so
 w0 1
 <2
 w0 1
->modules/fs.so
+>fs.so
 !

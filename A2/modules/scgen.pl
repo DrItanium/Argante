@@ -141,6 +141,11 @@ foreach $in (@idsort) {
 
 print INITFILE "}\n\n";
 
+# Add a symbol for reload
+print INITFILE "#ifndef STATIC\n#ifdef MODULE_RELOAD_VER\n";
+print INITFILE "int module_reload_ver=MODULE_RELOAD_VER;\n";
+print INITFILE "#endif\n#endif\n";
+
 close INITFILE;
 
 open TABFILE, ">" . $fnbase . ".sc";

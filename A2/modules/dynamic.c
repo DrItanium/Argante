@@ -196,7 +196,8 @@ int module_dyn_reload(unsigned lid) {
 	void *libhandle;
 	moduleinitfunc *init;
 	modulevcpufunc *start, *stop;
-	char *file;
+	int *ver_old, *ver_new;
+	const char *file;
 #ifndef NO_DLOPEN_FIX
 	char *tmp, *oldname=NULL;
 	struct stat sbuf;
@@ -212,7 +213,10 @@ int module_dyn_reload(unsigned lid) {
 		return 1;
 	}
 
-	file=NULL; //booga_XXX_func();
+	if (lid_getdata(lid, &file, NULL) != lid || !file) {
+		printk2(PRINTK_CRIT, "Reloading module we don't know filename of\n");
+		return 1;
+	}
 
 #ifndef NO_DLOPEN_FIX
 	if (!stat(file, &sbuf)) {
@@ -234,6 +238,17 @@ int module_dyn_reload(unsigned lid) {
 
 	if (handles[lid]==libhandle) {
 		printk2(PRINTK_CRIT, "that would load the _exact_ same module twice! (dlopen bug?)\n");
+		dlclose(libhandle);
+		RMHACKFILE;
+		return -1;
+	}
+	/* First, check data structures are compatible and reloading's OK */
+	ver_old=dlsym(handles[lid], "module_reload_ver");
+	ver_new=dlsym(libhandle,    "module_reload_ver");
+	if (!ver_old || !ver_new || *ver_old != *ver_new) {
+		printk2(PRINTK_CRIT, "reload version mismatch (%d versus %d)\n",
+				(ver_old) ? *ver_old : -1,
+				(ver_new) ? *ver_new : -1);
 		dlclose(libhandle);
 		RMHACKFILE;
 		return -1;

@@ -1,14 +1,15 @@
 
-SUBDIRS=compat include modules kernel compiler agent
+SUBDIRS=compat include agent modules kernel compiler
 DIST_SUBDIRS=$(SUBDIRS) bench lib LAC Documentation
 
-CLEAN=core core.* a2 autoscan.log configure.scan
+CLEAN=core core.* a2 vconsole autoscan.log configure.scan
 DISTCLEAN=config.status config.log config.cache autocfg.h Makefile
 MAINTAINERCLEAN=configure
 
 all: $(foreach A, $(SUBDIRS), $(A)-all )
-	$(RM) a2
+	$(RM) a2 vconsole
 	@LN_S@ kernel/a2 a2 
+	@LN_S@ agent/vconsole vconsole
 	@echo --------------------------
 	@echo Done! Type \'./a2\' to start
 	@echo

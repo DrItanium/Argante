@@ -1,4 +1,12 @@
+#ifndef _HAVE_FLEXSOCK_H
+#define _HAVE_FLEXSOCK_H
+
+#ifdef __WIN32__
+#include <winsock.h>
+#else
 #include <sys/types.h>
+#include <netinet/in.h>
+#endif
 
 #define FXST_STDIO	0x1 /* e.g. agent has forked out a kernel... */
 #define FXST_UNIX_B	0x2 /* Bind a Unix socket */
@@ -39,8 +47,9 @@ int FXS_Desc2Ascii(const struct flexsock_desc *d, char *buf, size_t size);
 int FXS_Ascii2Desc(struct flexsock_desc *d, const char *buf);
 
 int FXS_IsConnectType(const struct flexsock_desc *d);
-/* Does this connection type reuse the bound lisocket as the comm flexsock?
- * I.e. if we close the lisock will that cause mayhem with the flexsock? */
+
+/* Def'n changed, A2 0.010 - we'll DuplicateHandle named pipes (when we get them).
+ * Therefore you can CloseListener on anything safely. */
 int FXS_IsSingleAcceptType(const struct flexsock_desc *d);
 
 flexsock FXS_StdIO(void);
@@ -62,4 +71,4 @@ int FXS_Write(flexsock f, const char *buf, size_t size);
 void FXS_Close(flexsock f);
 void FXS_CloseListener(flexlisock f);
 
-
+#endif

@@ -26,11 +26,13 @@ extern int unregister_syscall(unsigned id);
 
 extern unsigned lid_create(void);
 extern void lid_destroy(unsigned lid);
-extern void lid_assign(unsigned lid, char *name, modulevcpufunc *start, modulevcpufunc *stop);
+extern void lid_assign(unsigned lid, const char *filename, const char *otherdesc,
+		modulevcpufunc *start, modulevcpufunc *stop);
+extern unsigned lid_getdata(unsigned lid, const char **filename, const char **otherdesc); 
 
-extern void *vcpu_modules_start(void *);
-extern void *vcpu_modules_stop(void *);
-extern void vcpu_set_moduleid(unsigned);
-extern void *vcpu_module_start(void *);
-extern void *vcpu_module_stop(void *);
+/* changed 0.010 */
+extern void vcpu_modules_start(struct vcpu *curr_cpu);
+extern void vcpu_modules_stop(struct vcpu *curr_cpu);
+extern void vcpu_module_start(struct vcpu *curr_cpu, unsigned moduleid);
+extern void vcpu_module_stop(struct vcpu *curr_cpu, unsigned moduleid);
 

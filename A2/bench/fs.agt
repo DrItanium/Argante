@@ -16,10 +16,10 @@
 :File
 	"/AddDateHere"
 :WDStrBuf1
-	"/subdir"
+	"/ftp/"
 	0x0 repeat 10
 :WDStrBuf2
-	"/subdir"
+	"/ftp/"
 	0x0 repeat 10
 :BufSz
 	0

@@ -2,6 +2,7 @@ TARGETS=@A2_COMPAT_O@
 
 VPATH=@srcdir@
 
+CFLAGS=@CFLAGS@
 CFLAGS+=-I.. -I@top_srcdir@ -I../include -I@top_srcdir@/include
 
 all: $(TARGETS)

@@ -1,3 +1,8 @@
+0.010C:
+- new Agent backend & script engine added.
+- Removed need for Posix semaphores (and 'emulation')
+- less need for manually setting cflags
+
 0.009:
 - coredump with modulo op fixed
 - added CFD_PRINT_* functions

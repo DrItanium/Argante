@@ -69,6 +69,10 @@
 #define IDLE usleep(1)
 #endif
 
+/* Time it takes for man_pollall() to return, in millis.
+ * In single threaded mode, this sets the time-slice allocated to a VCPU. */
+#define A2_POLLTIME 50
+
 /* CAN BE CHANGED as much as you like because they don't do anything */
 #if 0
 #define A2_MAX_HACRULES	128		/* Just to keep it it limits. */

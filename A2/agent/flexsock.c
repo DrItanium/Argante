@@ -26,9 +26,6 @@
 #ifdef __WIN32__
 #include <windows.h>
 #include <winsock.h>
-/* M$ is lame, hope we don't run into 64bits */
-#define uint16_t u_short
-#define uint32_t u_long
 #else
 #include <stdio.h>
 #include <unistd.h>
@@ -39,9 +36,6 @@
 #include <errno.h>
 #include <sys/fcntl.h>
 #include <sys/signal.h>
-
-#define uint32_t unsigned int
-#define uint16_t unsigned short
 
 /* Fix Solaris. */
 #ifndef PF_LOCAL
@@ -516,6 +510,26 @@ flexsock FXS_Accept(flexlisock f) {
 	return s;
 }
 
+flexsock FXS_AcceptPoll(flexlisock f) {
+	int fd;
+	flexsock s;
+	int flags;
+
+	flags=fcntl(f->fd, F_GETFL, 0);
+	if (flags < 0) return NULL;
+	if (fcntl(f->fd, F_SETFL, flags | O_NONBLOCK) < 0) return NULL;
+	/* Sandwich fillings. */
+	fd=accept(f->fd, NULL, NULL);
+	fcntl(f->fd, F_SETFL, flags); /* This better not fail! */
+
+	if (fd < 0) return NULL;
+	s=malloc(sizeof(struct _flexsock));
+	s->fd_in=fd;
+	s->fd_out=fd;
+	SetCLOExec(fd);
+	return s;
+}
+
 ssize_t FXS_ReadPoll(flexsock f, char *buf, size_t size) {
 	int flags, enb;
 	ssize_t ret;
@@ -713,6 +727,24 @@ flexlisock FXS_BindTo(const struct flexsock_desc *to, struct flexsock_desc *reve
 	}
 	s=(void *) GlobalAlloc(GMEM_FIXED, sizeof(struct _flexlisock));
 	s->sock=sockfd;
+	return s;
+}
+
+flexsock FXS_AcceptPoll(flexlisock f) {
+	SOCKET fd;
+	flexsock s;
+	u_long nonblock;
+
+	if (ioctlsocket(f->sock, FIONBIO, &nonblock)) return -1;
+	/* Sandwich fillings. */
+	fd=accept(f->sock, NULL, NULL);
+	nonblock=FALSE;
+	ioctlsocket(f->sock, FIONBIO, &nonblock);
+
+	if (fd == INVALID_SOCKET) return NULL;
+	s=(void *) GlobalAlloc(GMEM_FIXED, sizeof(struct _flexsock));
+	s->kind=fst_winsock;
+	s->u.sock=fd;
 	return s;
 }
 

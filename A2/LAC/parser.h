@@ -1,3 +1,7 @@
+#ifndef BISON_PARSER_H
+# define BISON_PARSER_H
+
+#ifndef YYSTYPE
 typedef union {
 	mVar *var;
 	mType *type;
@@ -10,30 +14,35 @@ typedef union {
 	RegList *reglist;
 	TypeList *typelist;
 	ITypeList *itypelist;
-} YYSTYPE;
-#define	VALUE	258
-#define	TYPE	259
-#define	STRING	260
-#define	AOPER	261
-#define	CMP	262
-#define	ID	263
-#define	FUNC	264
-#define	SYSCALL	265
-#define	IGNORE	266
-#define	STRADDR	267
-#define	STRLEN	268
-#define	GOTO	269
-#define	HANDLER	270
-#define	IF	271
-#define	RETURN	272
-#define	WAIT	273
-#define	ERRNO	274
-#define	RAISE	275
-#define	ALLOC	276
-#define	REALLOC	277
-#define	FINALIZE	278
-#define	UNFINALIZE	279
-#define	DEALLOC	280
+} yystype;
+# define YYSTYPE yystype
+# define YYSTYPE_IS_TRIVIAL 1
+#endif
+# define	VALUE	257
+# define	TYPE	258
+# define	STRING	259
+# define	AOPER	260
+# define	CMP	261
+# define	ID	262
+# define	FUNC	263
+# define	SYSCALL	264
+# define	IGNORE	265
+# define	STRADDR	266
+# define	STRLEN	267
+# define	GOTO	268
+# define	HANDLER	269
+# define	IF	270
+# define	RETURN	271
+# define	WAIT	272
+# define	ERRNO	273
+# define	RAISE	274
+# define	ALLOC	275
+# define	REALLOC	276
+# define	FINALIZE	277
+# define	UNFINALIZE	278
+# define	DEALLOC	279
 
 
 extern YYSTYPE yylval;
+
+#endif /* not BISON_PARSER_H */

@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT([A2], [0.009], [ecks@optusnet.com.au])
-AC_DEFINE([A2_VERSION], ["0.009 alpha"], [The name that shows up at startup])
+AC_INIT([A2], [0.010C], [ecks@optusnet.com.au])
+AC_DEFINE([A2_VERSION], ["0.010 CVS-alpha"], [The name that shows up at startup])
 AC_CONFIG_SRCDIR([compiler/nagt.c])
 AC_CONFIG_HEADER([autocfg.h])
 
@@ -135,31 +135,18 @@ A2_WITHLIB([dl], [dlopen], [yes], [use dynamically-linked modules],
 	  ]
 	)
 
-AC_LIBSOURCE(compat/semaphr.c)
 A2_WITHLIB([pthread], [pthread_create], [yes], [use multithreading],
 	[
 	  a2_save_libs=$LIBS
 	  LIBS="-lpthread $LIBS"
-	  AC_SEARCH_LIBS([sem_init], [rt],
-	  [
-	  	# XXX: Some systems might need -lc_r - but which?
-	  	AC_DEFINE([_REENTRANT], 1, [Enable reentrancy in C library])
-	  	AC_DEFINE([_POSIX_PTHREAD_SEMANTICS], 1, [Use POSIX style pthreads])
-		AC_SUBST([PTHREAD_LIBS], [$LIBS])
-	  ],
-	  [
-AC_MSG_WARN([pthreads were found on your system, but not semaphores. Multithreading is
-disabled. Please report this and your system's location of sem_init.])
-	  	AC_DEFINE([NO_THREADS], 1, [Disable multithreading])
-		A2_COMPAT_O(semaphr)
-		A2_LIBOBJ(compat/semaphr, [KERNEL])
-	  ])
+	  # XXX: Some systems might need -lc_r - but which?
+	  AC_DEFINE([_REENTRANT], 1, [Enable reentrancy in C library])
+	  AC_DEFINE([_POSIX_PTHREAD_SEMANTICS], 1, [Use POSIX style pthreads])
+	  AC_SUBST([PTHREAD_LIBS], [$LIBS])
 	  LIBS=$a2_save_libs
 	],
 	[
 	  AC_DEFINE([NO_THREADS], 1, [Disable multithreading])
-	  A2_COMPAT_O(semaphr)
-	  A2_LIBOBJ(compat/semaphr, [KERNEL])
 	  ]
 	)
 
@@ -183,7 +170,46 @@ AC_C_CONST
 AC_C_INLINE
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
-AC_CHECK_TYPE([ssize_t], [AC_DEFINE([ssize_t], [int], [Define to `int' if <sys/types.h> does not define.])])
+AC_CHECK_TYPE([ssize_t], ,
+	[AC_DEFINE([ssize_t], [int], [Define to `int` if undefined.])],
+	[
+@%:@if HAVE_SYS_TYPES_H
+@%:@ include <sys/types.h>
+@%:@endif
+@%:@if HAVE_UNISTD_H
+@%:@ include <unistd.h>
+@%:@endif
+	]
+	)
+# Exceptionally evil; but should be OK for 64bit anyway
+AC_CHECK_TYPE([uint32_t], , 
+	[AC_DEFINE([uint32_t], [unsigned], [Define to `unsigned` if undefined.])],
+	[
+@%:@if HAVE_SYS_TYPES_H
+@%:@ include <sys/types.h>
+@%:@endif
+@%:@if HAVE_UNISTD_H
+@%:@ include <unistd.h>
+@%:@endif
+@%:@if HAVE_NETINET_IN_H
+@%:@ include <netinet/in.h>
+@%:@endif
+	]
+	)
+AC_CHECK_TYPE([uint16_t], ,
+	[AC_DEFINE([uint16_t], [unsigned short], [Define to `unsigned short` if undefined.])],
+	[
+@%:@if HAVE_SYS_TYPES_H
+@%:@ include <sys/types.h>
+@%:@endif
+@%:@if HAVE_UNISTD_H
+@%:@ include <unistd.h>
+@%:@endif
+@%:@if HAVE_NETINET_IN_H
+@%:@ include <netinet/in.h>
+@%:@endif
+	]
+	)
 AC_STRUCT_TM
 
 #

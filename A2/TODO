@@ -1,11 +1,17 @@
+- Fix case-sensitivity for HAC on Windows
+- Check:
+  Load 6 libraries
+  Free the first five
+  Free the last one
+  Load a new one - is alib_id = 0?
+  Need plenty of testing with the code pages thing - unloading etc.
 - Fix nagt so it can't produce illegally large segments. Will do this when .packed is added.
 - change realloc u, s to reperm.
 - Come to think of it, allocating RO memory is never useful. The whole alloc instruction
   should be changed to alloc dest, size; just like realloc.
 - common library for image file manipulations.
 - Update documentation.
-- Alter metastack to allow cleaner resizing and a way around
-  exception bug in LAC.
+- Alter metastack to allow cleaner resizing and a way around exception bug in LAC.
 - Eliminate perror & stderr code
 - Agents (Mental Note: network byte order!)
 - Windows Threads

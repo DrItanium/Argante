@@ -38,3 +38,8 @@ void alib_shutdown
 	unregister_syscall(1903); /* alib_close */
 }
 
+#ifndef STATIC
+#ifdef MODULE_RELOAD_VER
+int module_reload_ver=MODULE_RELOAD_VER;
+#endif
+#endif

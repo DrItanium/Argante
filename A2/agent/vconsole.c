@@ -18,18 +18,11 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
  */
 #include "autocfg.h"
-
-#ifdef __WIN32__
-#define uint16_t u_short
-#define uint32_t u_long
-#include <winsock.h>
-#else
-#define uint32_t unsigned int
-#define uint16_t unsigned short
-#endif
+#include "compat/usleep.h"
 
 #include "flexsock.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 int main(int argc, char **argv) {
 	int i;
@@ -89,8 +82,7 @@ int main(int argc, char **argv) {
 			fprintf(stderr, "Listening. To connect, use descriptor %s.\n", buf);
 		}
 		remt=FXS_Accept(bound);
-		if (!FXS_IsSingleAcceptType(&fxsd))
-			FXS_CloseListener(bound);
+		FXS_CloseListener(bound);
 	} else {
 		/* Connect a flexsock. */
 		remt=FXS_ConnectTo(&fxsd);
@@ -131,11 +123,7 @@ int main(int argc, char **argv) {
 			continue;
 		}
 		if (i < 0) break;
-#ifndef __WIN32__
 		usleep(10000);
-#else
-		Sleep(100);
-#endif
 	}
 	fprintf(stderr, "Disconnected.\n");
 
