@@ -22,6 +22,7 @@ typedef union {
 
 YYSTYPE yylval;
 
+extern int yynerrs;
 int charPos=1;
 int EM_TokPos=0;
 int EM_LineNo=1;
@@ -45,7 +46,7 @@ eol		\n
 white 		[ \t]+
 id		[[:alpha:]][[:alpha:][:digit:]_]*
 float		[[:digit:]]+\.[[:digit:]]+("E"(\+|\-)?[[:digit:]]+)?
-keys		[\{\}\(\,\);=<>\+\-\*/\|&!~%]
+keys		[\{\}\(\,\);=<>\+\-\*/\|&!%]
 %%
 
 <*>{eol}		{ADJ; EM_LineNo++; EM_TokPos=0; }
@@ -71,8 +72,8 @@ keys		[\{\}\(\,\);=<>\+\-\*/\|&!~%]
 <INITIAL>"pointer to"	{ADJ; return POINTER; }
 <INITIAL>"cast"		{ADJ; return CAST; }
 
-<INITIAL>"typedef"	{ADJ; return TYPEDEF; }
-<INITIAL>"funcdef"	{ADJ; return FUNCDEF; }
+<INITIAL>"type"		{ADJ; return TYPEDEF; }
+<INITIAL>"func"		{ADJ; return FUNCDEF; }
 <INITIAL>"var"		{ADJ; return VAR; }
 <INITIAL>"errhandler"	{ADJ; return ERRHANDLER; }
 
@@ -110,5 +111,5 @@ keys		[\{\}\(\,\);=<>\+\-\*/\|&!~%]
 
 <INITIAL>{keys}		{ADJ; return yytext[0]; }
 
-.	{ fprintf(stderr, "line %d: lex error between char %d and %d\n", EM_LineNo, EM_TokPos, charPos); exit(1); }
+.	{ EM_ErrorMessage("unrecognized char"); yynerrs++; return 0; }
 

@@ -1,8 +1,6 @@
 CFLAGS=-g -O2 -Wall
 
-main: main.o iyy.o string.o i.tab.o expr.o
-
-string.o: string.c
+main: main.o iyy.o string.o i.tab.o expr.o type.o stms.o
 
 i.tab.h i.tab.c: i.y
 	bison -d -v $^

@@ -1,7 +1,10 @@
 /*
  * Tree structures for handling abstractsyntax.
- * Very much from 'modern compiler implementation in C, andrew appel'.
+ * Vaguely based on 'modern compiler implementation in C, andrew appel',
+ * which is a extreeeeemely good book.
  */
+
+extern void EM_ErrorMessage(char *x);
 
 typedef struct _AStm *AStm;
 typedef struct _AExpr *AExpr;
@@ -11,22 +14,29 @@ typedef struct _AParmList *AParmList;
 typedef struct _ACompoundField *ACompoundField;
 
 struct _AStm {
-	enum { SGoto, SReturn, SExpr } kind;
+	enum { SGoto, SReturn, SRaise, SLabel, SExpr, SFunc, SCJump, SDestroy, SResize, SVar, } kind;
 	union {
 		string to;
 		AExpr val;
+		struct { AExpr cond; string to; } cjump;
+		struct { string id; AType newsize; } resize;
+		struct { string id; AType type; } var;
+		struct { string id; AType retType; AParmList parmlist; string errhandler; AStm code; } func;
 	} u;
 	AStm next;
+	AStm prev;
 	AStm last; /* Last statement in this StmList */
 };
 
 struct _AExpr {
-	enum { EID, EUnOp, EBinOp, ECast, EValue } kind;
+	enum { EID, EAssign, EUnOp, EBinOp, ECast, ESizeof, ENew, ECall, EValue } kind;
 	AType type; /* float/unsigned/signed etc */
 	union {
 		string id;
 		struct { AExpr a1; int op; AExpr a2; } binop;
+		struct { string id; AExpr a; } assn;
 		struct { AExpr a; int op; } unop;
+		struct { string id; AExprList args; } call;
 		AExpr cast;
 		int ival;
 		float fval;
@@ -40,11 +50,12 @@ struct _AType {
 	 * TArray is just a TPointer that can't be assigned directly.
 	 * TCompound is the same.
 	 */
-	enum { TUnsigned, TSigned, TFloat, TString, TPointer, TArray, TCompound } kind;
+	enum { TID, TUnsigned, TSigned, TFloat, TString, TPointer, TPointerArray, TArray, TCompound } kind;
 	AExpr size;
 	union {
 		AType PointerTo;
 		ACompoundField *FirstRec;
+		string id;
 	} u;
 };
 
@@ -59,12 +70,14 @@ struct _AExprList {
 	AExpr expr;
 	AType type;
 	AExprList next;
+	AExprList last;
 };
 	
 struct _AParmList {
 	string id;
 	AType type;
 	AParmList next;
+	AParmList last;
 };
 
 /*
@@ -101,8 +114,10 @@ extern AParmList ParmListNew(AType type, string id);
 extern AExprList ArgListAdd(AExprList to, AExpr new);
 extern AExprList ArgListNew(AExpr first);
 
-extern AStm LabelGen(string id);
+extern AStm LabelGenNamed(string id);
+extern AStm LabelGenGeneric(string id);
 extern AStm FuncGen(string id, AType retType, AParmList parmlist, string errhandler, AStm code);
+extern AStm VarGen(string id, AType type);
 
 /*
  * -- Types. --
@@ -129,7 +144,7 @@ extern AExpr ExprValuef(float val);
 extern AExpr ExprValuei(int val, AType type);
 extern AExpr ExprString(string val);
 extern AExpr ExprAssign(string id, AExpr val);
-extern AExpr ExprSizeof(AExpr of);
+extern AExpr ExprSizeof(string id);
 extern AExpr ExprNew(AType type);
 extern AExpr ExprCall(string id, AExprList arglist);
 extern AExpr ExprID(string id);

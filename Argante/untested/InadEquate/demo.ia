@@ -1,6 +1,13 @@
-typedef z = { unsigned a1, signed s1, float f1 }
+type z = { unsigned a1, signed s1, float f1 }
+var z adze;
 
-funcdef main () =
+main();
+
+COW BOLLOCKS;
+
+= COW BOLLOCKS;
+
+func main =
 {
 	var unsigned d = 0xa;
 	var signed x=0;

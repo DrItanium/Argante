@@ -4,7 +4,6 @@
 #include "tree.h"
 #include "i.tab.h"
 
-#define EM_ErrorMessage(a) fprintf(stderr, "%s", a)
 /*
  * EXPRESSIONS
  */
@@ -162,8 +161,7 @@ extern AExpr ExprUnOp(AExpr a, int op)
 		{
 			switch(op) {
 			case '-': out->u.ival= -((signed) a->u.ival); break;
-			case '!': out->u.ival= !((signed) a->u.ival); break; 
-			case '~': out->u.ival= ~((signed) a->u.ival); break;
+			case '!': out->u.ival= ~((signed) a->u.ival); break; 
 			default: EM_ErrorMessage("Bad UnOp on signed");
 			}
 		} break;
@@ -171,8 +169,7 @@ extern AExpr ExprUnOp(AExpr a, int op)
 		{
 			switch(op) { /* Hmm... Is this 100% desired? */
 			case '-': out->u.ival= -((unsigned) a->u.ival); break;
-			case '!': out->u.ival= !((unsigned) a->u.ival); break;
-			case '~': out->u.ival= ~((unsigned) a->u.ival); break;
+			case '!': out->u.ival= ~((unsigned) a->u.ival); break;
 			default: EM_ErrorMessage("Bad UnOp on unsigned");
 			}
 		} break;
@@ -272,9 +269,60 @@ AExpr ExprCast(AExpr expr, AType type)
 	return out;
 }
 
-extern AExpr ExprAssign(string id, AExpr val);
-extern AExpr ExprSizeof(AExpr of);
-extern AExpr ExprNew(AType type);
-extern AExpr ExprCall(string id, AExprList arglist);
-extern AExpr ExprID(string id);
+AExpr ExprAssign(string id, AExpr val)
+{
+	AExpr out;
+	out=calloc(sizeof(struct _AExpr), 1);
+	
+	/* Do we want to unchain e=a=1 expressions? */
+//	if (val->type->kind == EAssign) val=val->u.assn.a;
+
+	out->kind=EAssign;
+	out->type=val->type;
+	out->u.assn.id=id;
+	out->u.assn.a=val;
+	return out;
+}
+
+AExpr ExprSizeof(string id)
+{
+	AExpr out;
+	out=calloc(sizeof(struct _AExpr), 1);
+	
+	out->kind=ESizeof;
+	out->type=Type(TUnsigned);
+	out->u.id=id;
+	return out;
+}
+
+AExpr ExprNew(AType type)
+{
+	AExpr out;
+	out=calloc(sizeof(struct _AExpr), 1);
+	
+	out->kind=ENew;
+	out->type=TypePointer(type);
+	return out;
+}
+
+AExpr ExprCall(string id, AExprList arglist)
+{
+	AExpr out;
+	out=calloc(sizeof(struct _AExpr), 1);
+	
+	out->kind=ECall;
+	out->u.call.id=id;
+	out->u.call.args=arglist;
+	return out;
+}
+
+AExpr ExprID(string id)
+{
+	AExpr out;
+	out=calloc(sizeof(struct _AExpr), 1);
+	
+	out->kind=EID;
+	out->u.id=id;
+	return out;
+}
 

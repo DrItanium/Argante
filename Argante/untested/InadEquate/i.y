@@ -1,9 +1,16 @@
 %{
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "string.h"
 #include "tree.h"
 
+#define YYERROR_VERBOSE
+#define YYDEBUG 1
+
 void yyerror(char *);
 int yylex();
+
 
 AStm prog;
 %}
@@ -53,7 +60,7 @@ AStm prog;
 // '~' '!' '=' ';' '{' '}' '(' ')'
 %type <uexpr> expr
 %type <utype> type
-%type <ustmt> stm stmlist prog
+%type <ustmt> stm stmlist stmlist1 prog
 
 %type <uexprlist> arglist
 %type <uparmlist> parmlist1 parmlist
@@ -65,22 +72,34 @@ AStm prog;
 %start prog
 %%
 
-prog: stm { prog=$1 };
+/* Error recovery */
+stm: error ';' { $$=NULL; yyerrok; }
+expr: '(' error ')' { $$ = NULL; }
+
+/*
+Word of warning:
+All statements are to be assumed to be lists.
+The difference between stmlist and stm is that a
+stm is considered a single block.
+*/
+
+prog: stmlist { prog=$1 };
 
 stm: expr ';' { $$=StmExpr($1); }
 
-stmlist: stm { $$=$1; }
-	| stmlist stm { $$=StmCompound($1, $2); }
+stmlist: stmlist stmlist1 { $$=StmCompound($1, $2); }
+	| stmlist1 { $$=$1 }
+stmlist1: stm { $$=$1; }
 
 stm: '{' stmlist '}' { $$=$2 }
 
 /* These are stmlists not stms so we don't have to deal
    with the dangling-else problem. */
-stmlist: WHILE '(' expr ')' stm { $$=StmWhileHead($3, $5); }
+stmlist1: WHILE '(' expr ')' stm { $$=StmWhileHead($3, $5); }
 	| UNTIL '(' expr ')' stm { $$=StmUntilHead($3, $5); }
 	| DO stm WHILE '(' expr ')' { $$=StmWhileTail($5, $2); }
 	| DO stm UNTIL '(' expr ')' { $$=StmWhileTail($5, $2); }
-stmlist: IF '(' expr ')' stm ELSE stm { $$=StmIfElse($3, $5, $7); }
+stmlist1: IF '(' expr ')' stm ELSE stm { $$=StmIfElse($3, $5, $7); }
 	| IF '(' expr ')' stm { $$=StmIfElse($3, $5, NULL); }
 
 /* Built in functions. It would be fairly trying to write a RET or GOTO add-in,
@@ -105,9 +124,12 @@ parmlist: { $$=NULL; }
 arglist: arglist ',' expr { $$=ArgListAdd($1, $3); }
 	 | expr { $$=ArgListNew($1); }
 
-/* Eh, well, they're no-ops :) */
-stm: ID ':' { $$=LabelGen($1); }
+/* A label IS a statement. It goes into the asm code
+   just as much as any other statement... */
+stm: ID ':' { $$=LabelGenNamed($1); }
 
+/* What the hell. Nested functions look harder to avoid than
+   to accept. */
 stm:	FUNCDEF type ID parmlist ERRHANDLER ID '=' stm
 		{ $$=FuncGen($3, $2, $4, $6, $8); }
 	| FUNCDEF type ID parmlist '=' stm
@@ -116,6 +138,15 @@ stm:	FUNCDEF type ID parmlist ERRHANDLER ID '=' stm
 		{ $$=FuncGen($2, NULL, $3, $5, $7); }
 	| FUNCDEF ID parmlist '=' stm
 		{ $$=FuncGen($2, NULL, $3, NULL, $5); }
+/* Var decls. We have to wait until later to isolate the decl
+   from the code, so they're statements like everything else... */
+stm:	VAR type ID '=' expr ';'
+		/* The decl will be scooped away later. The assignment sticks
+		   where it's put. */
+		{ $$=StmCompound(VarGen($3, $2), StmExpr(ExprAssign($3, $5))); }
+	| VAR type ID ';'
+		{ $$=VarGen($3, $2); }
+stm:	TYPEDEF ID '=' '{' parmlist '}' {$$=NULL; }
 
 type: UNSIGNED { $$=Type(TUnsigned); }
 	| SIGNED { $$=Type(TSigned); }
@@ -129,8 +160,8 @@ type: UNSIGNED { $$=Type(TUnsigned); }
 expr: CAST type expr { $$=ExprCast($3, $2); }
 expr: '(' expr ')' { $$=$2; }
 
-expr:	V_INT { $$=ExprValue($1, Type(TSigned)); }
-	| V_FLOAT { $$=ExprValue($1, Type(TFloat)); }
+expr:	V_INT { $$=ExprValuei($1, Type(TSigned)); }
+	| V_FLOAT { $$=ExprValuef($1); }
 	| V_STRING { $$=ExprString($1); }
 
 expr:	expr '+' expr { $$=ExprBinOp($1, $3, '+'); }
@@ -148,8 +179,13 @@ expr:	expr '<' expr { $$=ExprBinOp($1, $3, '<'); }
 	| expr NEQ expr { $$=ExprBinOp($1, $3, NEQ); }
 expr:	ID '=' expr { $$=ExprAssign($1, $3); }
 
-/* Erk. sizeof types may well be out, sorry. */
-expr:	SIZEOF '(' expr ')' { $$=ExprSizeof($3); }
+/* This can get put in later. ugh 
+expr:	expr '[' expr ']'
+*/
+
+/* We can't separate type and expr */
+expr:	SIZEOF '(' ID ')' { $$=ExprSizeof($3); }
+
 expr:	NEW '(' type ')' { $$=ExprNew($3); }
 
 expr:	ID '(' ')' { $$=ExprCall($1, NULL); }
@@ -159,6 +195,6 @@ expr:	ID '(' ')' { $$=ExprCall($1, NULL); }
    there's no overhead in excess braces. Why not just use it? */
 expr:	'(' '-' expr ')' { $$=ExprUnOp($3, '-'); }
 	| '!' expr { $$=ExprUnOp($2, '!'); }
-	| '~' expr { $$=ExprUnOp($2, '~'); }
+/* ~ removed as per Adam's request. ! and ~ are now identical. */
 
 expr: ID { $$=ExprID($1); }
