@@ -466,41 +466,43 @@ void non_fatal(int code,char* desc,int c) {
 
 
 // Bytecode interpreter. It's not so ugly any more.
+extern int curr_cpu;
+extern struct vcpu_struct *curr_cpu_p;
 
-void do_cycles(int cnt,int c) {
+void do_cycles(int cnt) {
   int L;
   unsigned int reality;
-  cnt+=(cnt==0);
+  if (cnt==0) cnt=1;
   for (L=0;L<cnt;L++) {
 
     if (task_ripc_handler) task_ripc_handler(); // Ugly.
 
-    if (!(cpu[c].flags & VCPU_FLAG_USED)) return;
+    if (!(curr_cpu_p->flags & VCPU_FLAG_USED)) return;
 
-    if ((cpu[c].state & (VCPU_STATE_SLEEPFOR | VCPU_STATE_SLEEPUNTIL
+    if ((curr_cpu_p->state & (VCPU_STATE_SLEEPFOR | VCPU_STATE_SLEEPUNTIL
         | VCPU_STATE_IOWAIT | VCPU_STATE_IPCWAIT))) return;
 
-    if (cpu[c].IP>=cpu[c].bytecode_size) {
-      non_fatal(ERROR_OUTSIDE_CODE,"IP beyond code segment",c);
+    if (curr_cpu_p->IP>=curr_cpu_p->bytecode_size) {
+      non_fatal(ERROR_OUTSIDE_CODE,"IP beyond code segment",curr_cpu);
       continue;
     }
 
     // z33d's changes
-    if (cpu[c].state & VCPU_STATE_STOPPED) continue;
-    if (cpu[c].flags & VCPU_FLAG_DEBUG)
-      if(main_debug(c)) // go to debugger
+    if (curr_cpu_p->state & VCPU_STATE_STOPPED) continue;
+    if (curr_cpu_p->flags & VCPU_FLAG_DEBUG)
+      if(main_debug(curr_cpu)) // go to debugger
         continue;
     // end of z33d's changes
  
     change=1;
-    reality=cpu[c].IP*12;
+    reality=curr_cpu_p->IP*12;
 
     got_nonfatal_round=0;
     but_in_fact_it_was_fatal=0;
 
-    ((void (*)()) JIT [cpu[c].bytecode[reality]*36+(cpu[c].bytecode[reality+1]+1)+6*(cpu[c].bytecode[reality+2])]) (c);
+    ((void (*)()) JIT [curr_cpu_p->bytecode[reality]*36+(curr_cpu_p->bytecode[reality+1]+1)+6*(curr_cpu_p->bytecode[reality+2])]) ();
 
-    cpu[c].IP=cpu[c].IP+change;
+    curr_cpu_p->IP=curr_cpu_p->IP+change;
   }
 
 }

@@ -28,6 +28,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+/* Globals */
+int curr_cpu;
+struct vcpu_struct *curr_cpu_p;
+
 extern int be_quick_dude;
 void	(*task_ripc_handler)(void) = NULL;
 void	(*task_ipc_timeouter)(void) = NULL;
@@ -215,9 +219,9 @@ inline void task_cycle(void) {
 
     printk("-> Error: VCPU %d caught OS exception %d, killing it.\n",current_cpu,
            caught_sig);
-    printk("-> VCPU process name: %s\n",cpu[x].name);
-    printk("-> Instruction pointer: 0x%x\n",cpu[x].IP);
-    printk("-> Task flags=0x%x, state=0x%x\n",cpu[x].flags,cpu[x].state);
+    printk("-> VCPU process name: %s\n",curr_cpu_p->name);
+    printk("-> Instruction pointer: 0x%x\n",curr_cpu_p->IP);
+    printk("-> Task flags=0x%x, state=0x%x\n",curr_cpu_p->flags,curr_cpu_p->state);
     destroy_task(x);
     died_proc++;
     killed_proc--;
@@ -226,51 +230,53 @@ inline void task_cycle(void) {
   }
 
   for (x=0;x<top_cpu+1;x++) {
-    current_cpu=x;
-    if (cpu[x].flags & VCPU_FLAG_USED) {
-      if (cpu[x].state & VCPU_STATE_IOWAIT) {
-        cpu[x].iowait_cycles++;
+	  /* curr_cpu globalisation by shykta */
+    curr_cpu=current_cpu=x;
+    curr_cpu_p=&cpu[x];
+    if (curr_cpu_p->flags & VCPU_FLAG_USED) {
+      if (curr_cpu_p->state & VCPU_STATE_IOWAIT) {
+        curr_cpu_p->iowait_cycles++;
         total_wait++;
-        if (cpu[x].timecrit) wait_babe=safe_usleep=0;
-        if (cpu[x].iohandler) {
-          if (cpu[x].iohandler(x))
-            if (cpu[x].state & VCPU_STATE_IOWAIT) {
-              cpu[x].state-=VCPU_STATE_IOWAIT;
-              cpu[x].iohandler=0;
-              cpu[x].iowait_id=0;
-              cpu[x].timecrit=0;
+        if (curr_cpu_p->timecrit) wait_babe=safe_usleep=0;
+        if (curr_cpu_p->iohandler) {
+          if (curr_cpu_p->iohandler(x))
+            if (curr_cpu_p->state & VCPU_STATE_IOWAIT) {
+              curr_cpu_p->state-=VCPU_STATE_IOWAIT;
+              curr_cpu_p->iohandler=0;
+              curr_cpu_p->iowait_id=0;
+              curr_cpu_p->timecrit=0;
             }
           } else {
-          cpu[x].state-=VCPU_STATE_IOWAIT;
-          cpu[x].iohandler=0;
-          cpu[x].iowait_id=0;
+          curr_cpu_p->state-=VCPU_STATE_IOWAIT;
+          curr_cpu_p->iohandler=0;
+          curr_cpu_p->iowait_id=0;
           wait_babe=0;
           non_fatal(ERROR_DEADLOCK,"STATE_IOWAIT but no iohandler()",x);
         }
       } else
-      if (cpu[x].state & VCPU_STATE_IPCWAIT) {	// by Bulba
-          cpu[x].iowait_cycles++;
+      if (curr_cpu_p->state & VCPU_STATE_IPCWAIT) {	// by Bulba
+          curr_cpu_p->iowait_cycles++;
 	  total_wait++;
       } else 
-      if (!(cpu[x].state & (VCPU_STATE_SLEEPFOR|VCPU_STATE_SLEEPUNTIL))) {
-        do_cycles(cpu[x].priority,x);
+      if (!(curr_cpu_p->state & (VCPU_STATE_SLEEPFOR|VCPU_STATE_SLEEPUNTIL))) {
+        do_cycles(curr_cpu_p->priority);
         safe_usleep=wait_babe=0;
-        cpu[x].work_cycles++;
+        curr_cpu_p->work_cycles++;
         total_work++;
       } else
-      if (cpu[x].state & VCPU_STATE_SLEEPFOR) {
-        if (cpu[x].cnt_down>0) cpu[x].cnt_down--;
-        if (!cpu[x].cnt_down)
-          cpu[x].state-=VCPU_STATE_SLEEPFOR;
+      if (curr_cpu_p->state & VCPU_STATE_SLEEPFOR) {
+        if (curr_cpu_p->cnt_down>0) curr_cpu_p->cnt_down--;
+        if (!curr_cpu_p->cnt_down)
+          curr_cpu_p->state-=VCPU_STATE_SLEEPFOR;
         safe_usleep=wait_babe=0;
-        cpu[x].sleep_cycles++; total_idle++;
-      } else if (cpu[x].state & VCPU_STATE_SLEEPUNTIL) {
+        curr_cpu_p->sleep_cycles++; total_idle++;
+      } else if (curr_cpu_p->state & VCPU_STATE_SLEEPUNTIL) {
         someone_is_sleeping=1;
-        if (datime>cpu[x].wake_on)
-          cpu[x].state-=VCPU_STATE_SLEEPUNTIL;
+        if (datime>curr_cpu_p->wake_on)
+          curr_cpu_p->state-=VCPU_STATE_SLEEPUNTIL;
         safe_usleep=0;
-        if (cpu[x].wake_on<sleep_to) sleep_to=cpu[x].wake_on;
-        cpu[x].sleep_cycles++; total_idle++;       
+        if (curr_cpu_p->wake_on<sleep_to) sleep_to=curr_cpu_p->wake_on;
+        curr_cpu_p->sleep_cycles++; total_idle++;       
       }
     } else total_idle++;
   }

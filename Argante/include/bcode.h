@@ -14,7 +14,7 @@
 
 #include "exception.h"
 
-void do_cycles(int,int);
+void do_cycles(int);
 
 // Instruction size: 12 bytes.
 
