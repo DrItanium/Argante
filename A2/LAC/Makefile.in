@@ -13,6 +13,7 @@ CLEAN=core core.* *.agt *.img parser.output lac $(LAC_OBJECTS)
 DISTCLEAN=Makefile
 MAINTAINERCLEAN=parser.c parser.h yaccer.c
 
+CFLAGS=@CFLAGS@
 CFLAGS+=-I@srcdir@ -I. -I@top_srcdir@ -I..
 
 all: lac
