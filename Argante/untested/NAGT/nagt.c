@@ -508,6 +508,9 @@ void do_pragma(char *ln)
  * 2. Strings. ""
  * 3. TODO: special types repeat and block.
  */
+
+int rep_data_offs; /* Data offset as of line start, for repeat */
+
 char *do_data(char *ln)
 {
 	char *next, *ret;
@@ -519,10 +522,6 @@ char *do_data(char *ln)
 	if(*ln==0)
 		return NULL;
 
-	/* Is it a special op? */
-	if (!strcmp(ln, "block "))
-		return NULL; /* Abandon it. We are in block mode always. I think. */
-	if (!strcmp(ln, "repeat "));
 
 	/* Is it a string? */
 	if(ln[0]=='"')
@@ -552,8 +551,7 @@ char *do_data(char *ln)
 		return ln;
 	}
 
-	/* Now check it for a number.
-	 * For simplicity's sake, break up the string. */
+	/* For simplicity's sake, break up the string. */
 	next=ln;
 	while (*next && !my_isspace(*next))
 		next++;
@@ -562,7 +560,54 @@ char *do_data(char *ln)
 		*next=0; next++;
 	} else
 		next=NULL;
+
+	/* Is it a special op? */
+	if (!strcasecmp(ln, "BLOCK"))
+		return NULL; /* Abandon it. We are in block mode always. I think. */
+	if (!strcasecmp(ln, "REPEAT"))
+	{
+		int sz, ct, z;
+		FILE *ft;
+		/* Now we have multi-element data symbols, so the whole deal of what
+		 * 'repeat' does is kinda thorny.
+		 * 
+		 * So, let's just say repeat repeats all data on the same line as
+		 * repeat is given on. Ugly, yes; but also the most useful possibility.
+		 */
 	
+		/* Get repct */
+		ct=strtol(next, &ret, 0) - 1; /* We already wrote one block of data */
+		if (ret==next) { warn(next); error("Garbage numeric"); }
+
+		if (ct<0 || ct>MAX_ALLOC_MEMBLK)
+			error("Senseless repeat count");
+
+		/* Get data to repeat */
+		sz=ftello(out_data) - rep_data_offs; /* Amount of data to repeat */
+		if (!sz) error("No data given to repeat");
+		
+		next=malloc(sz);
+		/* Read data... */
+		ft=fopen("nag_data.tmp", "rb");
+		if (!ft) { perror("fopen(r)"); exit(1); }
+		fseek(ft, rep_data_offs, SEEK_SET);
+		if ((z=fread(next, sizeof(char), sz, ft)) < sz)
+			perror("fread");
+		fclose(ft);
+		
+		/* Ok, we recovered the data to repeat... repeat it */
+		while(ct > 0)
+		{
+			fwrite(next, sizeof(char), sz, out_data);
+			ct--;
+		}
+		
+		free(next);
+		return ret;
+	}
+
+	/* Now check it for a number. */
+		
 	/* I guess we just assume it's floating point if it contains . or ends in f */
 	if(ln[strlen(ln)-1]=='f' || strchr(ln, '.'))
 	{
@@ -827,6 +872,8 @@ int main(int argc, char *argv[])
 			tmp--;
 		}
 		if (tmp==ln) continue; /* Eh? Blank line? */
+
+		rep_data_offs=ftello(out_data);
 		
 		/* Parse the Code!!! */
 		if (ln[0] == '!') {
