@@ -10,5 +10,5 @@ argante: $(OBJECTS) $(MAIN)
 	$(CC) $(CFLAGS) $(LDLIBS) $^ -o $@
 
 clean:
-	rm -f $(OBJECTS) argante
+	rm -f $(OBJECTS) argante ../argante
 
