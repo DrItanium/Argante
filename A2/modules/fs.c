@@ -133,7 +133,7 @@ static const struct cfdop_1 fs_ops = {
 	(cfdop_read_block *) fs_cio_read,
 	(cfdop_write_block *) fs_cio_write,
 	(cfdop_close_fd *) fs_cio_close,
-	0, NULL /* No Agent-FD's, though an ArganteNFS would be cool. */
+	A2_CFDDESC_NONE, NULL /* No Agent-FD's, though an ArganteNFS would be cool. */
 };
 
 static inline int module_internal_init(int lid)

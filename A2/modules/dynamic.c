@@ -22,8 +22,17 @@
  *
  */
 #include "autocfg.h"
+#include "compat/alloca.h"
+
+#include <stdio.h>
+#include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#include <string.h>
+
+#ifndef NO_BROKEN_DLOPEN
+#include <sys/stat.h>
 #endif
 
 #include <dlfcn.h>
@@ -31,9 +40,8 @@
 #include "printk.h"
 #include "modload.h"
 
-/* Ummmm!
- * This crashes GDB! And potentially your kernel!
- */
+/* Ummmm! This crashes GDB! And potentially your kernel!
+ * Wtf? I don't remember why I wrote that. */
 
 static void *handles[A2_MAX_RSRVD];
 
@@ -53,22 +61,62 @@ static void do_null_error(char *type) {
 		printk2(PRINTK_ERR, "module is bad: %s is NULL!\n", type);
 }
 
+#ifndef NO_DLOPEN_FIX
+#define RMHACKFILE if (oldname) unlink(file)
+#else
+#define RMHACKFILE
+#endif
+
 /* RETURNS LID or -1 */
 int module_dyn_load(char *file) {
 	void *libhandle;
 	moduleinitfunc *init;
 	modulevcpufunc *start, *stop;
 	unsigned lid;
+	int i;
+#ifndef NO_DLOPEN_FIX
+	char *tmp, *oldname=NULL;
+	struct stat sbuf;
+	ALLOCA_STACK;
 
+	/* dlopen() on most systems is brokenish. It bases "load new" / 
+	 * "use existing" on filenames, not file versions.
+	 * This is an ugly hack */
+	if (!stat(file, &sbuf)) {
+		tmp=alloca(16 + 6);
+		/* Should be enough to make collisions
+		 * unlikely even with 64bit inodes(?) */
+		sprintf(tmp, "./%.8x%.8x.so", (unsigned) sbuf.st_mtime, (unsigned) sbuf.st_ino);
+		if (!link(file, tmp)) {
+			oldname=file;
+			file=tmp;
+		}
+	}
+#endif
 	libhandle=dlopen(file, RTLD_NOW);
+
 	if (!libhandle) {
 		do_null_error("libhandle");
+		RMHACKFILE;
 		return -1;
 	}
+
+	/* If you load the same file twice you only get one copy.
+	 * This is bad: if we initialize it twice it will corrupt! */
+	for(i=0;i<A2_MAX_RSRVD;i++) {
+		if (handles[i]==libhandle) {
+			printk2(PRINTK_CRIT, "that would load the _exact_ same module twice! (dlopen bug?)\n");
+			dlclose(libhandle);
+			RMHACKFILE;
+			return -1;
+		}
+	}
+
 
 	lid=lid_create();
 	if (lid==-1) {
 		dlclose(libhandle);
+		RMHACKFILE;
 		return -1;
 	}
 
@@ -76,6 +124,7 @@ int module_dyn_load(char *file) {
 	if (!init) {
 		do_null_error("module_init");
 		dlclose(libhandle);
+		RMHACKFILE;
 		return -1;
 	}
 
@@ -88,6 +137,7 @@ int module_dyn_load(char *file) {
 		else
 			do_null_error("module_shutdown");
 		dlclose(libhandle);
+		RMHACKFILE;
 		return -1;
 	}
 
@@ -96,14 +146,22 @@ int module_dyn_load(char *file) {
 	
 	stop=dlsym(libhandle, "module_vcpu_stop");
 	if (!stop) do_null_error("module_vcpu_start");
-	
-	lid_assign(lid, file, start, stop);
+
+#ifndef NO_DLOPEN_FIX
+	if (oldname)
+		lid_assign(lid, oldname, file, start, stop);
+	else
+		lid_assign(lid, file, NULL, start, stop);
+#else
+	lid_assign(lid, file, NULL, start, stop);
+#endif
 	
 	if (lid >= A2_MAX_RSRVD)
 		printk2(PRINTK_CRIT, "Loading module with excessive LID... unloading impossible!\n");
 	else
 		handles[lid]=libhandle;
 
+	RMHACKFILE;
 	return lid;
 }
 
@@ -128,13 +186,79 @@ int module_dyn_unload(unsigned lid) {
 
 	dlclose(handles[lid]);
 	handles[lid]=NULL;
+
 	lid_destroy(lid);
 	return 0;
 }
 
 /* RETURNS ZERO=success */
 int module_dyn_reload(unsigned lid) {
-	printk2(PRINTK_ERR, "reload not yet implemented, sorry.\n");
-	return 1;
+	void *libhandle;
+	moduleinitfunc *init;
+	modulevcpufunc *start, *stop;
+	char *file;
+#ifndef NO_DLOPEN_FIX
+	char *tmp, *oldname=NULL;
+	struct stat sbuf;
+	ALLOCA_STACK;
+#endif
+	if (lid >= A2_MAX_RSRVD) {
+		printk2(PRINTK_CRIT, "Reloading module with excessive LID\n");
+		return 1;
+	}
+
+	if (!handles[lid]) {
+		printk2(PRINTK_CRIT, "Reloading module we don't know about\n");
+		return 1;
+	}
+
+	file=NULL; //booga_XXX_func();
+
+#ifndef NO_DLOPEN_FIX
+	if (!stat(file, &sbuf)) {
+		tmp=alloca(16 + 6);
+		sprintf(tmp, "./%.8x%.8x.so", (unsigned) sbuf.st_mtime, (unsigned) sbuf.st_ino);
+		if (!link(file, tmp)) {
+			oldname=file;
+			file=tmp;
+		}
+	}
+#endif
+	libhandle=dlopen(file, RTLD_NOW);
+
+	if (!libhandle) {
+		do_null_error("libhandle");
+		RMHACKFILE;
+		return -1;
+	}
+
+	if (handles[lid]==libhandle) {
+		printk2(PRINTK_CRIT, "that would load the _exact_ same module twice! (dlopen bug?)\n");
+		dlclose(libhandle);
+		RMHACKFILE;
+		return -1;
+	}
+
+	/* XXX: have to unregister and reregister syscalls! */
+
+	start=dlsym(libhandle, "module_vcpu_start");
+	if (!start) do_null_error("module_vcpu_start");
+	
+	stop=dlsym(libhandle, "module_vcpu_stop");
+	if (!stop) do_null_error("module_vcpu_start");
+
+#ifndef NO_DLOPEN_FIX
+	if (oldname)
+		lid_assign(lid, oldname, file, start, stop);
+	else
+		lid_assign(lid, file, NULL, start, stop);
+#else
+	lid_assign(lid, file, NULL, start, stop);
+#endif
+	
+	dlclose(handles[lid]);
+	handles[lid]=libhandle;
+	RMHACKFILE;
+	return lid;
 }
 

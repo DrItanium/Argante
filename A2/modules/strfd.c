@@ -65,7 +65,8 @@ static const struct cfdop_1 strfd_ops = {
 	(cfdop_read_block *) strfd_cio_read,
 	(cfdop_write_block *) strfd_cio_write,
 	(cfdop_close_fd *) strfd_cio_close,
-	0, NULL /* We don't accept Agent-VFD's - could be fun though - Commandlines anyone? */
+	/* We don't accept Agent-VFD's - could be fun though - Commandlines anyone? */
+	A2_CFDDESC_NONE, NULL
 };
 
 static inline int module_internal_init(int lid)

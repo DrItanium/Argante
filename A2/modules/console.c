@@ -39,14 +39,12 @@
 #include "exception.h"
 #include "hhac.h"
 
-#define CON_FDDESC 0x
 /*! assigned 601 - 600 */ 
 
 static int stored_lid;
 
 struct con_vfd {
-	int in;
-	int out;
+	flexsock io;
 };
 
 static size_t con_sread(struct vcpu *curr_cpu, struct con_vfd *vfd);
@@ -54,7 +52,7 @@ static size_t con_swrite(struct vcpu *curr_cpu, struct con_vfd *vfd);
 static size_t con_write(struct vcpu *curr_cpu, struct con_vfd *vfd, const char *buf, size_t size);
 static size_t con_read(struct vcpu *curr_cpu, struct con_vfd *vfd, char *buf, size_t size);
 static void con_close (struct vcpu *curr_cpu, struct con_vfd *vfd);
-static int con_create (struct vcpu *curr_cpu, const char *desc, int in, int out);
+static int con_create (struct vcpu *curr_cpu, const char *desc, flexsock io);
 
 /* CFD ops table */
 static struct cfdop_1 con_ops = {
@@ -63,15 +61,13 @@ static struct cfdop_1 con_ops = {
 	(cfdop_read_block *) con_read,
 	(cfdop_write_block *) con_write,
 	(cfdop_close_fd *) con_close,
-	0, /* Changed later */
+	"TCON",
 	(cfdop_create_fd *) con_create
 };
 
 static inline int module_internal_init(int lid)
 {
 	stored_lid=lid;
-	/* TCON -> 0x54434f4e on BE systems */
-	con_ops.fd_desc=*((int *) "TCON"); /* ehhe - 64bit warn! */
 	cfdop1_lid_set(lid, &con_ops);
 
 	printk2(PRINTK_INFO, "Console module loaded.\n");
@@ -90,19 +86,18 @@ static inline void module_internal_vcpu_stop(struct vcpu *cpu)
 	/* Don't blab about unclosed FD's - for console who cares? */
 	while((fdh=vfd_find_mine(cpu, stored_lid)) >= 0) {
 		fd=vfd_get_data(cpu, stored_lid, fdh);
-		if (fd) free(fd);
+		if (fd) con_close(cpu, fd);
 		vfd_dealloc(cpu, stored_lid, fdh);
 	}
 }
 
-static int con_create (struct vcpu *curr_cpu, const char *desc, int in, int out) {
+static int con_create (struct vcpu *curr_cpu, const char *desc, flexsock io) {
 	int j;
 	struct con_vfd *new;
 	new=malloc(sizeof(struct con_vfd));
 	if (!new) return 0;
 
-	new->in=in;
-	new->out=out;
+	new->io=io;
 
 	j=vfd_alloc_new(curr_cpu, stored_lid);
 	vfd_set_data(curr_cpu, stored_lid, j, new);
@@ -110,7 +105,10 @@ static int con_create (struct vcpu *curr_cpu, const char *desc, int in, int out)
 }
 
 static void con_close (struct vcpu *curr_cpu, struct con_vfd *vfd) {
-	if (vfd) free(vfd);
+	if (vfd) {
+		FXS_Close(vfd->io);
+		free(vfd);
+	}
 }
 
 static size_t con_sread(struct vcpu *curr_cpu, struct con_vfd *vfd) {
@@ -125,14 +123,14 @@ static size_t con_swrite(struct vcpu *curr_cpu, struct con_vfd *vfd) {
 
 static size_t con_write(struct vcpu *curr_cpu, struct con_vfd *vfd, const char *buf, size_t size) {
 	int x;
-	x=write(vfd->out, buf, size);
+	x=FXS_Write(vfd->io, buf, size);
 	if (x < 0) throw_except(curr_cpu, ERR_GENERIC);
 	return x;
 }
 
 static size_t con_read(struct vcpu *curr_cpu, struct con_vfd *vfd, char *buf, size_t size) {
 	int x;
-	x=read(vfd->in, buf, size);
+	x=FXS_Read(vfd->io, buf, size);
 	if (x < 0) throw_except(curr_cpu, ERR_GENERIC);
 	return x;
 }

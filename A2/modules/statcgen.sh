@@ -28,6 +28,9 @@ cat << EOF
 #include "taskman.h"
 #include "modload.h"
 #define MINUS1 (unsigned) -1
+#ifndef NULL
+#define NULL (void *) 0
+#endif
 EOF
 
 for A in $*; do {
@@ -49,7 +52,7 @@ cat << EOF
 	}
 EOF
 echo "if (!"$A"_init(lid)) {"
-echo "	lid_assign(lid, \"$A\", "$A"_vcpu_start, "$A"_vcpu_stop);"
+echo "	lid_assign(lid, NULL, \"$A\", "$A"_vcpu_start, "$A"_vcpu_stop);"
 echo "	lid=MINUS1;"
 echo "}"
 } done

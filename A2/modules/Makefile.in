@@ -15,23 +15,33 @@ NATIVE_O=$(foreach A,$(MODULES_NATIVE),$(A).@OBJEXT@)
 
 CLEAN=core core.* $(ALL_O) $(ALL_SO)
 CLEAN+=dynamic.@OBJEXT@ st_kern.c st_nativ.c st_kern.@OBJEXT@ st_nativ.@OBJEXT@ st_kern.a st_nativ.a
-CLEAN+=modlistk modlistn modlistk.new modlistn.new
+CLEAN+=modlistk modlistn modlistk.new modlistn.new modules.scr
 
 DISTCLEAN=Makefile
 MAINTAINERCLEAN=$(ALL_SC) $(ALL_H) asyscall.h
 
 # Do NOT include compat libs 'LIBOBJS' because we don't produce executables.
 
+CFLAGS=@CFLAGS@
 CFLAGS+=-I@top_srcdir@/include -I../include -I@top_srcdir@ -I..
 
 SHROPTS=-shared -fpic
 
-TARGETS=st_nativ.a asyscall.h
+TARGETS=st_nativ.a asyscall.h modules.scr
 
 ifeq (@MODULES@,DYNAMIC)
 TARGETS+=dynamic.@OBJEXT@ $(KERN_SO)
+
+MODLOADS=$(foreach A,$(MODULES_KERN),echo ">"$(A).so >> $@;)
+modules.scr: modlistk
+	$(RM) $@
+	$(MODLOADS)
 else
 TARGETS+=st_kern.a
+
+modules.scr: modlistk
+	$(RM) $@
+	touch $@
 endif
 
 # END variables
@@ -71,6 +81,8 @@ modlistk: FORCE
 modlistn: FORCE
 	echo $(MODULES_NATIVE) > $@.new
 	(cmp -s $@ $@.new && $(RM) $@.new) || mv -f $@.new $@
+
+modules.scr:
 
 # Loader stuff
 #
