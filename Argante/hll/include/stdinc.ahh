@@ -34,6 +34,10 @@ procedure Attach_Bounded ( writable b : Bounded_Chunk, addr : Data_Addr,
   b.size := len;
 }
 
+type String is structure {
+	data : unsigned;
+	length : unsigned;
+}
 
 // Exceptions
 
