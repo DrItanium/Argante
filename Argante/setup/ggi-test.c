@@ -1,8 +1,6 @@
 #include <ggi/ggi.h>
 
-int main() {
+main() {
 	ggiInit();
 	ggiExit();
-	
-	return 0;
 }
