@@ -2,23 +2,27 @@
 #
 # Maintainer: James Kehl <ecks@optusnet.com.au>
 # (If nobody objects!)
+# Some fixes by Adam Chodorowski
 
-# A cute hack. I hope you use locate!
-SSL_DIR1=$(dir $(shell locate ssl.h))
+# Look up where the includes and libs for SSL are located.
+#
+# FIXME: This uses 'locate', which may fail on some platforms
+#        (Solaris for example) - investigate other options!!
 
-ifneq ($(SSL_DIR1),)
+SSL_INCS=$(foreach file,$(shell locate ssl.h),-I$(dir $(file)))
+SSL_LIBS=$(foreach file,$(shell locate libssl.so),-L$(dir $(file)))
 
-SSL_DIR=$(SSL_DIR1)..
-CFLAGS+=-DUSE_SSL -I$(SSL_DIR)/include 
-LDLIBS+=-L$(SSL_DIR)/lib -lssl -lcrypto
+ifneq ($(SSL_INCS),)
+CFLAGS+=-DUSE_SSL $(SSL_INCS)
+LDLIBS+=$(SSL_LIBS) -lssl -lcrypto
 
 all: ripcd
 else
 all: warn ripcd
 endif
 
-ripcd: ripcd.c 
-	$(CC) $(CFLAGS) -DCFGFILE='"r1"' -o $@.o -c $^
+ripcd: ripcd.c
+	$(CC) $(CFLAGS) -DCFGFILE='"r1"' -c $^ -o $@.o
 	$(CC) $(CFLAGS) $@.o $(LDLIBS) -o $@
 	ln -sf ripc-daemon/$@ ../.
 
@@ -35,6 +39,6 @@ warn:
 
 # This is one contributor to the third-snapshot bloat!
 clean:
-	rm -f core *.o cli ripcd 
+	-rm -f core *.o cli ripcd
 
 cli: cli.c
