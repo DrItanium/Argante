@@ -1,0 +1,111 @@
+inadEquate
+=================
+
+You ask, what kind of name is "inadequate" and why should I use it?
+
+It is well proven by mathematics that nothing's perfect. You can't integrate
+e^(-x^2). The axioms our reasoning is based on are purely arbitary. (Has anyone
+_seen_ a parallel line, or a 2-dimensional plane?) And the truly optimizing
+compiler is a fiction.
+
+So, if you can't make a perfect compiler or programming language, why try?
+
+I'm not about to declare inadEquate a medium-level language, but it is not going
+to have a keyword for _everything_. No polymorphism. No inheritance. No methods.
+I'm going to try to make the LALR table empty :)
+
+After all, if you know what the program should do, why can't you write the code
+for it?
+
+It's going to be very similar to C; except in the declarations. I'm going for
+parser simplicity as well as ease of use. I HAVE NO S/R CONFLICTS! YEEHA!
+
+As for the name, I like it a helluva lot better than maybe 'D' or 'SCCA'
+(Stupid Compiler with Crappy Acronym).
+==================
+OPERATORS
+
+Binary operators: +-/*|& behave like they do in C.
+		  == != >= <= > < produce boolean. (i.e. 1 or 0)
+
+Unary operators: -!~ numeric negative, boolean inverse, binary inverse respectively.
+
+Don't ask the difference between boolean inverse and binary inverse because I
+doubt anyone really knows the answer.
+
+==================
+TYPES
+
+Standard types are:
+	unsigned, signed and float. Selfexplanatory.
+	array <type> size <size>. An array of type, first value being size.
+		The type is between the array and size so it's clear what
+		array pointer to unsigned size 50
+		and pointer to array unsigned size 50 mean.
+		
+	pointer to <type>. Pointer referencing an object of <type> or NULL. 
+	string. Not really possible to create these directly, because they're
+		pointers to arrays, first entry sizeof as always.
+		If you're desperate, cast a new array:
+		str=cast string new(array unsigned size 10000);
+	
+Types are defined with typedef name = {structure}
+
+sizeof(var) thus yields the first entry (length) of an array or string.
+
+With a pointer, you can give it something to point to with the 'new(type)'
+keyword. OO freaks may like this. For C veterans, just put
+#declare new(x) malloc(sizeof(x))
+into your head somewhere.
+
+I will _NOT_ allow the & operator. It completely buggers optimization.
+So, if you need an address, have it start as an address, i.e pointer.
+
+To get rid of a pointer, use destroy x.
+
+pointer to array <type> is also a valid type. ESPECIALLY with the lack of size.
+After all, if you're dynamically allocating it, you're dynamically allocating
+it, aren't you?
+
+Use it with a=new(array <type> size <size>) and resize it with
+resize(a, array <type> size <newsize>)
+
+BE CAREFUL WITH DESTROY AND RESIZE! THEY MAY DESTROY/MOVE THE TARGET OBJECT!
+SO DON'T EXPECT ANY OTHER POINTERS TO THE SAME OBJECT TO STILL BE VALID!
+
+===================
+FUNCTIONS
+
+
+Functions are defined with funcdef [output type] name (inputs)
+[errhandler FUNC] [= { code }].
+(Omitted output type is equvalent to void.)
+
+Syscalls aren't used directly. Instead, we use the following sort of construct:
+funcdef PrintString(S: string) {
+	asm (u0, u1) {
+	MOVE u0, *S
+	ADD S, 1
+	MOVE u1, S
+	SYSCALL $DISPLAY_PRINT_STRING
+	}
+}
+
+An exception handler probably shouldn't set itself as its own exception
+handler. It would take too much effort to make this illegal for me to make it
+so. (Someone might find it useful?!) But just don't do it. Can you see why?
+
+I figure most functions will handle exceptions the same way all the way
+through. There isn't all that much variety with the state of panic a
+failed malloc or a full disk causes within a function.
+
+Oh, and, by the way, to throw an exception use raise <n>; like a return.
+=====================
+VARIABLES
+
+Variables are defined with var <type> name [= value].
+=====================
+CONDITIONALS/LOOPS
+
+To Be Written...
+=====================
