@@ -130,14 +130,14 @@ stm: ID ':' { $$=LabelGenNamed($1); }
 
 /* What the hell. Nested functions look harder to avoid than
    to accept. */
-stm:	FUNCDEF type ID parmlist ERRHANDLER ID '=' stm
-		{ $$=FuncGen($3, $2, $4, $6, $8); }
-	| FUNCDEF type ID parmlist '=' stm
-		{ $$=FuncGen($3, $2, $4, NULL, $6); }
-	| FUNCDEF ID parmlist ERRHANDLER ID '=' stm
-		{ $$=FuncGen($2, NULL, $3, $5, $7); }
-	| FUNCDEF ID parmlist '=' stm
-		{ $$=FuncGen($2, NULL, $3, NULL, $5); }
+stm:	FUNCDEF type ID '(' parmlist ')' ERRHANDLER ID '=' stm
+		{ $$=FuncGen($3, $2, $5, $8, $10); }
+	| FUNCDEF type ID '(' parmlist ')' '=' stm
+		{ $$=FuncGen($3, $2, $5, NULL, $8); }
+	| FUNCDEF ID '(' parmlist ')' ERRHANDLER ID '=' stm
+		{ $$=FuncGen($2, NULL, $4, $7, $9); }
+	| FUNCDEF ID '(' parmlist ')' '=' stm
+		{ $$=FuncGen($2, NULL, $4, NULL, $7); }
 /* Var decls. We have to wait until later to isolate the decl
    from the code, so they're statements like everything else... */
 stm:	VAR type ID '=' expr ';'
@@ -146,7 +146,8 @@ stm:	VAR type ID '=' expr ';'
 		{ $$=StmCompound(VarGen($3, $2), StmExpr(ExprAssign($3, $5))); }
 	| VAR type ID ';'
 		{ $$=VarGen($3, $2); }
-stm:	TYPEDEF ID '=' '{' parmlist '}' {$$=NULL; }
+stm:	TYPEDEF ID '=' '{' parmlist '}' { $$=TypeGen($2, TypeCompound($5)); }
+stm:	TYPEDEF ID '=' type ';' { $$=TypeGen($2, $4); }
 
 type: UNSIGNED { $$=Type(TUnsigned); }
 	| SIGNED { $$=Type(TSigned); }

@@ -6,7 +6,8 @@
  * to add strings to this.
  */
 
-typedef char *string;
+typedef struct _string *string;
 
 string String(char *a);
+char *StringToChar(string s);
 

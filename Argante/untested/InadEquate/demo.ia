@@ -1,19 +1,25 @@
 type z = { unsigned a1, signed s1, float f1 }
+type p = unsigned;
 var z adze;
+var p pop;
 
 main();
 
-COW BOLLOCKS;
-
-= COW BOLLOCKS;
-
-func main =
+func main () =
 {
 	var unsigned d = 0xa;
 	var signed x=0;
+	var p pop;
 
 	p=(300 - 60) % 02;
+/* errhandler main */
+	func unsigned submain (signed x) =
+	{
+		p=p-1;
+	}
 
+	submain();
+	
 	while(d)
 	{
 		d=d-1;
@@ -21,3 +27,5 @@ func main =
 	}
 	return;
 }
+
+submain();

@@ -14,7 +14,8 @@ typedef struct _AParmList *AParmList;
 typedef struct _ACompoundField *ACompoundField;
 
 struct _AStm {
-	enum { SGoto, SReturn, SRaise, SLabel, SExpr, SFunc, SCJump, SDestroy, SResize, SVar, } kind;
+	enum { SGoto, SReturn, SRaise, SLabel, SExpr, SFunc, SCJump, SDestroy, SResize, SVar, SType } kind;
+
 	union {
 		string to;
 		AExpr val;
@@ -54,7 +55,8 @@ struct _AType {
 	AExpr size;
 	union {
 		AType PointerTo;
-		ACompoundField *FirstRec;
+		ACompoundField FirstRec; /* Sadly I can't do my little CompactList as it reverses list orders */
+		ACompoundField LastRec;
 		string id;
 	} u;
 };
@@ -64,6 +66,7 @@ struct _ACompoundField {
 	AType type;
 	int location;
 	ACompoundField next;
+	ACompoundField prev;
 };
 
 struct _AExprList {
@@ -118,6 +121,7 @@ extern AStm LabelGenNamed(string id);
 extern AStm LabelGenGeneric(string id);
 extern AStm FuncGen(string id, AType retType, AParmList parmlist, string errhandler, AStm code);
 extern AStm VarGen(string id, AType type);
+extern AStm TypeGen(string id, AType type);
 
 /*
  * -- Types. --
@@ -130,6 +134,7 @@ extern AType TypePointerArray(AType arraytype);
 extern AType TypePointer(AType pointertype);
 extern AType TypeArray(AType pointertype, AExpr size);
 extern AType TypeID(string id);
+extern AType TypeCompound(AParmList parms);
 
 /*
  * -- Expressions. --
@@ -149,3 +154,4 @@ extern AExpr ExprNew(AType type);
 extern AExpr ExprCall(string id, AExprList arglist);
 extern AExpr ExprID(string id);
 
+extern int yynerrs;

@@ -130,3 +130,60 @@ AType TypeID(string id)
 	AddType(n);
 	return n;
 }
+
+/* It would be just WAY too complicated to guarantee uniqueness
+ * for a compound type, and why bother :P */
+AType TypeCompound(AParmList parms)
+{
+	AParmList s;
+	AType n;
+	ACompoundField z;
+
+	n=calloc(sizeof(struct _AType), 1);
+	n->kind=TCompound;
+	
+	s=parms;
+	while (s)
+	{
+		z=calloc(sizeof(struct _ACompoundField), 1);
+		
+		if (!n->u.FirstRec) n->u.FirstRec=z;
+		z->prev=n->u.LastRec;
+		z->prev->next=z;
+		n->u.LastRec=z;
+
+		z->id=s->id;
+		z->type=s->type;
+		s=s->next;
+	}
+	
+	AddType(n);
+	return n;
+}
+
+/* No Phase0 code after this line */
+#include "linearize.h"
+/* Solve TIDS */
+void TypeDoTID()
+{
+	ATChain tc=Chead;
+	AType t;
+	while (tc)
+	{
+		if (tc->a->kind == TID) {
+		t=FindType(tc->a->u.id);
+		if (!t)
+		{
+			yynerrs++;
+			fprintf(stderr, "%s is undefined\n", StringToChar(tc->a->u.id));
+			EM_ErrorMessage("Undefined type");
+		} else {
+			/* TID's should be unique so WTF,
+			 * it's only a double up :P */
+			memcpy(tc->a, t, sizeof(struct _AType));
+		}
+		}
+
+		tc=tc->next;
+	}
+}

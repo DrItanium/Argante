@@ -1,3 +1,12 @@
+/*
+ * inadEquate main module.
+ * (c) 2001 James Kehl.
+ * Licensed under GPL
+ * 
+ *         lambent neon lights
+ *     in the storm of snowflakes
+ *         enveloping silence
+ */
 #include <stdio.h>
 #include "string.h"
 #include "tree.h"
@@ -19,6 +28,12 @@ extern int yyparse();
 extern int yynerrs;
 extern int yydebug;
 
+void NErrs(int d)
+{
+		fprintf(stderr, "<!> %d errors encountered.\n", yynerrs);
+		exit(d);
+}
+
 FILE *yyin;
 int main()
 {
@@ -26,21 +41,14 @@ int main()
 	yyin=stdin;
 //	yydebug=1;
 
-	/* Lex and parse */
-	if ((e=yyparse()) || yynerrs)
-	{
-		fprintf(stderr, "<!> %d errors encountered.\n", yynerrs);
-		return 3;
-	}
-	/* Ok, we have our tree. */
-	/* Now finalize those type definitions */
+	/* PHASE0: Lex and parse */
+	if ((e=yyparse()) || yynerrs) NErrs(3);
+	/* PHASE1: Split out functions, Resolve TIDs */
+	Phase1();
+	if (yynerrs) NErrs(2);
+	/* PHASE2: finalize compound types, constant optimization */
 	
-	/* declare those variables and functions */
-	
-	/* Now loop through the tree, do typechecking,
-	 * constant optimization, and break into temporaries */
-	
-	/* Register Allocation. */
+	/* PHASE(3/4?): Register Allocation. */
 	
 	/* We're done. Dump code (core? :P) */
 	return 0;

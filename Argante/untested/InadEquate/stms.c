@@ -269,6 +269,19 @@ AStm VarGen(string id, AType type)
 	return new;
 }
 
+AStm TypeGen(string id, AType type)
+{
+	AStm new;
+
+	new=calloc(sizeof(struct _AStm), 1);
+	new->kind=SType;
+	new->u.var.id=id;
+	new->u.var.type=type;
+
+	return new;
+}
+
+
 /* ParmList / ArgList; yeuch */
 
 AParmList ParmListAdd(AParmList to, AType type, string id)
