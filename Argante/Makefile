@@ -24,15 +24,13 @@ CFLAGS+=-DBUILD=$X
 TOP := $(shell pwd)
 
 # Include the configuration.
-include conf.mk
+include $(TOP)/conf.mk
 
-# Definitions
-
-# Generic
-CC = gcc
+# Generic definitions
+CC      = gcc
 LDLIBS += -lm -lc
-CFLAGS += -I../include -fomit-frame-pointer -O9 -ffast-math -Wall -fforce-mem -fforce-addr -fcaller-saves -fstrength-reduce -fthread-jumps -funroll-loops -fcse-follow-jumps -fcse-skip-blocks -frerun-cse-after-loop -fexpensive-optimizations -fschedule-insns2
-SHROPTS = -shared -fPIC
+CFLAGS += -I$(TOP)/include -fomit-frame-pointer -O9 -ffast-math -Wall -fforce-mem -fforce-addr -fcaller-saves -fstrength-reduce -fthread-jumps -funroll-loops -fcse-follow-jumps -fcse-skip-blocks -frerun-cse-after-loop -fexpensive-optimizations -fschedule-insns2
+SHROPTS = -shared
 
 #
 # Optimization for Everyone.
@@ -40,7 +38,7 @@ SHROPTS = -shared -fPIC
 # flame me if not. Fingers crossed.
 #
 # chodorowski: Works on Linux/i386 and OpenBSD/i386, but not Solaris/sparc.
-#
+
 ARCH=$(shell uname -m)
 
 ifneq ($(SYS),Solaris)
@@ -82,8 +80,8 @@ endif
 
 # Solaris
 ifeq ($(SYS), Solaris)
-LDLIBS += -lsocket -Xlinker -export-dynamic -ldl 
-SHROPTS = -L/usr/ucblib -lucb -Xlinker "-R/usr/ucblib"
+LDLIBS  += -lsocket -Xlinker -ldl
+SHROPTS += -L/usr/ucblib -lucb -Xlinker "-R/usr/ucblib"
 endif
 
 IDSTR ="`whoami`@`uname -n` on `date +'%A, %d %B %Y, %H:%M'`"

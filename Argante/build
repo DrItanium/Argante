@@ -156,7 +156,7 @@ if [ -e conf.mk~ ]; then
     echo "Config files are different. Cleaning:"
     mv conf.mk conf2.mk
     mv conf.mk~ conf.mk
-    make clean
+    gmake clean
     mv conf2.mk conf.mk
   fi
 fi
