@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# This is still mega-ick.
-# Autoconf coming soon.
 
 SYS=`uname -s`
 
@@ -42,30 +40,41 @@ if [ "$SYS" = "Linux" ]; then
 
   if [ -z "$NOSVGALIB" ]; then
   echo ">>> Performing svgalib compatibility test..."
-  cat >.ctest.c <<_EOF_
-#include <vga.h>
-main() { vga_setmode(1); vga_ext_set(1,1); vga_hasmode(1); vga_setpalette(1,1,1,1);
-         vga_setpalvec(1,1,1); vga_getch(); vga_getgraphmem(); graph_mem=1;
-         vga_lockvc(); vga_unlockvc(); vga_getkey(); }
-_EOF_
 
-  rm -f .ctest
+  rm -f setup/svga-test
   gcc -fomit-frame-pointer -O9 -ffast-math -Wall -fforce-mem -fforce-addr \
       -fcaller-saves -fstrength-reduce -fthread-jumps -funroll-loops \
       -fcse-follow-jumps -fcse-skip-blocks -frerun-cse-after-loop \
       -fexpensive-optimizations -fschedule-insns2 -m486 -ldl -rdynamic -lm \
-      -lvga .ctest.c -o .ctest >/dev/null 2>&1
+      -lvga setup/svga-test.c -o setup/svga-test >/dev/null 2>&1
 
-  if [ ! -x .ctest ]; then
+  if [ ! -x setup/svga-test ]; then
     echo ">>> Test failed, compiling without gfx module."
   else
     echo ">>> Test successful, compiling with gfx module."
-    echo "USE_SVGALIB=yes" >> conf.mk
+    echo "USE_SVGALIB=YES" >> conf.mk
   fi
-  rm -f .ctest .ctest.c
+  rm -f setup/svga-test
   else
     echo "NOTE: SVGALib test disabled by user."
   fi
+fi
+
+# Check if we should compile the GGI module
+if [ -z "$NOGGILIB" ]; then 
+	rm -f setup/ggi-test
+	gcc -lggi setup/ggi-test.c -o setup/ggi-test >/dev/null 2>&1
+	
+	if [ ! -x setup/ggi-test ]; then
+		echo "<+> GGI test failed, compiling without GGI module."
+	else
+		echo "<I> GGI test successful, compiling with GGI module."
+		echo "USE_GGI=YES" >> conf.mk
+	fi
+	
+	rm -f setup/ggi-test
+else
+	echo "<+> GGI test disabled by user."
 fi
 
 ISSOL=`echo $SYS|egrep -e 'Sun|Sola|Nis'`
@@ -106,46 +115,40 @@ fi
 
 # GTK test
 if [ -z "$NOGTK" ]; then
-  echo ">>> Performing GTK compatibility test..."
-  cat >.ctest.c <<_EOF_
-#include <gtk/gtk.h>
-main() { gtk_init(NULL, NULL); }
-_EOF_
+	echo ">>> Performing GTK compatibility test..."
 
-  rm -f .ctest
-  gcc `gtk-config --libs` `gtk-config --cflags` .ctest.c -o .ctest >/dev/null 2>&1
+	rm -f setup/gtk-test
+	gcc `gtk-config --libs` `gtk-config --cflags` setup/gtk-test.c -o setup/gtk-test >/dev/null 2>&1
 
-  if [ ! -x .ctest ]; then
-    echo ">>> Test failed, compiling without GTK interface."
-  else
-    echo ">>> Test successful, compiling with GTK interface."
-    echo "USE_GTK=yes" >> conf.mk
-  fi
-  rm -f .ctest .ctest.c
+	if [ ! -x setup/gtk-test ]; then
+		echo ">>> Test failed, compiling without GTK interface."
+	else
+		echo ">>> Test successful, compiling with GTK interface."
+		echo "USE_GTK=YES" >> conf.mk
+	fi
+	
+	rm -f setup/gtk-test 
 else
-    echo "NOTE: GTK test disabled by user."
+	echo "NOTE: GTK test disabled by user."
 fi
 
 # ncurses test
 if [ -z "$NOCURSES" ]; then
-  echo ">>> Performing curses compatibility test..."
-  cat >.ctest.c <<_EOF_
-#include <curses.h>
-main() { initscr(); }
-_EOF_
+	echo ">>> Performing curses compatibility test..."
 
-  rm -f .ctest
-  gcc -lcurses .ctest.c -o .ctest >/dev/null 2>&1
+	rm -f setup/curses-test
+	gcc -lcurses setup/curses-test.c -o setup/curses-test >/dev/null 2>&1
 
-  if [ ! -x .ctest ]; then
-    echo ">>> Test failed, compiling without curses interface."
-  else
-    echo ">>> Test successful, compiling with curses interface."
-    echo "USE_CURSES=yes" >> conf.mk
-  fi
-  rm -f .ctest .ctest.c
+	if [ ! -x setup/curses-test ]; then
+		echo ">>> Test failed, compiling without curses interface."
+	else
+		echo ">>> Test successful, compiling with curses interface."
+		echo "USE_CURSES=YES" >> conf.mk
+	fi
+
+	rm -f setup/curses-test
 else
-    echo "NOTE: Curses test disabled by user."
+	echo "NOTE: Curses test disabled by user."
 fi
 
 # Has the config changed, and needs a cleanup?
