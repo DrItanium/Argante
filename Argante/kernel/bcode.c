@@ -69,7 +69,7 @@ extern int failure;
    Note: This function works on the currently active VCPU (ie. the 
    one stored in curr_cpu_p and curr_cpu)! This is for speed reasons. */
 
-inline void push_ip_on_stack() {
+inline void g_push_ip_on_stack() {
     CHECK_FAILURE_FN;
 
     if( curr_cpu_p->stack_ptr >= MAX_STACK ) {
@@ -105,7 +105,7 @@ inline void push_ip_on_stack() {
    Note: This function works on the currently active VCPU (ie. the 
    one stored in curr_cpu_p and curr_cpu)! This is for speed reasons. */
 
-inline void pop_ip_from_stack() {
+inline void g_pop_ip_from_stack() {
     CHECK_FAILURE_FN;
 
     if( curr_cpu_p->stack_ptr > 0 ) {
@@ -120,6 +120,61 @@ inline void pop_ip_from_stack() {
           // printk("RET - Restoring saved_ex %d\n",curr_cpu_p->saved_ex);
           (*curr_cpu_p->ex_st)[curr_cpu_p->stack_ptr]=curr_cpu_p->saved_ex;
           curr_cpu_p->saved_ex = 0;
+        }
+    }
+}
+
+/* Pushes the specified VCPU's IP onto the top of it's call stack.  */
+
+inline void push_ip_on_stack( int id ) {
+    CHECK_FAILURE_FN;
+
+    if( cpu[id].stack_ptr >= MAX_STACK ) {
+        non_fatal( ERROR_STACK_OVER, "Cannot push - stack overflow", id );
+        return;
+    }
+  
+    if( cpu[id].stack_ptr >= cpu[id].dssiz ) {
+        void* q;
+        cpu[id].dssiz += STACK_GROW;
+        q = realloc( cpu[id].stack, 4 * cpu[id].dssiz );
+        
+        if( !q ) {
+            non_fatal( ERROR_STACK_OVER, "Cannot resize stack", id );
+            return;
+        }
+        
+        cpu[id].stack = q;
+        q = realloc( cpu[id].ex_st, 4 * (cpu[id].dssiz + 1) );
+        
+        if( !q ) {
+            non_fatal( ERROR_STACK_OVER, "Cannot resize exception stack", id );
+            return;
+        }
+        cpu[id].ex_st = q;
+    }
+  
+  (*cpu[id].stack)[cpu[id].stack_ptr++]=cpu[id].IP;
+  (*cpu[id].ex_st)[cpu[id].stack_ptr]=0;
+}
+
+/* Pops the specified VCPU's IP from the top of it's call stack. */
+
+inline void pop_ip_from_stack( int id ) {
+    CHECK_FAILURE_FN;
+
+    if( cpu[id].stack_ptr > 0 ) {
+        cpu[id].IP = (*cpu[id].stack)[--cpu[id].stack_ptr]; 
+    } else {
+      non_fatal( ERROR_STACK_UNDER, "Attempt to pop from empty stack", id );
+      return;
+    }
+
+    if( cpu[id].saved_ex ) {
+        if( cpu[id].stack_ptr == cpu[id].ex_at ) {
+          // printk("RET - Restoring saved_ex %d\n",curr_cpu_p->saved_ex);
+          (*cpu[id].ex_st)[cpu[id].stack_ptr]=cpu[id].saved_ex;
+          cpu[id].saved_ex = 0;
         }
     }
 }
@@ -468,8 +523,7 @@ void non_fatal(int code,char* desc,int c) {
   for (;x>=0;x--) {
     if( (*cpu[c].ex_st)[x] ) break;
     if( x > 0 ) {
-        // WARNING: possible problem if c != curr_cpu !!  
-        pop_ip_from_stack();
+        pop_ip_from_stack( c );
     } // Kosmos ;>
   }
 
@@ -506,7 +560,7 @@ void non_fatal(int code,char* desc,int c) {
     cpu[c].saved_ex=(*cpu[c].ex_st)[x];
     cpu[c].ex_at=cpu[c].stack_ptr;
     (*cpu[c].ex_st)[x]=0;
-    push_ip_on_stack();
+    push_ip_on_stack( c );
     nofatalinside=0;
     cpu[c].IP=cpu[c].saved_ex; 
     change=0;

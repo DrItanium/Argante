@@ -33,8 +33,12 @@ struct memarea {
 
 /*** Prototypes **************************************************************/
 
-void push_ip_on_stack();
-void pop_ip_from_stack();
+void g_push_ip_on_stack();
+void g_pop_ip_from_stack();
+
+void push_ip_on_stack( int c );
+void pop_ip_from_stack( int c );
+
 int  get_mem_value(int c,unsigned int addr);
 int  mem_alloc(int c,unsigned int size,unsigned int flags);
 void mem_dealloc(int c,int h);
