@@ -85,7 +85,7 @@ context *context_head;
 symbol *curr_symbol=NULL;
 context *curr_symbol_context;
 
-FILE *in, *out_bcode, *out_data, *out_pure;
+FILE *in, *out_bcode, *out_data, *out_pure, *out_syms;
 
 #define STATE_OPTION 0
 #define STATE_DATA 1
@@ -242,7 +242,8 @@ symbol *find_symbol_f(char *symname)
 	context_head->syms=d;
 	strncpy(d->name, symname, sizeof(d->name));
 
-	if (sizeof(symname) > 62) warn("Symbol name too long, clipping enforced.");
+	if (strlen(symname) >= sizeof(d->name)) warn("Symbol name too long, clipping enforced.");
+	d->name[sizeof(d->name) - 1]=0; /* It's easier if it's null-terminated */
 	
 	return d;
 }
@@ -328,6 +329,16 @@ void define_symbol()
 			d=n;
 		}
 		curr_symbol->dep=NULL;
+
+		/* Now write name->address symbol table if requested */
+		if (out_syms)
+		{
+			/* NAME (dynamic len), ADDRESS, SIZE, TYPE */
+			fwrite(&curr_symbol->name, strlen(curr_symbol->name), 1, out_syms);
+			fwrite(&curr_symbol->location, sizeof(curr_symbol->location), 1, out_syms);
+			fwrite(&curr_symbol->size, sizeof(curr_symbol->size), 1, out_syms);
+			fwrite(&curr_symbol->stortype, sizeof(curr_symbol->stortype), 1, out_syms);
+		}
 	}
 	curr_symbol=NULL;
 }
@@ -372,7 +383,8 @@ void do_symbol(char *ln)
 /*	else
 		warn("Prototype ref found here"); */
 
-	if (sizeof(ln) > 62) warn("Symbol name too long, clipping enforced.");
+	if (strlen(ln) >= sizeof(curr_symbol->name)) warn("Symbol name too long, clipping enforced.");
+	curr_symbol->name[sizeof(curr_symbol->name) - 1]=0; /* It's easier if it's null-terminated */
 
 	curr_symbol->defined=0;
 	curr_symbol->location=ftello((state==STATE_CODE) ? out_bcode : out_data)
@@ -827,7 +839,7 @@ int main(int argc, char *argv[])
 	
 	if (argc < 3)
 	{
-		fprintf(stderr, "Usage: nag filename.in filename.out\n");
+		fprintf(stderr, "Usage: nag filename.in filename.out [filename.sym]\n");
 		exit(1);
 	}
 
@@ -836,6 +848,13 @@ int main(int argc, char *argv[])
 	out_bcode=fopen("nag_bcode.tmp", "wb");
 	out_data=fopen("nag_data.tmp", "wb");
 	out_pure=fopen(argv[2], "wb");
+	
+	if (argc == 4) 
+	{
+		out_syms=fopen(argv[3], "wb");
+		if (!out_syms) perror("error opening syms file");
+	} else out_syms=NULL;
+	
 	if (!out_bcode || !out_data || !out_pure) { perror("fopen(w)"); return 1; }
 
 	context_head=calloc(sizeof(context),1);
