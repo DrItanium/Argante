@@ -1,4 +1,5 @@
 %{
+#include "string.h"
 #include "tree.h"
 
 AStm prog;

@@ -6,4 +6,4 @@
  * to add strings to this.
  */
 
-typedef const char *string;
+typedef char *string;
