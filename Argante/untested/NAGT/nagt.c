@@ -334,7 +334,7 @@ void define_symbol()
 		if (out_syms)
 		{
 			/* NAME (dynamic len), ADDRESS, SIZE, TYPE */
-			fwrite(&curr_symbol->name, strlen(curr_symbol->name), 1, out_syms);
+			fwrite(&curr_symbol->name, strlen(curr_symbol->name) + 1, 1, out_syms);
 			fwrite(&curr_symbol->location, sizeof(curr_symbol->location), 1, out_syms);
 			fwrite(&curr_symbol->size, sizeof(curr_symbol->size), 1, out_syms);
 			fwrite(&curr_symbol->stortype, sizeof(curr_symbol->stortype), 1, out_syms);
