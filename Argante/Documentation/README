@@ -879,7 +879,7 @@ Paramaters:     <addr> = IMMEDIATE, UREG, IMMPTR, UPTR
                 s0 - loop counter
 Opcode:         29
 Description:    jump to an absolute address if s0 is greater than zero,
-                s0 is increased by one
+                s0 is decreased by one
 Result:         IP change, s0 change
 Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
 
