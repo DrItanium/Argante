@@ -3,8 +3,18 @@
 # Autoconf coming soon.
 
 SYS=`uname -s`
-# Even linux has gmake. I think.
-alias make=gmake
+
+# Apparently, OpenBSD doesn't have gmake, and make
+# is GNU make. So test make, and try gmake if non-GNU.
+TESTMAKE=`make --version | grep GNU`
+
+if [ -z "$TESTMAKE" ]; then
+	echo "Using gmake..."
+	alias make=gmake
+else
+	echo "Using standard make."
+fi
+	
 
 echo "Configuring Argante for $SYS platform..."
 rm -f conf.mk~ conf2.mk
