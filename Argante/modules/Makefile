@@ -13,10 +13,12 @@ endif
 all: $(MODULES)
 
 %.so: %.c
-	$(CC) $(CFLAGS) $(LDLIBS) $(SHROPTS) $^ -o $@
+	@echo "Compiling module" $@ "..."
+	@$(CC) $(CFLAGS) $(LDLIBS) $(SHROPTS) $^ -o $@
 
 gfx.so: gfx.c
-	$(CC) $(CFLAGS) $(LDLIBS) -lvga $(SHROPTS) $^ -o $@
+	@echo "Compiling module" $@ "..."
+	@$(CC) $(CFLAGS) $(LDLIBS) -lvga $(SHROPTS) $^ -o $@
 
 clean:
 	rm -f $(MODULES)

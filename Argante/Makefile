@@ -68,7 +68,7 @@ endif # Linux
 # AIX
 ifeq ($(SYS), AIX)
 LDLIBS += -lc -ldl
-SHROPTS	= -Xlinker -G
+SHROPTS = -Xlinker -G
 endif
 
 # IRIX
@@ -81,7 +81,7 @@ endif
 # Solaris
 ifeq ($(SYS), Solaris)
 LDLIBS  += -lsocket -Xlinker -ldl
-SHROPTS += -L/usr/ucblib -lucb -Xlinker "-R/usr/ucblib"
+SHROPTS += -fPIC -L/usr/ucblib -lucb -Xlinker "-R/usr/ucblib"
 endif
 
 IDSTR ="`whoami`@`uname -n` on `date +'%A, %d %B %Y, %H:%M'`"
