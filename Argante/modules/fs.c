@@ -349,10 +349,11 @@ int buildcache(const struct dirent* x) {
 
 
 void syscall_handler(int c,int nr) {
-  char* oper=0,*oper2=0,*fiction;
+	/* Initialising data to fix warnings was one reason rename bug slipped thru */
+  char* oper,*fiction;
   int fin,got,l;
   int mode;
-  char *sth,*sth2,*fn,*fn2,*fiction2;
+  char *sth,*sth2,*fn;
   struct stat b;
 
   failure=0;
@@ -368,14 +369,13 @@ void syscall_handler(int c,int nr) {
       if ((cpu[c].uregs[2] & MASK) == FS_FLAG_READ) oper="fs/fops/open/file/read"; else
       if ((cpu[c].uregs[2] & MASK) == FS_FLAG_WRITE) oper="fs/fops/open/file/write"; else
       if ((cpu[c].uregs[2] & MASK) == FS_FLAG_APPEND) oper="fs/fops/open/file/write/append";
-
-      mode=FS_FLAG_USED+(cpu[c].uregs[2] & MASK);
-
-      if (!oper) {
+      else {
         non_fatal(ERROR_FS_BAD_OPEN_MODE,"invalid OPEN_FILE mode",c);
         failure=1;
         return;
       }
+
+      mode=FS_FLAG_USED+(cpu[c].uregs[2] & MASK);
 
       if (!(sth=verify_access(c,cpu[c].uregs[0],(cpu[c].uregs[1]+3)/4,MEM_FLAG_READ))) {
         non_fatal(ERROR_PROTFAULT,"open: Attempt to access protected memory",c);
@@ -710,6 +710,12 @@ lilly:
 
 
     case SYSCALL_FS_RENAME:
+    { /* Heinous bugfix 19/7/01 JSK.
+	 Now it works in a kludgy (NOT klugy :) sort of way:
+	 pointers to static buffers are EVIL! */
+	    char realpath1[sizeof(rpath)];
+	    char realpath2[sizeof(rpath)];
+	    char *q;
 
     // Input:  u0 - name addr, u1 - name len
     //         u2 - dst name addr, u3 - dst name len
@@ -726,49 +732,56 @@ lilly:
       return;
     }
 
+    /* Source */
     fn=verify_and_clean(c,sth,cpu[c].uregs[1]);
     check_status();
-
-    fn2=verify_and_clean(c,sth2,cpu[c].uregs[3]);
+    
+    q=get_realpath(c,fn);
     check_status();
+    strncpy(realpath1, q, sizeof(realpath1) - 1);
+    realpath1[sizeof(realpath1) - 1]=0;
 
-    fiction=fn;
-    fiction2=fn2;
+//    printk("<.> FS: source %s(%s)\n", fn, realpath1);
 
-    fn=get_realpath(c,fn);
-    check_status();
-    fn2=get_realpath(c,fn2);
-    check_status();
-
-    if (stat(fn,&b)) {
+    if (stat(realpath1,&b)) {
       non_fatal(ERROR_FS_NOFILE,"rename: cannot access source object",c);
       failure=1;
       return;
     }
 
     if (S_ISDIR(b.st_mode)) {
-      oper="fs/fops/delete/directory";
-      oper2="fs/fops/create/directory";
+      VALIDATE(c,fn,
+           "fs/fops/delete/directory");
+      oper="fs/fops/create/directory";
     } else {
-      oper="fs/fops/delete/file";
+      VALIDATE(c,fn,
+	   "fs/fops/delete/file");
       oper="fs/fops/create/file";
     }
 
-    if (!stat(fn2,&b)) {
+    /* Destination */
+    fn=verify_and_clean(c,sth2,cpu[c].uregs[3]);
+    check_status();
+    VALIDATE(c,fn,oper);
+    
+    q=get_realpath(c,fn);
+    check_status();
+    strncpy(realpath2, q, sizeof(realpath2) - 1);
+    realpath2[sizeof(realpath2) - 1]=0;
+   
+//    printk("<.> FS: dest %s(%s)\n", fn, realpath2);
+    if (!stat(realpath2,&b)) {
       non_fatal(ERROR_FS_EXISTS,"rename: destination object exists",c);
       failure=1;
       return;
     }
 
-    VALIDATE(c,fiction,oper);
-    VALIDATE(c,fiction2,oper2);
-
-    if (rename(fn,fn2)) {
+    if (rename(realpath1,realpath2)) {
       non_fatal(ERROR_FSERROR,"rename: cannot rename object?",c);
       failure=1;
       return;
     }
-
+	}
     break;
 
 
