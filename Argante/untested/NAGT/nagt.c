@@ -46,9 +46,11 @@ struct defines 		*defined = NULL;
  * exactly like the old one(!)
  * 
  * Extensions:
- * !VERSION 2 enables NAG extensions; not that there are any! yet!
+ * !VERSION 2 enables NAG extensions. These are fancies like auto/reent
+ * context data. And they don't work yet.
  *
- * { } opens/closes context bracket.
+ * Contexts are supported irrelevant of version, they're really important
+ * for namespace cleaning & therefore linking. { } opens/closes context bracket.
  */
 
 #define REF_PTR 1
@@ -66,7 +68,6 @@ struct _depend {
 typedef struct _symbol symbol;
 struct _symbol {
 	char name[62];
-	char type;
 	char stortype;
 	char defined;
 	int location;
@@ -91,10 +92,17 @@ FILE *in, *out_bcode, *out_data, *out_pure, *out_syms;
 #define STATE_DATA 1
 #define STATE_CODE 2
 
+#define DATA_ALLOC 0x10
+#define DATA_REENT 0x20
+#define CODE_RET 0x10
+#define CODE_JMP 0x20
+
 struct bformat bfmt;
 int state=0;
 int lineno=0;
 int version=1;
+
+int linking=1;
 
 #define WHITESPACE " \t\n\r"
 #define my_isspace(a) strchr(WHITESPACE, a)
@@ -108,36 +116,6 @@ void error(char *message)
 void warn(char *message)
 {
 	fprintf(stderr, "<+> Line %d: %s\n", lineno, message);
-}
-
-void end_context()
-{
-	symbol *s, *d;
-	context *x;
-	int count;
-	s=context_head->syms;
-	count=0;
-	while(s)
-	{
-		d=s->next;
-		if (!s->defined)
-		{
-			fprintf(stderr, "<+> Symbol %s undefined\n", s->name);
-			count++;
-		} else
-			free(s);
-		s=d;
-	}
-
-	if (count)
-	{
-		fprintf(stderr, "<!> Line %d: %d symbols are undefined at context termination\n", lineno, count);
-		exit(1);
-	}
-
-	x=context_head->prev;
-	free(context_head);
-	context_head=x;
 }
 
 /* BlEh! Defines. A Hack... */
@@ -195,7 +173,9 @@ void add_depend(int type, int loc, symbol *to)
 {
 	depend *new;
 
+#ifdef NORELOC
 	if (to->defined) return;
+#endif
 	new=malloc(sizeof(new));
 	if (!new) error("Malloc failure (out of memory!)");
 	
@@ -324,25 +304,149 @@ void define_symbol()
 			fwrite(&i, sizeof(int), 1, f);
 			fseek(f, 0, SEEK_END);
 
-			/* Free deps & clear chain */
-			free(d);
 			d=n;
 		}
-		curr_symbol->dep=NULL;
-
-		/* Now write name->address symbol table if requested */
-		if (out_syms)
-		{
-			/* NAME (dynamic len), ADDRESS, SIZE, TYPE */
-			fwrite(&curr_symbol->name, strlen(curr_symbol->name) + 1, 1, out_syms);
-			fwrite(&curr_symbol->location, sizeof(curr_symbol->location), 1, out_syms);
-			fwrite(&curr_symbol->size, sizeof(curr_symbol->size), 1, out_syms);
-			fwrite(&curr_symbol->stortype, sizeof(curr_symbol->stortype), 1, out_syms);
-		}
 	}
+
+	/* We now save symbol-table output till the last moment, so we can
+	 * keep a relocation table */
 	curr_symbol=NULL;
 }
 
+/*
+ * Manages debugger output and relocation table stuff
+ */
+void symbol_track(symbol *s)
+{
+	depend *r;
+	const int n1=-1;
+	const char c1=-1;
+	/* Kinda FIXME: We don't store context symbols because
+	 * it'll confuse the linker. But we want to keep them
+	 * for the debugger.
+	 * Any ideas anyone?
+	 */
+	if (curr_symbol_context->prev) return;
+
+	if (!out_syms) return;
+
+	fprintf(stderr, "<.> storing symbol %s, %s\n", s->name, (s->defined) ? "defined" : "undef");
+	
+	/* NAME (dynamic len), ADDRESS, SIZE, TYPE.
+	 * Size is zero for undefined symbols, of course. */
+	fwrite(&s->name, strlen(s->name) + 1, 1, out_syms);
+	fwrite(&s->location, sizeof(s->location), 1, out_syms);
+	fwrite(&s->size, sizeof(s->size), 1, out_syms);
+	fwrite(&s->stortype, sizeof(s->stortype), 1, out_syms);
+	/* Reloc table output. Sorry, I broke the format. *sniff*/
+	r=s->dep;
+	while (r)
+	{
+		/* We write char reftype; char stortype; off_t location; for each depend. */
+		fwrite(&r->reftype, sizeof(r->reftype), 1, out_syms);
+		fwrite(&r->stortype, sizeof(r->stortype), 1, out_syms);
+		fwrite(&r->location, sizeof(r->location), 1, out_syms);
+		r=r->next;
+	}
+	/* -1 for reftype terminates the chain. */ 
+	fwrite(&c1, sizeof(r->reftype), 1, out_syms);
+	fwrite(&c1, sizeof(r->stortype), 1, out_syms);
+	fwrite(&n1, sizeof(r->location), 1, out_syms);
+}
+
+/* Context Data - TODO (sorry) 
+ *
+ * If there are flagged data symbols, all jumps and rets are intercepted
+ * and made to to reference #j<addr>. At context end, (if there are any
+ * such #j symbols) we write
+ * JMP :##
+ * :#j<addr>
+ * FREE :kevin
+ * JMP <addr>
+ * :##
+ *
+ * If it happens that the :<addr> occurs within the same context, we wait
+ * until context end, cry "oops" and define :#j<addr> as :<addr>.
+ * 
+ * Because it would be just too hard to allocate data at the start of the
+ * context if the declaration is in the middle of the code, we shouldn't
+ * trap JMP's before data is allocated. (It may happen for debugging)
+ */
+
+void begin_context()
+{
+	context *new;
+
+	new=malloc(sizeof(context));
+	if (!new) error("Out of memory while creating context");
+
+	new->syms=NULL;
+	new->prev=context_head;
+	context_head=new;
+}
+
+void end_context()
+{
+	symbol *s, *d;
+	context *x;
+	int count;
+	s=context_head->syms;
+	count=0;
+
+	/* Symbols shouldn't finish in a higher context than they started in
+	 * (other way round is OK) */
+	define_symbol();
+	
+	x=context_head->prev;
+	while(s)
+	{
+		d=s->next;
+		/* Top level and linking? Don't worry about undefined symbols then */
+		if (!s->defined && (!linking || x)) 
+		{
+			/* If we aren't top level, well, it must be defined in
+			 * a higher context */
+			if (x)
+			{
+				s->next=x->syms;
+				x->syms=s;
+				/* Don't bother fixing up context_head->syms
+				 * because we won't use it anymore anyway. */
+			} else {
+				fprintf(stderr, "<+> Symbol %s undefined\n", s->name);
+				count++;
+			}
+		} else
+		{
+			depend *r, *n;
+			/* Save the data */
+			symbol_track(s);
+
+			/* Free the chain */
+			r=s->dep;
+			while (r)
+			{
+				n=r->next;
+				free(r);
+				r=n;
+			}
+			free(s);
+		}
+		s=d;
+	}
+
+	if (count)
+	{
+		fprintf(stderr, "<!> Line %d: %d symbols are undefined at end-of-file\n", lineno, count);
+		exit(1);
+	}
+
+	x=context_head->prev;
+	free(context_head);
+	context_head=x;
+}
+
+/* grunt work starts here */
 void switch_state(int to)
 {
 	if (to==state) return;
@@ -547,6 +651,19 @@ char *do_data(char *ln)
 				ln++;
 				switch(*ln)
 				{ /* There's a few I missed, I'm sure */
+					case 'x':
+					{ /* Shellcode in Argante? Cool! */
+						static char nu[3]; /* Ick... like the only static buffer here */
+						ln++;
+						if (!(nu[0]=*ln)) error("Bad \\x sequence.");
+						ln++;
+						if (!(nu[1]=*ln)) error("Bad \\x sequence.");
+						nu[2]=0;
+
+						*ln=strtol(&nu[0], &ret, 0x10); /* Hex radix */
+						if (ret && *ret) error("Bad \\x sequence."); /* Trailing garbage? */
+						break;
+					}
 					case 'n': *ln='\n'; break;
 					case 'r': *ln='\r'; break;
 					case 'e': *ln='\e'; break;
@@ -760,12 +877,14 @@ void do_code(char *ln)
 	/* Try and comprehend the args. */
 	ict=0;
 	bop.t1=bop.t2=-1;
+	/* Clear the struct properly. Oops. */
+	bop.rsrvd=bop.a1=bop.a2=0;
 	if (arg1) {
 		ict=1;
 		while (*arg1 && my_isspace(*arg1))
 			arg1++;
 		arg_parse(arg1, &bop.a1, &bop.t1, 4);
-	}
+	} 
 	if (arg2) {
 		ict=2;
 		while (*arg2 && my_isspace(*arg2))
@@ -853,11 +972,16 @@ int main(int argc, char *argv[])
 	{
 		out_syms=fopen(argv[3], "wb");
 		if (!out_syms) perror("error opening syms file");
-	} else out_syms=NULL;
+	} else {
+		out_syms=fopen("nag_syms.tmp", "wb");
+		if (!out_syms) perror("error opening syms file");
+	}
 	
 	if (!out_bcode || !out_data || !out_pure) { perror("fopen(w)"); return 1; }
 
-	context_head=calloc(sizeof(context),1);
+	context_head=NULL;
+	begin_context();
+	
 	bfmt.magic1=BFMT_MAGIC1;
 	bfmt.magic2=BFMT_MAGIC2;
 	bfmt.memflags=MEM_FLAG_READ | MEM_FLAG_WRITE;
@@ -904,6 +1028,13 @@ int main(int argc, char *argv[])
 		} else if (ln[0]==':') {
 			define_symbol();
 			do_symbol(ln);
+		/* Contexts - added v1.6 Apr 18 2001 */
+		} else if (ln[0]=='{') {
+			begin_context();
+		} else if (ln[0]=='}') {
+			end_context();
+			if (!context_head)
+				error("Global context undefined: you don't want to do that");
 		} else {
 			if (state==STATE_DATA)
 			{
@@ -918,7 +1049,6 @@ int main(int argc, char *argv[])
 		free(o);
 	}
 
-	/* Just in case */
 	define_symbol();
 	end_context();
 
@@ -936,14 +1066,25 @@ int main(int argc, char *argv[])
 	/* The rest */
 	fclose(out_bcode); 
 	fclose(out_data); 
+	fclose(out_syms); 
 	out_bcode=fopen("nag_bcode.tmp", "rb");
 	out_data=fopen("nag_data.tmp", "rb");
-	if (!out_bcode || !out_data) { perror("fopen(r)"); return 1; }
+
+	/* Stick reloc table at EOF. Argante complains but will
+	 * still run the image. */
+	if (argc == 4) 
+		out_syms=fopen(argv[3], "rb");
+	else
+		out_syms=fopen("nag_syms.tmp", "rb");
+
+	if (!out_bcode || !out_data || !out_syms) { perror("fopen(r)"); return 1; }
 
 	while (fread(&z, sizeof(z), 1, out_bcode) > 0) 
 		fwrite(&z, sizeof(z), 1, out_pure);
 	while (fread(&z, sizeof(z), 1, out_data) > 0) 
 		fwrite(&z, sizeof(z), 1, out_pure);
+	while (fread(&z, 1, 1, out_syms) > 0) /* syms are not always 4-align */
+		fwrite(&z, 1, 1, out_pure);
 	
 	return 0;
 }
