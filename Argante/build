@@ -120,8 +120,9 @@ if [ -z "$NOSSL" ]; then
 	if [ -z "$OPENSSLLOC" ]; then
 		echo ">>> OpenSSL executable not found in \$PATH, SSL unused."
 	else
-		# Yuk. I hope this isn't Linux specific...
-		OPENSSLLOC=`(cd $OPENSSLLOC/../..; pwd)`
+		# No typo, we do it twice (/bin/openssl)
+		OPENSSLLOC=`dirname $OPENSSLLOC`
+		OPENSSLLOC=`dirname $OPENSSLLOC`
 		echo ">>> OpenSSL found in $OPENSSLLOC..."
 		echo "Using includes as $OPENSSLLOC/include, libs as $OPENSSLLOC/lib"
 		echo "USE_SSL=YES" >> conf.mk
