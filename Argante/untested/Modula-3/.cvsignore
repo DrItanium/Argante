@@ -1,0 +1,7 @@
+*.o
+m3
+m3scaner.c
+m3parser.c
+m3parser.h
+m3parser.output
+

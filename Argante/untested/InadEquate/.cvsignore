@@ -1,0 +1,7 @@
+*.o
+main
+i.tab.c
+i.tab.h
+iyy.c
+i.output
+
