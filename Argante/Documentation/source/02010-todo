@@ -1,0 +1,53 @@
+  This list is open, no single line of code was written, assignments are
+  subject to further agreements :> Feel free to comment this list, tell me if
+  you are interested in specific subject:
+
+  + Endian block translation (in advmem). Assigned person: lcamtuf
+    Status: DONE
+
+  + Solaris/BSD portability for low-level networking (packet.c); well, in
+    fact, someone should write #ifdef code for every platform when it comes
+    to packet sniffing. BPF support would be nice. Assigned person: bikappa
+    (as long as he will found some free time to write AND TEST his code on a
+    few platforms ;)
+    Status: CONCEPT
+
+  + Solaris, BSD, IRIX: ripcd portability; some minor fixes are required to
+    make it portable accross these platforms. Assigned person: (???)
+    Status: CONCEPT
+
+  + Mainstream Argante: HP/UX, AIX ports. Assigned person: (???)
+    Status: PARTIALLY DONE
+
+  + Bytecode interpreter JITs (jumps in table) instead of multiple ifs.
+    Assigned person: Mariusz Woloszyn.
+    Status: NEEDS REFINING
+
+  + X Window: GTK-based GUI (agtses, agtback functionality; basic console
+    commands as menu items / buttons; vcpucons / agtexe in xterm window).
+    Assigned person: (???)
+    Status: UNDER DEVELOPMENT
+
+  + AHLL should be rewritten using some flex/bison-alike stuff.
+    Assigned person: Bulba or lcamtuf (???)
+    Status: IN THE MIDDLE OF THE NIGHT...
+
+  + Math module should be optimized (floating point arrays -> fixed point or
+    int arrays, etc). Assigned person: z33d
+    Status: ALMOST DONE
+
+  + Some examples - SMTP, POP3 functionality should be good.
+    Assigned person: (???) - after AHLL rewriting!
+    Status: CONCEPT
+
+  + PDF/sgml/html documentation, completely revised and clean.
+    Assigned person: lcamtuf
+    Status: CONCEPT
+
+  + Modula-3 compiler. Assigned person: Marcin Zukowski
+    Status: STALLED
+
+  + Functional blocks: command interpreter, fs proxy, authorization
+    module, network listener... Assigned person: lcamtuf
+    Status: CONCEPT
+

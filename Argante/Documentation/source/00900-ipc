@@ -1,0 +1,822 @@
+  Applications developed under control of Argante Operating System are forced to
+  use limited interaction and trust architecture. There is no way of forking,
+  executing another binary image, or passing parameters directly to other
+  processes. Also, enforced OSI model allows only two closest data processing
+  layers to work together at the same time. It may look that this makes
+  application development harder or at least less efficient, but it's not true.
+  Whole interprocess communication is provided by IPC module that allows to
+  write code wether or not each part of application is working on the same
+  phisical system. This approach helps alot when developing distributed and
+  fault-tolerant programs. Once written application, provided that it uses IPC,
+  can be run on many system creating cluster-like structure, with request
+  distribution and redundancy.
+
+  IPC module allows processes to send short messages containing two 32bit words,
+  create stream connections or use block devices. All this is based on limited
+  trust architecture, so targets of each IPC request get all data about requestor
+  and then decide to accept or deny it. On the other side, requestor gets
+  full information about the process that accepted his request. Additionaly
+  by using HAC access control, one can make application to work in OSI style,
+  allowing only communication between nearest data processing layers.
+  Request destination is specified by structure containing target vcpu number,
+  virtual system number and ipc registered id. This allows to send requests
+  that get to one process, many processes, one of group of processes,
+  or even each process on one or each system connected to rIPC network.
+
+  For example, we know that authentication processes had registered ipc id 100.
+  By sending request to ipc id 100, and marking other address structure fields
+  as unimportant we can be sure that this request gets to at least one
+  authentication process. Which one will respond first, depends on system load,
+  amount of authentication tasks on local system and in rIPC network. You may
+  assume that the least busy process on the least busy system should answer
+  request before the others do.
+
+  Almost every IPC module syscall can be called in blocking or nonblocking maner,
+  thus allowing to make server applications that must be connected to many
+  other processes and switch context between them without any unnecesary delay.
+  ArganteOS takes care about request queueing requests, creating accepted
+  connections, and data exchange once request has been allowed. In nonblocking
+  mode, process just has to check the status of sent request. In blocking mode
+  process goes asleep until request is accepted by one or more processes
+  or dropped by all targets.
+
+  Possible applications of IPC system are ranging from simple process
+  synchronization to distributed cluster-like web servers with load balancing.
+
+  ****** DETAILED DESCRIPTION *******
+
+  A) rIPC communication basics
+
+  Remote Interprocess Communication subsystem in Argante provides basic set
+  of communication methods inside Argante:
+
+  - unicast messages (process to process)
+  - multicast messages (process to process group)
+  - unicast stream connections
+  - unicast block connections
+
+  Unicast and multicast messages work just like UDP network packets. You can
+  send one-time message, without establishing rIPC session, to specific target
+  or group of targets, expecting no response.
+
+  Stream connections are less or more equal to TCP traffic - they are abstract,
+  bidirectional data streams. You have to establish a connection before any
+  data exchange might occour.
+
+  Block connections are generally related to memory sharing. One process might
+  create a block of memory and, after establishing rIPC session, other side
+  might read or modify this piece of memory.
+
+  All operations have to be confirmed by other side. You might ACK or NACK
+  any rIPC request. All operations are controlled by HAC:
+
+  - for unicast requests, checking is done on sender's side, there's no
+    HAC for accepting or refusing an request,
+
+  - for multicast / broadcast requests, basic checks are performed on
+    sender's side (to verify if sender is able to send such packet at all);
+    then, check is done on recipient's side, to check if specific packet
+    should be delivered. If there's no permission, such packet is silently
+    dropped.
+
+  Every packet can be addressed by specyfing some of the following parameters:
+
+  - destination rIPC group (ipc_reg number - numerous processes can register
+    under the same number; if any request addressed by ipc_reg will be send,
+    the fastest recipient will be choosen to serve the connection),
+
+  - destination system identifier (unique vs_number) - can be used to
+    address processes on specific physical machine,
+
+  - destination VCPU identifier - can be used to address specific VCPU number
+    on machine.
+
+  All of these parameters together make an unique identifier of rIPC member,
+  but every combination is allowed. So, if you send stream session request
+  to any rIPC group, any vs_number and VCPU number '2', and if you have
+  appropriate permissions, the fastest VCPU (assuming any VCPU with this number
+  is interested in accepting your rIPC request, of course) will answer.
+  This is somewhat stupid example, but more useful possibilities, like
+  addressing the fastest member of specific ipc_reg group (let's say "web
+  servers") can be used for smart load balancing purposes.
+
+  B) rIPC configuration
+
+  There are some configuration options for rIPC module (conf/ipc.conf). Complete
+  list is available in section D, while here you can find an explaination for
+  the essential features:
+
+      vs_number <number>  - unique IPC subsystem identifier; it is very
+                            important to use UNIQUE identifiers if you are
+                            going to connect numerous rIPC subsystems
+                            together; right now, there's no automatic conflict
+                            detection, so be careful.
+
+      listen <path>       - if this rIPC should have listener functionality,
+                            please specify unix socket path here (ripcd
+                            daemon or other rIPC subsystems might connect
+                            to it, please REMEMBER TO KEEP APROPRIATE FILE
+                            PERMISSIONS ON THIS SOCKET TO AVOID UNWANTED
+                            LOCAL SESSIONS)
+
+      connect <path>      - if this rIPC should connect to unix socket,
+                            please specify its path here.
+
+  'connect' and 'listen' can be used together. Any amount of 'connect' entries
+  can be used.
+
+  C) ripcd setup
+
+  ripcd is a daemon for maintaining rIPC connections. As you've probably noticed,
+  rIPC itself can connect or listen on unix sockets, and nothing more. To
+  arrange rIPC network, you will need ripcd (or similar tool). This daemon
+  is a companion utility provided with Argante, and can be found in tools/.
+
+  Basically, ripcd uses OpenSSL for providing secure communication between
+  the endpoints (when communication is going thru Internet). If you do not
+  have or do not want OpenSSL support, it will work in plaintext mode.
+  Plaintext mode is extremely insecure for rIPC networks! You can use it
+  when:
+
+  - you're doing local tests,
+
+  - you have another cryptographic layer (eg. VPN) between rIPC nodes,
+
+  - you are going to tunnel the connections over other SSL implementation
+    or, for example, ssh tunnels - but, in this case, you have to do it
+    manually:
+                                                (Internet)
+    rIPC --> ripcd --> (local port) ----> ssh -- - - - - - -> sshd ---+
+                                                                      |
+              rIPC <-- ripcd <-- (local port) <----------------------+
+
+  To determine whether incoming connection on specific ripcd network
+  listen port should be rejected as unautorized, or passed to the rIPC,
+  ripcd uses simple key validation mechanism (which, again, is not
+  secure if you're using plaintext connections). ripcd connecting in the
+  client mode to ripcd working in server mode should send some "magic key"
+  (usually 512 bytes of /dev/urandom should be more than enough for
+  authorization purposes in single rIPC network ;). This key is compared
+  with expected passphrase.
+
+  Locally, it works in one of two ways:
+
+  - rIPC is working in 'connect' mode, while ripcd is listening on
+    unix socket. After accepting local connection, ripcd is connecting
+    to the remote system given in the config file, and sending the magic
+    key; remote ripcd, after verification, will forward the connection
+    to remote rIPC to its listening socket.
+
+  - rIPC is working in 'listen' mode... well, it's the second endpoint
+    of above example.
+
+  In both cases, ripcd functionality is completely transparent to rIPC.
+  Listening rIPC modules with corresponding ripcd listen ports are
+  called HUBs, because such points can accumulate numerous client
+  connections.
+
+  Single ripcd instance can handle numerous listen ports and do proxying
+  for numerous rIPC connections.
+
+  rIPC network connection models:
+
+  L - listening ripcd, connections forwarded to listening rIPC
+  C - connecting (client) ripcd, connecting after connect from local rIPC
+
+    C -------> LC ------> L (...)
+
+      The simpliest solution; it is weak and difficult to maintain,
+      there's only one way for travelling packets, and it could be really
+      long in some cases.
+
+    C ------> L <------ C
+            /|\
+              |
+              |
+              C
+
+      This is a "star" model. It has one HUB and is extremely easy to maintain.
+      Packet routes are usually short, but all traffic is travelling via single
+      point. This solution is easy, but is not really fault tolerant and can
+      cause network overload.
+
+
+    LC -------> CL ------> CL --+
+  /|\                          |
+    +---------<-------<---------+
+
+      This structure is known as "ring". Packet routes are not too long,
+      network load will be automatically balanced. This solution is fault
+      tolerant because there are always two ways for packet. Unfortunately,
+      ring structure is hard to maintain if you have to add new devices.
+
+    +--------------------------+
+    |                          |
+    C ------> L <------ CL_<---+
+            /|\        ||\
+              |         |   \
+              |         |     \
+              |        \|/      \
+              C ------> L <----- C
+
+        Mixed star/ring structures ("web") are the most useful, combining
+        easy maintaining, fault tolerancy and short packet routes. It is
+        real-life solution, useful if your rIPC network has to be logically
+        separated into two or more subets (eg. databases, content generators
+        and content servers).
+
+
+  Now, a few words about autoconfiguration; to place your subsystem in the
+  right place of the rIPC structure, you do not need to do anything. Assuming
+  you want to add new machine to your cluster, and expect it to appear in the
+  place it is necessary at the moment, you have to configure rIPC to be able
+  to connect to *any* HUB in your network (you can provide addresses of more
+  than one HUB for accuracy!). Then, you have to map ripcd config file
+  somewhere in the SVFS directories and to provide 'rehash file' parameter
+  in ripcd command line. This rehash file should be visible within SVFS, as well.
+  All these steps can be done only once, and the result can be installed on any
+  of systems.
+
+  After launching such box, it will automatically connect to your HUB. Then,
+  your software might contact any "cluster management" point, which knows
+  (having externally provided directives or detecting it heuristically) where
+  in the network this box should be placed and what kind of functionality should
+  it resume. This information can be used to download or modify configuration
+  file, which is present within SVFS. After having all changes done, you have
+  to create empty rehash file and wait a few seconds. ripcd will reload the
+  configuration file, rearranging rIPC connections and removing rehash file
+  to notify the process.
+
+  Then, virtual process can resume expected functionality.
+
+  NOTE: non-ssl ripcd is not compatible with ssl version and vice versa.
+  You have to use the same method on both sides.
+
+  ripcd config file format:
+
+  method prot ip_addr:port /sock/path /key/path
+  |      |    |            |          |
+  |      |    |            |          +--- path to authorization key file
+  |      |    |            |               (raw binary of useful size and
+  |      |    |            |               random content mathing key file on
+  |      |    |            |               the other side of connection)
+  |      |    |            |
+  |      |    |            +--- path to socket used by rIPC
+  |      |    |
+  |      |    +--- (see method)
+  |      |
+  |      +--- ssl == use ssl, text == do not crypt the connection
+  |
+  +---- local == listen on specific address and port for incoming connections;
+        verify connections with /key/path, forward them to /sock/path.
+        inet == listen on /sock/path; after receiving a connection, connect to
+        specific address and port, send /key/path as a key, and do forwarding.
+
+  D) rIPC API:
+
+  >>> config file: conf/ipc.conf
+  vs_number <number> 		- ipc system identifier 1..255
+                  must be unique, unless you want to break
+            your ripc network
+  listen <path>			- path of listening unix socket
+  connect <path>			- path of unix socket to connect
+  system_max_streams <number> 	- how many streams can be open on this system
+  max_interfaces <number> 	- how many rIPC connections with other systems
+  max_streams <number> 		- how many streams per process
+  max_blocks <number>		- how many blocks per process
+  max_stream_buffers <number> 	- how many stream buffers on whole system
+  bucket_max <number> 		- how many packet buckets on whole system
+  default_ttl <number> 		- rIPC packet default TTL
+
+  note:
+      you'd better try to setup variables before trying to listen or connect...
+  default values:
+      vs_number (1), system_max_streams (1024), max_interfaces (16),
+      max_streams (16), max_blocks (16), max_stream_buffers (512),
+      max_buckets (512), default_ttl (32)
+
+  >>> limitations:
+      max number of hosts in rIPC network - 255
+      max ttl - 255
+
+  >>> constants
+      returned status
+      IPC_EOK = 1  	- returned when syscall succesfull
+      IPC_ETRYAGAIN = 0	- in nonblocking mode when no data available
+      IPC_ERROR = -1	- in case of any failure..
+
+      errorcodes
+      IPC_ERR_OK = 0		- :) oh happy day...
+      IPC_ERR_NOTARGET = 1	- target legal but not found
+      IPC_ERR_NACK = 2		- target denied this request
+      IPC_ERR_TIMEOUT = 3		- request timed out
+      IPC_ERR_NORESOURCES = 4	- no resources to complete request
+      IPC_ERR_BADMEM = 5		- when some idiot dealloced memory that
+            has been pointed as a target of nonblocking
+                      ipc_block_read/write request
+      IPC_ERR_DEAD = 6		- when system finds out that peer of stream
+            or block transmision is dead
+
+      request state
+      IPC_RSTATUS_ERROR = -1	- request finished with error
+      IPC_RSTATUS_WAITING = 0	- request is awaiting in queue
+      IPC_RSTATUS_ACCEPTED = 1	- request is alredy accepted
+      IPC_RSTATUS_COMPLETED = 2	- request is done
+
+      flags
+      IPC_FLAG_NONBLOCK = 1 - syscall is nonblocking
+      IPC_FLAG_MULTICAST = 2 - when there are many possible targets, wait till
+              all of them got this request and accept it or deny
+
+  >>> exceptions
+  ERROR_IPC_NOMEM 	- in case of module failed to allocate memory
+  ERROR_IPC_BAD_FLAGS 	- when bad flags are supplied to syscall
+  ERROR_IPC_BAD_TARGET 	- caused when supplied data specifying target
+                are illegal (f.e. vcpu < -1 or vcpu > MAX_VCPUS)
+  ERROR_IPC_NO_TARGET 	- target specification is legal, but no target found
+  ERROR_IPC_NOT_REGISTERED - when trying to call ipc syscalls without registering
+          with syscall IPC_REGISTER first, or calling
+          ipc syscalls after unregistering with IPC_REGISTER
+  ERROR_IPC_NO_RESOURCES 	- when no new resources available, f.e. limit
+                of streams open for this process is reached
+  ERROR_IPC_NO_REQUEST 	- when calling syscalls with id of nonexistent ipc
+          request f.e. trying to accept timeouted request
+                (note: this exception can happen when stream request
+          is targeted to many processes and has been accepted
+          after your process got queue status, but before you
+          called ipc_stream_ack)
+  ERROR_IPC_REQUEST_TIMEOUTED - in nonblocking mode, when request hasn't been
+              completed in about 10 seconds
+  ERROR_IPC_REQUEST_NACKED - when target denied this request
+  ERROR_IPC_STREAM_ID_INVALID - when trying to write/read/stat/close stream
+              that is not open
+  ERROR_IPC_STREAM_CLOSED - when trying to write to stream that is closed by peer
+                            (note: although you cannot write to this stream
+          you surelly may read data that may be available
+          till the real end of stream)
+  ERROR_IPC_BLOCK_ID_INVALID - guess what?, you gave wrong block id ;)
+  ERROR_IPC_DEAD		- hmm, our peer has died
+  ERROR_IPC_STREAM_DEADLOCK - trying to go asleep while peer is sleeping with
+            the same type of transmission
+
+  >>> syscalls
+
+  syscall IPC_REGISTER:
+  ---------------------
+  parameters:	u0 - new ipc_reg or 0 to unregister
+  success:
+  failure:
+      exceptions ERROR_NOMODULE, ERROR_NOPERM
+  effect:
+      on success returns with registered ipc_reg, or unregistered
+      if 0 passed to u0
+  HAC:	object = ipc/ipcreg/<ipc_reg>	oper= ipc/register
+  notes:
+      registering ipc_reg is essential to use any of IPC goodies
+      trying to call IPC syscalls without registered ipc_reg
+      causes exception ERROR_IPC_NOTREG most of the times...
+
+
+
+  syscall IPC_MSG_SEND:
+  ---------------------
+  parameters:	u0 - flags (IPC_FLAG_NONBLOCK,IPC_FLAG_MULTICAST)
+      s0 - target #VCPU (or -1 for each VCPU)
+      s1 - target #VS (or -1 for each VS, or 0 for local VS)
+      u1 - target ipc_reg (or 0 for each ipc_reg)
+      u2 - dword1
+      u3 - dword2
+  success:
+    NONBLOCKING mode:
+      u0 = id of sent msg (for further status checking)
+    BLOCKING mode:
+      u0 - #VCPU of first who got message
+      u1 - #VS of first who got message
+      u2 - ipc_reg of first who got message
+  failure:
+      exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+      ERROR_IPC_BAD_FLAGS, ERROR_IPC_BAD_TARGET, ERROR_IPC_NOMEM,
+      ERROR_IPC_NO_TARGET, ERROR_IPC_REQUEST_TIMEOUTED, ERROR_IPC_REQUEST_NACKED
+  effect:
+      target process or processes recive supplied 2*dword message
+  notes:
+      if flag IPC_FLAG_MULTICAST is set task is completed when all target
+      processes get message, else we wait for first one who got message,
+      nevertheless message is delivered to all possible targets
+
+
+  syscall IPC_MSG_RECV:
+  ---------------------
+  parameters:	u0 - flags (IPC_FLAG_NONBLOCK)
+  success:
+    BLOCKING mode:
+      u0 - #VCPU of sender
+      u1 - #VS of sender
+      u2 - ipc_reg of sender
+      u3 - dword1
+      u4 - dword2
+    NONBLOCKING mode:
+      all from BLOCKING mode plus
+      s0 = IPC_EOK
+  failure:
+      exception ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+      ERROR_IPC_BAD_FLAGS
+      in NONBLOCKING mode:
+      s0 = IPC_ETRYAGAIN when no message in queue
+  effect:
+      syscall returns information about first message awaiting in queue
+
+
+  syscall IPC_MSG_STAT:
+  ---------------------
+  parameters:	u0 - msg id (got from NONBLOCKING IPC_MSG_SEND syscall)
+  success:
+      s0 - msg state (IPC_RSTATUS_*)
+      in state COMPLETED, or in ACCEPTED (if not MULTICAST msg)
+      u0 - #VCPU of first who got message
+      u1 - #VS of first who got message
+      u2 - ipc_reg of first who got message
+      in ERROR state:
+      u0 - errorcode (IPC_ERR_*)
+  failure:
+      exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+      ERROR_IPC_NO_REQUEST
+  effect:
+      syscall returns state of NONBLOCKING ipc_msg_send request
+  note:
+      if request is in state COMPLETED or ERROR it is destroyed by this syscall
+      when request is not checked for longer than 10 seconds after it got into
+      COMPLETED or ERROR state it's assumed forgoten and is destroyed
+      either of this happened, msg id is no longer valid
+
+
+  syscall IPC_STREAM_REQ:
+  -----------------------
+  parameters:	u0 - flags (NONBLOCKING/BLOCKING)
+          s0 - #VCPU of target
+      s1 - #VS of target
+      u1 - ipc_reg of target
+  success:
+      in nonblocking mode:
+      u0 - stream request id (for further peeking)
+      in blocking mode:
+      u0 - peer #VCPU
+      u1 - peer #VS
+      u2 - peer ipc_reg
+      u3 - stream id (for further read/write operations)
+  failure:
+      exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+      ERROR_IPC_BAD_FLAGS, ERROR_IPC_BAD_TARGET, ERROR_IPC_NOMEM,
+      ERROR_IPC_NO_TARGET, ERROR_IPC_REQUEST_TIMEOUTED, ERROR_IPC_REQUEST_NACKED,
+      ERROR_IPC_NO_RESOURCES
+  effect:
+      if successful establishes stream between peers
+
+  syscall IPC_STREAM_STAT:
+  ------------------------
+  parameters:	u0 - stream request id (got from nonblocking ipc_stream_req)
+  success:	s0 - request status (ERROR/WAITING/COMPLETED)
+    when ERROR:
+      u0 - error code (IPC_ERR_*)
+    when COMPLETED:
+      u0 - peer #VCPU
+      u1 - peer #VS
+      u2 - peer ipc_reg
+      u3 - stream id
+  failure:
+      exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+      ERROR_IPC_NO_REQUEST
+  effect:
+      returns information about specified nonblocking stream request,
+      if request completed, returns stream id and peer identity
+      on COMPLETED or ERROR, request is destroyed, stream request id is
+      no longer valid
+
+  syscall IPC_STREAM_QUEUE:
+  ------------------------
+  parameters:	u0 - flags (NONBLOCKING/BLOCKING)
+
+  success:	u0 - #VCPU of sender
+      u1 - #VS of sender
+      u2 - ipc_reg of sender
+      u3 - stream request id
+      in nonblocking mode:
+      all of them and
+      s0 - IPC_EOK
+  failure:
+      exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+      ERROR_IPC_BAD_FLAGS
+      in nonblocking mode:
+      s0 - IPC_ETRYAGAIN, when no stream request available
+  effect:
+      returns id of the first stream request found in this process queue
+      on basis of information about sender, process must decide wheather to
+      deny or accept stream request
+      in blocking mode process is sleeping till any message arrives
+  note:
+      next call of icp_stream_chck without acking or nacking previouse request,
+      returns the same data, unless request time out
+
+
+  syscall IPC_STREAM_NACK:
+  ------------------------
+  parameters:	u0 - request id (got from ipc_stream_queue syscall)
+  success:	nothing changes
+  failure:
+      exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+      ERROR_IPC_NO_REQUEST
+  effect:
+      refuses to accept specified stream request, this request is unlinked
+      from process queue, so that further ipc_stream_queue will return new
+      requests
+  note:
+      request sender may be woken up with exception ERROR_IPC_NACK
+
+
+  syscall IPC_STREAM_ACK:
+  -----------------------
+  parameters:	u0 - flags (BLOCKING/NONBLOCKING)
+      u1 - stream request id (from ipc_stream_queue syscall)
+  success:
+      u0 - stream id
+    in nonblocking mode
+      s0 - IPC_EOK
+  failure:
+      exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+      ERROR_IPC_NO_REQUEST, ERROR_IPC_NO_RESOURCES, ERROR_IPC_NOMEM
+  effect:
+      returns stream id of established connection between processes,
+  note:
+      in nonblocking mode you may get an stream id that is not ready for
+      read/write operations, so don't be supprised if one day you get
+      ERROR_IPC_STREAM_ID_INVALID or ERROR_IPC_DEAD
+      try to use ipc_stream_status syscall to find out if stream is ready
+
+
+  syscall IPC_STRAM_WRITE:
+  ------------------------
+  parameters:	u0 - stream id
+      u1 - source buffer address
+      u2 - count in bytes
+      u3 - flags (BLOCKING/NONBLOCKING)
+  success:
+      u0 - amount of data written to the stream
+        in nonblocking mode also:
+      s0 - IPC_EOK
+  failure:
+      in nonblocking mode:
+      s0 = IPC_ETRYAGAIN, no room to write data, try again later
+      exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_OUTSIDE_MEM,
+      ERROR_IPC_STREAM_ID_INVALID, ERROR_IPC_STREAM_CLOSED, ERROR_IPC_BAD_FLAGS
+      ERROR_IPC_STREAM_DEADLOCK,
+  effect:
+      tries to write supplied data to open stream
+  note:
+      writting to stream that's closed by peer causes an exception
+      in blocking mode, all data is written to stream, in noblocking mode
+      only amount that can be written without any delay
+
+
+  syscall IPC_STREAM_READ:
+  ------------------------
+  parameters:	u0 - stream id
+      u1 - destination buffer address
+      u2 - count in bytes
+      u3 - flags (BLOCKING/NONBLOCKING)
+  success:
+      u0 - amount of data read from the stream (0 = EOF)
+    in nonblocking mode also:
+      s0 - IPC_EOK
+  failure:
+      in nonblocking mode:
+      s0 = IPC_ETRYAGAIN, no data to read
+      exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_STREAM_ID_INVALID,
+      ERROR_OUTSIDE_MEM, ERROR_IPC_BAD_FLAGS
+  effect:
+      tries to read data from open stream
+  effect:
+      reading from stream that's closed by peer, doesn't cause an exception,
+      just amount of data read is equal 0
+
+
+  syscall IPC_STREAM_INFO:
+  --------------------------
+  parameters:	u0 - stream id
+  success:	u0 - stream status ORed flags (0x1 - ready to read,
+                  0x2 - ready to write,
+                        0x4 - peer closed connection)
+  failure:
+      exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_STREAM_ID_INVALID
+  effect:
+      this syscall allows you to check stream status, without blocking,
+      and without risking ERROR_IPC_STREAM_CLOSED exception
+      can be used to emulate unix C function select()
+      also when acking stream request in nonblocking mode this syscall
+      can tell you if system established full connection between parties
+
+
+  syscall IPC_STREAM_CLOSE:
+  -------------------------
+  parameters:	u0 - stream id
+  success:	nothing changes
+  failure:
+      exceptions ERROR_NOMODULE, ERROR_NOPREM, ERROR_IPC_STREAM_ID_INVALID
+  effect:
+      uh, guess what? it's closing stream, making your stream id invalid for
+      further read/write operations
+      it's necesary to close stream, even after peer closed it's side of this
+      stream, streams aren't automaticly closed because there still may be some
+      data available to read
+
+
+
+
+  syscall IPC_BLOCK_CREATE:
+  -------------------------
+  parameters:	u0 - size of block device (in dwords)
+  success:	u0 - block id (for further use)
+      u1 - begin of block device memory (if you want to play with it)
+  failure:
+      exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+      ERROR_IPC_NO_RESOURCES, ERROR_IPC_NOMEM, ERROR_TOOBIG
+  effect:
+      create block device, by allocating memory for it
+  note:
+      don't try to free memory allocated by this syscall... it may hurt
+
+  syscall IPC_BLOCK_DESTROY:
+  --------------------------
+  parameters:	u0 - block id (got from ipc_block_create syscall)
+  success:	nothing changes...
+  failure:
+      exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+      ERROR_IPC_BLOCK_ID_INVALID
+  effect:
+      destroys block device, block id is no longer valid, any request
+      in queue that targeted this block device are unlinked, senders
+      may get exception ERROR_IPC_NO_TARGET
+
+
+  syscall IPC_BLOCK_READ, IPC_BLOCK_WRITE:
+  ----------------------------------------
+  parameters:	u0 - flags (NONBLOCKING/BLOCKING)
+      s0 - target #VCPU
+      s1 - target #VS
+      s2 - target block id (or -1 for any)
+      u1 - target ipc_reg
+      u2 - buffer address
+      u3 - block device offset	  (in dwords)
+      u4 - amount of data to read/write (in dwords)
+  success:
+      u0 - peer #VCPU
+      u1 - peer #VS
+      u2 - peer ipc_reg
+      u3 - block id
+      u4 - amount of data read/written ( 0 : see note)
+      in nonblocking mode:
+      u0 - request id (for further checking)
+  failure:
+      exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_OUTSIDE_MEM, ERROR_IPC_NACKED
+      ERROR_IPC_TIMEOUTED, ERROR_IPC_NOT_REGISTERED, ERROR_IPC_BAD_TARGET,
+      ERROR_IPC_BAD_FLAGS, ERROR_IPC_NO_TARGET, ERROR_IPC_NOMEM, ERROR_IPC_DEAD,
+      ERROR_IPC_NO_RESOURCES
+  effect:
+      asks for data transfer from/to block device
+      when trying to transfer data outside block device memory then u4 = 0
+
+
+  syscall IPC_BLOCK_QUEUE:
+  ------------------------
+  parameters:	u0 - flags (BLOCKING/NONBLOCKING)
+  success:	s1 - READ/WRITE request (0/1)
+      u0 - requestor #VCPU
+      u1 - requestor #VS
+      u2 - requestor ipc_reg
+      u3 - request id (for furter accepting or droping request)
+      u4 - requested block id (if -1 (0xffffffff) any)
+      u5 - requested offset
+      u6 - requested amount of data (in dwords)
+      in nonblocking mode:
+      all of those and
+      s0 = IPC_EOK
+
+  failure:
+      exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+      ERROR_IPC_BAD_FLAGS
+      in nonblocking mode:
+      s0 = IPC_ETRYAGAIN when no block request available
+  effect:
+      returns informations about next in queue request to block device
+      process should accept or deny request...
+
+  syscall IPC_BLOCK_NACK:
+  -----------------------
+  parameters:	u0 - request id (from ipc_block_queue)
+  success:	no changes
+  failure:
+      exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+      ERROR_IPC_NO_REQUEST
+  effect:
+      denies request, sender may get ERROR_IPC_NACKED exception
+      makes request id invalid
+
+  syscall IPC_BLOCK_ACK:
+  ----------------------
+  parameters:	u0 - flags (BLOCKING/NONBLOCKING)
+      u1 - request id (from ipc_block_queue)
+      u2 - block id (see note)
+  success:	nothing changes...
+  failure:
+      exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+      ERROR_IPC_NO_REQUEST, ERROR_IPC_BLOCK_ID_INVALID, ERROR_IPC_DEAD
+  effect:
+      accept request, makes transfer possible
+  note:
+      when request doesn't specify exact block id caller may select one
+      by putting it into u2, when request is specific u2 is ignored
+      local request is completed imediatly, network requests may take some
+      time to transfer all data
+      trying to ack request when other nonblocking transmission is in progress
+      is equal to nacking this request, to avoid such situations use
+      syscall ipc_block_is_busy described later
+
+  syscall IPC_BLOCK_STAT:
+  -----------------------
+  parameters:	u0 - request id
+  success:	s0 - reqiest status (IPC_RSTATUS_*)
+    if IPC_RSTATUS_ERROR
+      u0 - errcode (IPC_ERR_*)
+    if IPC_RSTATUS_COMPLETED
+      u0 - peer #VCPU
+      u1 - peer #VS
+      u2 - peer ipc_reg
+      u3 - block id
+      u4 - amount of data transfered (in dwords)
+    if IPC_RSTATUS_ACCEPTED
+      u0 - peer #VCPU
+      u1 - peer #VS
+      u2 - peer ipc_reg
+      u3 - block id
+    if IPC_RSTATUS_WAITING
+      nothing else..
+  failure:
+      exception ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+      ERROR_IPC_NO_REQUEST
+  effect:
+      check out status of nonblocking request
+  note
+      when stat-ing request with COMPLETED or ERROR status, request is destroyed
+      and request id is no longer valid
+
+  syscall IPC_BLOCK_IS_READY:
+  --------------------------
+  parameters:	u0 - block id (as from ipc_block_create syscall)
+  success:	u0 - 0 = when block ready, 1 = when block busy
+  failure:
+      exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+      ERROR_IPC_BLOCK_ID_INVALID
+  effect:
+      gives you ipc block status
+
+
+  E) DVR howto:
+
+  For now, it works on Linux only.
+
+  How to use it?
+
+  0. Edit conf/ files (you can simply rename the example files, but it's
+    generally better to revise the config); build Argante binaries, then
+    launch it.
+
+  1. Connect a few instances of Argante using ripcd. This should be
+    described somewhere in README. Alternatively, you can perform
+    local tests, as well, but you have to provide separate configurations
+    for each DVR instance.
+
+  2. Go to work/ and 'make' the project, then load output .img file
+    into Argante sessions on connected boxes or on one box on separate
+    VCPUs or argante instances.
+
+  3. Disable packet forwarding on test boxes. Assuming you have the following
+    configuration:
+
+    net1         RT1                           RT2          net2
+    ---------- [ DVR ] ------ (ripcd) ------ [ DVR ] -----------
+    10.1.0.0/16           i n t e r n e t           10.2.0.0./16
+
+    You have to choose one box in net1 and one box in net2, then
+    set route to 10.2.0.0/16 from net1 via RT1 and from net2 to
+    10.1.0.0/16 via RT2. Remember to have packet forwarding disabled on
+    these boxes!
+
+  4. Boom. It should work. You can add other locations, build redundant
+    links using ripcd, and so on.
+
+
+  Sample configuration can be found at Examples/DVR1 and Examples/DVR2 (two
+  complementary routers with basic configuration).
+
+
+
+

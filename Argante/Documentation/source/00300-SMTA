@@ -1,0 +1,76 @@
+  The concept of processes in Argante might seem shocking to many people,
+  especially to those accustomed to the Unix scheme: one client, one process.
+  In Argante processes are static objects -- they are started from the
+  management console or scripts. According to standard Argante semantics
+  (which, naturally, can be changed by adding a new syscall), processes
+  cannot multiply, create offspring or execute other programs in their place.
+
+  Instead, Argante supports the OSI-alike model, where a process is assigned not
+  an object (as a connecting client, for example), but a certain function (e.g.
+  database or connection service) - depending on programmer's will. Although it
+  seems like additional burden, I am sure when you finish reading this document
+  you won't think it is  something bad. The process is read into virtual
+  processor (VCPU) space and exists there until it finishes its job or a
+  critical error arises (like an unhandled exception).
+
+  Most process parameters, e.g priority or a "domain" set (which are an
+  object similar to supplement groups in Unix), are assigned to the binary
+  image of a given executable during compilation. Below is an example
+  structure of an ftp daemon fulfilling OSI requirements, easy to implement
+  in Argante (maybe simpler than in C), and at the same time much more secure
+  and... efficient:
+
+
+    TCP/IP                                    database  user files
+      |                                           |     |           "reality"
+    --|-------------------------------------------|-----|--------------------
+    (net) (ipc)---(ipc)-(ipc)-(ipc) (ipc)-(ipc)  (fs)  (fs)      kernel space
+    --|-----|-------|-----|-----|-----|-----|-----|-----|--------------------
+      |     |       |     |     |     |     |     |     |          user space
+    <A>----+      <B>   <B>   <B>----+    <C>----+----<D>
+
+  A - proces handling network connections: accepts a connection, connects to
+      one of the B processes with IPC and transfers commands to them
+
+  B - processes serving clients (any number, automatic request propagation);
+      they handle commands, communicate with the authorizing process with IPC;
+      thanks to ease of use of IPC and context support, handling of many sessions
+      in one process is not a problem.
+
+  C - the process realizing authorization; using the fd verifies entries in the
+      local database available in SVFS
+
+  D - after authorization, every request is passed from B to D (and back).
+
+  When describing the HAC system we will explain how inter-process communication
+  and group changing work. For now it should be said that processes will
+  never be able to, say, operate using the net and ipc module at the same
+  time (the "switch", mentioned earlier), and the process A will never be able
+  to communicate with C via IPC.
+
+  Firstly, security. Secondly, level of code complication at the level
+  not extending the same one written in C. Thirdly, much higher efficiency
+  when compared to the model using fork().
+
+  How does multitasking work? Generally speaking, it is rather just ;)
+  Every process in a given cycle of process handling is assigned as many
+  machine cycles of its virtual processor, as is the value of the "priority"
+  of the process. Consequently, a process with the priority of 10000 will be
+  given 10000 cycles, and a process with the priority of 1 - one cycle.
+
+  Obviously, it is advised to give processes reasonable priority values,
+  ranging from 100 to 10000.
+
+  Processes might be in the state STATE_SLEEPFOR, in which their execution
+  is suspended for a determined number of cycles of process handling; the state
+  STATE_SLEEPTILL is also possible: it is a condition where the process
+  is waiting for a given number of microseconds; or the state
+  STATE_IOWAIT, where the process is waiting until, let's say, it has been
+  granted the right to write to a file another process is writing to, or for
+  receiving data from a socket (of course only if it is made to enter in this
+  state, because it can also execute the function with the NONBLOCK option.
+
+  For details on proper project development, please see Part II, where
+  you can find practical guidelines and precautions...
+
+

@@ -1,0 +1,146 @@
+  Status: almost done
+
+  Purpose: Advanced memory operations
+
+  Access control: none
+  Exceptions: standard +
+      ERROR_MEM_FORMAT - when given string isn't convertible
+      ERROR_MEM_OFFSET - when offset < 0
+
+  Note: Offset may be bigger than 0..3, then base address (of dwords) is
+        suitably increased.
+
+  Syscall: SYSCALL_MEM_STRCPY
+      u0 - destination address
+      u1 - offset of destination (0..3 in addressed dword)
+      u2 - source address
+      u3 - offset of source
+      u4 - size in bytes
+
+  Syscall: SYSCALL_MEM_MEMSET
+      u0 - address
+      u1 - offset
+      u2 - character
+      u3 - size in bytes
+
+  Syscall: SYSCALL_MEM_BZERO
+      u0 - address
+      u1 - offset
+      u2 - size in bytes
+
+  Syscall: SYSCALL_MEM_ENDIAN
+      u0 - address
+      u1 - bytelength
+      u2 - current format
+      u3 - expected format (0 - big endian, 1 - little endian, 2 - native endian)
+
+  Syscall: SYSCALL_MEM_STRCHR
+      u0 - address
+      u1 - offset
+      u2 - character
+      u3 - size in bytes
+  RETURN: u0 - address of matched dword
+          u1 - offset in this dword
+          u2 - 0 if NOT succeed
+
+  Syscall: SYSCALL_MEM_STRRCHR
+      u0 - address
+      u1 - offset
+      u2 - character
+      u3 - size in bytes
+  RETURN: u0 - address of matched dword
+          u1 - offset in this dword
+    u2 - 0 if NOT succeed
+
+  Syscall: SYSCALL_MEM_STRCMP
+      u0 - address of 1st string
+      u1 - offset of 1st string
+      u2 - address of 2nd string
+      u3 - offset of 2nd string
+      u4 - size in bytes
+  RETURN: u0 - like strcmp from libc
+
+  Syscall: SYSCALL_MEM_STRCASECMP
+      u0 - address of 1st string
+      u1 - offset of 1st string
+      u2 - address of 2nd string
+      u3 - offset of 2nd string
+      u4 - size in bytes
+  RETURN: u0 - like strcmp from libc
+
+  Syscall: SYSCALL_MEM_STRSTR
+      u0 - address
+      u1 - offset
+      u2 - size of 1st string
+      u3 - addres
+      u4 - offset
+      u5 - size of 2nd string
+  RETURN: u0 - address
+          u1 - offset
+    u2 - 0 if NOT succeed
+
+  Syscall: SYSCALL_MEM_STRRSTR
+      u0 - address
+      u1 - offset
+      u2 - size of 1st string
+      u3 - addres
+      u4 - offset
+      u5 - size of 2nd string
+  RETURN: u0 - address
+          u1 - offset
+          u2 - 0 if NOT succeed
+
+  Syscall: SYSCALL_MEM_TOUPPER
+      u0 - address
+      u1 - offset
+      u2 - size
+
+  Syscall: SYSCALL_MEM_TOLOWER
+      u0 - address
+      u1 - offset
+      u2 - size
+
+  Syscall: SYSCALL_MEM_STRTOINT (converts string to integer)
+      u0 - address
+      u1 - offset
+      u2 - size in bytes
+  RETURN: u0 - integer or exception (ERROR_MEM_FORMAT)
+
+  Syscall: SYSCALL_MEM_STRTOHEX (converts string to unsigned int)
+      u0 - address
+      u1 - offset
+      u2 - size in bytes
+  RETURN: s0 - value or exception (ERROR_MEM_FORMAT)
+
+  Syscall: SYSCALL_MEM_STRTOFLOAT (converts string to float)
+      u0 - address
+      u1 - offset
+      u2 - size in bytes
+  RETURN: f0 - float or exception (ERROR_MEM_FORMAT)
+
+  Syscall: SYSCALL_MEM_STRHEXINT (string may begin with '0x' or ...)
+      u0 - address
+      u1 - offset
+      u2 - size in bytes
+  RETURN: s0 - unsigned integer or exception (ERROR_MEM_FORMAT)
+
+  Syscall: SYSCALL_MEM_HEXTOSTR (like sprintf("%x" ... in libc)
+      u0 - address
+      u1 - offset
+      u2 - size of buffor
+      s0 - value to convert
+  RETURN: s0 - number of written bytes
+
+  Syscall: SYSCALL_MEM_INTTOSTR (like sprintf("%d" ... in libc)
+      u0 - address
+      u1 - offset
+      u2 - size of buffor
+      u3 - value to convert
+  RETURN: s0 - number of written bytes
+
+  Syscall: SYSCALL_MEM_FLOATTOSTR (like sprintf("%f" ... in libc)
+      u0 - address
+      u1 - offset
+      u2 - size of buffor
+      f0 - value to convert
+  RETURN: s0 - number of written bytes

@@ -1,0 +1,118 @@
+  Status: under development
+
+  Purpose: Mathematical routines
+
+  Access control: none
+  Exceptions: standard +
+      ERROR_MATH_RANGE - arc-function range checking (-1 .. 1)
+      ERROR_MATH_DIV - math_table_div: division by zero
+      ERROR_MEM_FORMAT - math_table_*: unsigned char conversion isn't implemented
+
+  Note: When function uses cache returned values may be inaccurate.
+
+  Syscall: SYSCALL_MATH_SIN
+      u0 - type (0 - noncached, 1 - cached value)
+      f0 - value in radians
+  RETURN: f0 - sine of given value
+
+  Syscall: SYSCALL_MATH_COS
+      u0 - type (0 - noncached, 1 - cached value)
+      f0 - value in radians
+  RETURN: f0 - cosine of given value
+
+  Syscall: SYSCALL_MATH_TAN
+      u0 - type (0 - noncached, 1 - cached value)
+      f0 - value in radians
+  RETURN: f0 - tangent of given value
+
+  Syscall: SYSCALL_MATH_ASIN
+      u0 - type (0 - noncached, 1 - cached value)
+      f0 - value (-1..1)
+  RETURN: f0 - arcsine of given value or ERROR_MATH_RANGE exception
+
+  Syscall: SYSCALL_MATH_ACOS
+      u0 - type (0 - noncached, 1 - cached value)
+      f0 - value (-1..1)
+  RETURN: f0 - arccosine of given value or ERROR_MATH_RANGE exception
+
+  Syscall: SYSCALL_MATH_ATAN
+      u0 - type (0 - noncached, 1 - cached value)
+      f0 - value (-1..1) - strange ;>
+  RETURN: f0 - arctangent of given value or ERROR_MATH_RANGE exception
+
+  Syscall: SYSCALL_MATH_FILLSIN
+      u0 - address of buffer
+      s0 - count of sines to write (in dwords or in bytes when u2 == 2)
+      f0 - first value
+      f1 - 'step'
+      u1 - type (0-noncached, 1-cached)
+      u2 - type of results (0-int, 1-float, 2-unsigned char)
+      u3 - value to multiply with results (0 is like 1)
+  RETURN: Table of sine values
+
+  Syscall: SYSCALL_MATH_FILLCOS
+      u0 - address of buffer
+      s0 - count of cosines to write (in dwords or in bytes when u2 == 2)
+      f0 - first value
+      f1 - 'step'
+      u1 - type (0-noncached, 1-cached)
+      u2 - type of results (0-int, 1-float, 2-unsigned char)
+      u3 - value to multiply with results (0 is like 1)
+  RETURN: Table of cosine values
+
+  Syscall: SYSCALL_MATH_FILLTAN
+      u0 - address of buffer
+      s0 - count of tangents to write (in dwords or in bytes when u2 == 2)
+      f0 - first value
+      f1 - 'step'
+      u1 - type (0-noncached, 1-cached)
+      u2 - type of results (0-int, 1-float, 2-unsigned char)
+      u3 - value to multiply with results (0 is like 1)
+  RETURN: Table of tangent values
+
+  Syscall: SYSCALL_MATH_TABLE_MUL
+      u0 - address of table with values to multiply
+      u1 - size of this table (dword - float and int, byte - unsigned char)
+      u2 - type of values in first table (0 - int, 1 - float, 2 - unsigned char)
+      u3 - address of second table
+      u4 - size
+      u5 - type (0 - int, 1 - float, 2 - unsigned char)
+      u6 - type of results (0 - int, 1 - float, 2 - unsigned char)
+      u7 - value to multiply with results (it's used during float to int
+            conversion, fast operations ... only without float)
+            Ofcourse 0 is like 1.
+
+  Syscall: SYSCALL_MATH_TABLE_DIV
+      u0 - address of table with values to division
+      u1 - size of this table (dword - float and int, byte - unsigned char)
+      u2 - type of values in first table (0 - int, 1 - float, 2 - unsigned char)
+      u3 - address of second table
+      u4 - size
+      u5 - type (0 - int, 1 - float, 2 - unsigned char)
+      u6 - type of results (0 - int, 1 - float, 2 - unsigned char)
+      u7 - value to multiply with results (it's used during float to int
+            conversion, fast operations ... only without float)
+  Division by zero will call ERROR_MATH_DIV exception
+
+  Syscall: SYSCALL_MATH_TABLE_ADD
+      u0 - address of table with values to addition
+      u1 - size of this table (dword - float and int, byte - unsigned char)
+      u2 - type of values in first table (0 - int, 1 - float, 2 - unsigned char)
+      u3 - address of second table
+      u4 - size
+      u5 - type (0 - int, 1 - float, 2 - unsigned char)
+      u6 - type of results (0 - int, 1 - float, 2 - unsigned char)
+      u7 - value to multiply with results (it's used during float to int
+            conversion, fast operations ... only without float)
+
+  Syscall: SYSCALL_MATH_TABLE_SUB
+      u0 - address of table with values to subtract
+      u1 - size of this table (dword - float and int, byte - unsigned char)
+      u2 - type of values in first table (0 - int, 1 - float, 2 - unsigned char)
+      u3 - address of second table
+      u4 - size
+      u5 - type (0 - int, 1 - float, 2 - unsigned char)
+      u6 - type of results (0 - int, 1 - float, 2 - unsigned char)
+      u7 - value to multiply with results (it's used during float to int
+            conversion, fast operations ... only without float)
+

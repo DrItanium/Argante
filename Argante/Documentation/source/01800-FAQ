@@ -1,0 +1,144 @@
+  Here you can find answers to the most frequently asked questions. Most of
+  those answers include information you can find in other chapters, but
+  - as you probably know - it can be very easy to miss something.
+  Anyway, we are very often asked about following things:
+
+  1) What is it all for?
+
+  For pleasure. We're creating Argante not because we want to write another
+  Linux - we'd rather like to find out whether it is  possible to create a system that
+  would connect security with functionality, performance, universality
+  and that, at the same time, would break most conventions used
+  in other systems. The second thing - we'd like to see if we can do it :-)
+
+  Another matter is that some of Argante's solutions can potentially be
+  interesting - for example, the management (plug and play) and the creation
+  of a communication layer inside a cluster system, independent of the
+  distribution of systems, and in a transparent (for a programmer, of course)
+  way.
+
+  We don't want this OS to be a product, so we've decided to start
+  distributing it under terms and conditions of the LGPL license. The software,
+  support and some solutions can be a product, the OS itself - shouldn't be.
+
+  2) Where will Argante be useful?
+
+  Any distributed servers, where security and efficiency is vital, in
+  cluster systems (as mentioned above) and in many more... No, we don't
+  expect that Argante will be a desk-end product - we neither want to
+  challenge Microsoft nor to duplicate the success of Linux.
+
+  Argante is also the perfect solution for distributing network requests -
+  including distributed scanning tasks and fault-tolerant networks. Read
+  Part II of documentation to find out more.
+
+  3) Will Argante be a separate system?
+
+  I've mentioned it, but it all depends on how it will develop. An embedded
+  system has its advantages - among others, the possibility of very precise
+  integration (as a part of described hybrid solutions) with a real
+  system, and the lack of necessity to port all software at one time.
+
+  Of course, we're interested in making Argante more independent one day. Or
+  even implementing RSIS at hardware level, who knows? We already thought
+  about building a PC card with simple chip and RSIS interpreter in EEPROM,
+  plus some memory on the board. Only SYSCALLs, exceptions, and possibly
+  debugging traps will be reported to real system using IRQ (so real system
+  is responsible for I/O, while code execution is done at the card level).
+  Building such card at the cost below $200 shouldn't be a problem for
+  someone skilled with electronics and chip programming.
+
+  4) What about portability of Unix applications?
+
+  There will be nothing like it, because Argante has a completely
+  different base. We can talk about portability between DOS and Unix -
+  on both systems you can run a "Hello, world" software, but more
+  advanced software, because of very serious differences, won't be
+  portable. That's why we didn't even try to port the C language - of
+  course, if anybody wants to do it, he can, even if it's not an
+  extremely secure language...
+
+  5) Why does Argante has its own programming language?
+
+  In fact, Argante would operate on a subset of Ada's commands - on the other
+  hand, we use many conventions used in C to control the code and we think
+  it's not so bad :)  That's why AHLL is a mixture of good parts of both
+  languages and is very easy to learn.
+
+  6) Can I change system settings?
+
+  Maximal number of VCPUs, the maximal stack size and most of environmental
+  settings can be modified via config.h file; but remember that changing
+  some vital parameters (for example, the number of registers) can cause
+  incompatibility or mistakes in software.
+
+  7) How does Argante use the power of CPU?
+
+  When all processes are "dead", they wait for something or are in IOWAIT,
+  the VS clock slows down, giving most of its power to the real system. In
+  case when at least one process is WORKING, the whole processor power
+  available to Argante is divided between them. It can be controlled via
+  the "nice" value and the scheduling scheme in the real system.
+
+  It is possible to run more than one Argante at the same time, but
+  you should mind the efficiency; you can modify  multitasking
+  settings in the real system and Argante's priority.
+
+  If you create a hybrid system, in which Argante cooperates
+  with some elements of the real OS, we suggest to set priority
+  for Argante and the rest of processes in a correct way, so it could
+  use a CPU's power in a efficient way.
+
+  Running well-designed Argante's applications shouldn't load the
+  system too much.
+
+  9) Portability
+
+  At the moment,  biniaries aren't portable between systems with
+  different endians. We plan to put an automatic translator in a
+  loader module, but at the moment the only thing portable is
+  source code and - between systems with the same endian - biniaries.
+
+  The source code should be portable without any problems.
+
+  10) Problems with compilation?
+
+  In case of "memory exhausted" or "segmentation fault" errors during
+  compilation, comment out everything after -Wall in the CFLAGF= line
+  in the Makefile for a given OS (you can find it in a sysdep/ directory).
+  It can decrease efficiency of Argante, but it will speed up compilation
+  and will decrease resources needed to compile it.
+
+  11) Where will Argante work?
+
+  Linux       - native platform (with readline support)
+  FreeBSD     - tested
+  NetBSD      - not tested, should work
+  OpenBSD     - tested
+  Solaris     - tested
+  AIX         - untested (if you have access, let us know)
+  HP/UX       - beta version present
+  IRIX        - tested
+
+  ...other systems?
+
+  12) I want to use readline library. Am I able to do it?
+
+  The readline library can be used only when you:
+
+  - use Linux system
+  - have a new version of libc6 (glibc 2.1.x).
+
+  Otherwise, the readline support won't be compiled in your Argante.
+  This library isn't ideal and we're too busy writing the REALLY IMPORTANT
+  CODE, so write your own version of readline or... wait for it :)
+
+  13) I'd like to write something - where the h... is the CVS?
+
+  At the moment - nowhere. I don't think we will run it before the first
+  stable version is ready. Until then - I (lcamtuf@ids.pl) am a CVS
+  and please send all ideas, propositions and diffs (diff -urN) to me. Don't
+  send your own snapshots or diffs created with different options - it's
+  hard to update the code manually.
+
+

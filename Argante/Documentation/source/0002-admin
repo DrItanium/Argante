@@ -1,0 +1,98 @@
+
+  Welcome, glad you stopped by. It's a perfect moment to introduce
+  ourselves. We are a loose-knit group of computer security enthusiasts,
+  hackers, programists, developers - to be short, people who really
+  enjoy doing something challenging, and who cannot stand our computer
+  world is, in fact, broken by design :-)
+  
+  Argante project has been founded in late September, 2000, by
+  Michal Zalewski (lcamtuf), as a result of... well, just a bet =) But
+  surprisingly, more and more people became interested in making really
+  secure, free, effective and simple environment just to feel they are
+  making something useful =) As for now, Argante Development Team consist
+  of around 12 actively coding people, assisted slightly higher number of
+  spectators. But, as our rule of thumb, we are listing active coders /
+  contributors only - and here they are, in chronological order:
+  
+  * Michal Zalewski <lcamtuf@ids.pl>
+  
+    That's me :) I am a project coordinator, also known as "pain in the 
+    ass", mostly hated and against any progress =) I did most of the
+    original project, microkernel and basic modules design, coded
+    our tiny assembler, big and ugly AHLL translator (which has to
+    be rewritten, anyway), made a lot of compliants regarding other
+    people's work, and so on :)
+
+  * Bulba (bulba@intelcom.pl)
+  
+    Bulba developed interprocess communication subsystem (noone really
+    undestands how it works ;), and did some other valuable work - fixes,
+    suggestions, utility proggies. Unfortunately, not very reliable when
+    it comes to delivering the code promised earlier ;)
+    
+  * Maurycy Prodeus (z33d@eth-security.net)
+  
+    Author or real-time debugging and deassemby support; did some other
+    enhancements, developed math and advmem module. Sentenced for ten
+    years of prison for developing blinkenlights driver for Argante
+    kernel.
+  
+  * Artur Skura (arturs@people.pl)
+  
+    This guy did enormous amount of work translating my not really clear
+    ideas and thoughts to English. Did readline support on Linux console
+    and some PR-related work =)
+		      
+  * Marcin Dawcewicz (miv@interia.pl)
+  
+    Developed high-level network support, did some testing; author of
+    never really finished ripcd daemon. Killed in Action?
+			
+  * bikappa (bikappa@itapac.net)
+  
+    Low-level network connectivity module. Not much to say, good work,
+    except he does not really like to test his code ;)
+			  
+  * Lukasz Jachowicz (honey@linuxnews.pl)
+  
+    (Depreciated) SVGAlib console support for amusement purposes; held
+    in this section because of really lovely girlfriend ;)
+    
+  * ArtGabi (www.artgabi.com.pl)
+  
+    Guys who did our website and logo design completely for free :)
+			      
+  * Adam Podstawczyñski (adam@english.w3.pl)
+  
+    Documentation review and cleanup.
+				
+  * scrippie (ronald@grafix.nl)
+  
+    Documentation cleanups, numerous bugfixes and code cleanups :>
+				  
+  * Marcin Zukowski (eru@ibbrain.ibb.waw.pl)
+  
+    The Guy, Who Started Writing Modula-3 translator (and developed
+    Midnight Commander syntax highlighting files). Valuable contributor,
+    unfortunately never managed to finish his work :/
+				    
+  * Jaroslaw J. Pyszny (arghil@zeisk.tech.us.edu.pl)
+  
+    Known for valuable discussions and vim syntax highlight files :)
+				      
+  * Adam Chodorowski (adam.chodorowski@bigfoot.com)
+  
+    GGI display support and miscleanous suggestions :)
+    
+  * James Kehl (ecks@optusnet.com.au)
+  
+    GTK and ncurses managament consoles on Linux
+					  
+  * Mariusz Woloszyn (woloszyn@ipartners.pl)
+  
+    JIT optimizations, numerous fixes, what should I say?;)
+
+  Thats it :-) Hope you are still reading... So, let's start our
+  journey :)
+  
+  

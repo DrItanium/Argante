@@ -1,0 +1,247 @@
+  A unified privilege management mechanism (HAC) has been created.
+  A sample entry in the file access.set, the configuration file of the
+  subsystem:
+
+  12345:00000     fs/ftp/users          fs/fops/new/dir         allow
+  |               |                       |                       |
+  | +-------------+                       |      entry description|
+  | | +-----------------------------------+     - allow or deny
+  | | |
+  | | +-- hierarchical identfier of acces type: acces space is 'fs'; a branch
+  | |     for file operations (fops), operation type: object creation
+  | |     (new), object type: directory (dir). This convention is recommended,
+  | |     although as I said earlier the kernel is not responsible for
+  | |	authorisation - it is done by modules, passing the data to the
+  | |     function is_permitted().
+  | |
+  | +---- hierarchical resource identifier; in this case object space,
+  |       filesystem space (ftp file) and a concrete catalog are described.
+  |
+  +------ group membership; the value of '0' means the rule is of
+          "generic" type and refers to all grups; the value after ':'
+          refers to a the supgroup. In the case of rules specyfying
+          a non-zero group, the value must be integer.
+
+  The sequence of entries in the configuration file decides of their priority.
+  Consequently, more specific entries (e.g. containing denial of access to
+  resources for a given subgroup) should be given before more general ones.
+
+  NOTE: If operation identifier in in the configuration file is, say,
+  'fs/fops', it means someone fulfilling other criteria and requesting access
+  to 'fs/fops/new/file/text' will be granted access. Obviously, it doesn't
+  work both ways and the entry 'fs/fops/new/file/text' doesn't imply
+  access to the whole hierarchy 'fs/fops'. Using '/' as separators is
+  necessary: for example the entry 'fs_ops' doesn't mean access
+  to the object 'fs_ops_new_file'.
+
+  HAC requires detailing operation rules, making one precise their object
+  type which is undergoing operation.
+  I
+  n this way an entry of the type given below is _ALWAYS_ correct:
+
+      +- wdops ---- cwd
+      |    +------- pwd
+      |
+      +- setup ---- ...
+      |
+  fs -+- fops --+-- create -- file ----------+-- binary
+                |      +----- directory      |
+                |                            +-- text
+                +-- delete -- file
+                |      +----- directory
+                |
+                +-- read ---- directory
+                      +------ file
+
+  On the other hand, entries like fs/fops/file/delete, fs/fops/file/create, etc.
+  are INCORRECT. Although it may seem illogical at a glance, but this second
+  entry would actually make rules generalisation impossible (e.g. granting
+  privileges to create objects in a given part of the filesystem means entering
+  fs/fops/create, whereas if we used the other notation, it would require
+  many entries).
+
+  As a means of protection against attempts of filing misinformation to
+  modules managing the filesystem, the authorising system refuses access to
+  objects containing the sequence "/..". The module should take care (and it
+  does) of eliminating them.
+
+  As for subsystems where it's impossible to define resources, or their
+  defining would be doubling access type (e.g. the module displying text
+  on the virtual console - defining operation type is enough in this case),
+  the resource should be 'none'.
+
+  Rule testing before their ctualisation can be done with the included program
+  'actest' (in the 'tools' directory), which provides decent diagnostics HAC.
+  Rules actualisation is done with '^' within the management console (see below).
+
+  If you know nothing about modules yet, you can come back here later. I will
+  explain the HAC interface for modules below:
+
+  >From the point of view of the author of a module, the most comfortable
+  interface to access control is the VALIDATE() macro contained in the
+  file include/acman.h. The macro accepts three parameters: the processor
+  number, resource identifier as well as access type identifier.
+
+  For example:
+
+    VALIDATE(c,"net/tcp/destination/10.0.0.1/1234","net/connect");
+
+  In case where  access is possible, macro will have no effect. If access is
+  denied, the macrow will raise exception NOPERM with situation description and
+  will exit the function syscall_handler() it should be called from.
+
+  To handle it in a more refined way, we can use the function is_permitted(),
+  accepting parameters corresponding to the parameters of the VALIDATE() macro,
+  but returning the value of 0 (refusal) or 1 (access granted). There is no
+  place for function return, nor exception is raised. To be precise, the
+  VALIDATE() macro is constructed as a wrapper for the function is_permitted()
+  in the following way:
+
+  #define VALIDATE(cp,res,act) { \
+      char errbuf[512]; \
+      if (!is_permitted(cp,res,act)) { \
+        if (!cpu[cp].fail_safe) \
+          snprintf(errbuf,200,"permision denied [%d:%d] act='%s' obj='%s'", \
+                  cpu[cp].current_domain,cpu[(cp)].domain_uid,act,res); \
+        non_fatal(ERROR_NOPERM,errbuf,(cp)); \
+        return; \
+      } \
+    }
+
+  The module should also send as detailed requests as it is possible,
+  specyfying complete data needed for access verification. The module
+  responsible for graphics should not ask for 'graph', but about
+  'graph/control/setmode' and the resource 'graph/res/640/480/16bpp'.
+  Similarly, the rules in the configuration file access.hac should be as
+  precise as possible.
+
+  NOTE: for now, HAC supports wildcards in object path. These wildcards are
+  supported in two ways. First of all, you can use them in access.hac to
+  specify general rules. For example:
+
+  1 0     fs/ftp/users/*/mail          fs/fops/list/directory       allow
+
+  In this case, HAC request matching domain, uid and operation will be
+  approved if, at the time of HAC call, object path was either:
+  fs/ftp/users/mike/mail, fs/ftp/users/david/mail/archive or so. NOTE:
+  wildcards are not working accros path segments. This mean access attempt
+  to fs/ftp/users/mike/private_files/mail will FAIL, because single '*'
+  can substitute single path element only.
+
+  /* ...there's no second way at the moment, sorry ;) ... */
+
+  Please note: take a look on fs module if you are going to include
+  user-supplied data within object path in your own module. It is very
+  important to parse it properly, elliminating unwanted wildcards etc! But,
+  in fact, it is more important to avoid user/process-supplied strings in
+  HAC calls, except for filesystem module.
+
+  ****** HAC hierarchy tree *******
+
+  A) Objects:
+
+          +----- none (object unspecified or determined by operation)
+          |
+          | <fs.so>
+  / -------+----- fs (filesystem objects - recommended mapping start point)
+          |
+          | <network.so>
+          +----- net ------------ address ---- dest ------- unix ------- external --- <sock number>
+          |                          |           |            +--------- <vcpu#> ---- <sock number>
+          |                          |           |
+          |                          |           +---------- tcp ------- <host> ----- <port>
+          |                          |           |
+          |                          |           +---------- udp ------- <host> ----- <port>
+          |                          |
+          |                          +-------- source ------ tcp ------- <host> ----- <port> (listen & connect)
+          |                                      |            |             +-------- default
+          |                                      |            |
+          |                                      |            +--------- default ---- <port>
+          |                                      |            |
+          |                                      |            +--------- all -------- <port> (listen)
+          |                                      |
+          |                                      +---------- udp ------- <host> ----- <port> (listen & connect)
+          |                                      |            |             +-------- default
+          |                                      |            |
+          |                                      |            +--------- default ---- <port>
+          |                                      |            |
+          |                                      |            +--------- all -------- <port> (listen)
+          |                                      |
+          |                                      +---------- unix ------ stream ----- <sockid>
+          |                                                    |
+          |                                                    +-------- dgram ------ <sockid>
+          | <gfx.so>
+          +----- gfx ------------ output ----- text
+          |                          |
+          |                          +-------- <resltn> --- <bpp>
+          |                          :
+          |                          +-------- 320x200 ---- 256 (for example)
+          | <ipc.so>
+          +----- ipc ------------ ipcreg ----- <id>
+                  |
+                  +-------------- target ----- unicast ---- <vsid> ----- <vcpu> ----- <ipcreg>
+                  |                 |
+                  |                 +--------- broadcast
+                  |
+                  +-------------- source ------ <vsid> ------ <vcpu> ------- <ipcreg>
+
+
+  B) Operations:
+
+                <display.so>
+              +----- display ----- output ----- text
+              |                      +--------- integer
+              |                      +--------- character
+              | <fs.so>
+  / ----------+----- fs ---------- fops ------- open ------- file ----- read
+              |                      |                         +-------- write ------ append
+              |                      |
+              |                      +--------- create ----- file ------ write ------ append
+              |                      |            +--------- directory
+              |                      |
+              |                      +--------- delete ----- file
+              |                      |            +--------- directory
+              |                      |
+              |                      +--------- stat
+              |                      |
+              |                      +--------- list ------- directory
+              | <network.so>
+              +----- net --------- sock ------- connect
+              |       |              |
+              |       |              +--------- listen
+              |       | <packet.so>
+              |       +----------- raw -------- open ------- listener
+              |                                   |
+              |                                   +--------- sender
+              | <local.so>
+              +----- local ------- sys -------- real ------- time ------ get
+              |                     |            |
+              |                     |            +---------- hostname -- get
+              |                     |            |
+              |                     |            +---------- random ---- get
+              |                     |            |
+              |                     |            +---------- stat
+              |                     |
+              |                     +--------- virtual ----- stat
+              | <gfx.so>
+              +----- gfx -------- console ---- vclock
+              |       |
+              |       +---------- init
+              |       |
+              |       +---------- setmode
+              |
+              | <ipc.so>
+              +----- ipc -------- register
+                      |
+                      +---------- msg ------- send
+                      |            +--------- recv
+                      |
+                      +---------- stream ---- req
+                      |            +--------- recv
+                      |
+                      +---------- block ----- create
+                                    +-------- read
+                                    +-------- write
+                                    +-------- recv
+
+

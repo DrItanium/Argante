@@ -1,0 +1,38 @@
+  The filesystem is defined in the file conf/fsconv.dat. It contains
+  virtual filesystem mapping to the real filesystem, separated with
+  spaces. The rules for inclusion are similar as in HAC:
+
+
+  fs/ftp/test1            /Argante/fs/another directory
+  fs/ftp                  /Argante/fs/ftp_server
+
+  HAC controls access at the elvel of virtual directories. The above entries
+  mean that the fs/ftp/test1 is mapped to another place than the directory
+  fs/ftp. If a process has a HAC entry permitting operations like
+  fs/create/directory on the object fs/ftp, it will have acces to both
+  directories (according to the principles of HAC, provided that this
+  has not been excluded earlier). When creating the directory fs/ftp/nope,
+  the real entry will be created in /Argante/fs/tests/nope.
+  On the other hand, the same operation for fs/ftp/test1/nope, will result
+  in the file /Argante/fs/inny_katalog/nope. However, an attempt to access
+  the object fs/ftp/../nope will fail - the filesystem module will recognise
+  it as access to the object fs/nope, whereas such an entry doesn't exist
+  in the SVFS hierarchy.
+
+  The filesystem architecture in Argante presupposes resource access
+  control and real filesystem protection, and at the same time the possibility
+  of integrating the SVFS filesystem with objects of the real filesystem.
+
+  The SVFS system is well simplified but fully functional subset of
+  operations on the filesystem. In the original version it doesn't include
+  support for symlinks andd hardlinks, however, it supports the ones existing
+  at the real filesystem level.
+
+  Including essential resources / system directories directly in the SVFS
+  hierarchy is possible (e.g. making the /etc directory accessible), but
+  discouraged.
+
+  For more details on proper SVFS mapping, see Part II.
+
+
+

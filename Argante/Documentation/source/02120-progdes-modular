@@ -1,0 +1,40 @@
+  As it's been told, implementation philosophy in Argante is somewhat different
+  than eg. in Unix. Instead of treating your project as one big box, try
+  to separate functional blocks, drawing connections between them, for example:
+
+    FTP SERVER PROJECT:
+
+      |
+    network listener --- [ network layer ]
+      |
+    command processor -- [ log file ]
+      |
+    authorizator ------- [ access control database ]
+      |
+    filesystem access -- [ user directories ]
+
+  Don't split your project into 1000 parts - but try to keep every kind of
+  I/O interaction in a different module, avoiding dangerous solutions, like
+  giving command processor direct access to filesystem - put authorizator
+  between, and filter every filesystem request using authorization data.
+
+  In this example, network listener will pass connections to command
+  processor(s). These processors can communicate only with network through
+  listener (so no abusive operations are allowed), and authorizator (no
+  direct filesystem or password information access). Authorizator, on
+  every request passed to filesystem, should verify user information, and
+  pass it only if it's correct. The most sensitive layer - command processing -
+  is now safely separated from sensitive information.
+
+  That's quite simple and deadly effective. You should use rIPC for
+  communication between modules, so you can:
+
+  - split your project into for example 4 different machines with no
+    code changes,
+
+  - launch any number of authorizators, filesystem access processes or
+    command processors in cluster, creating redundant structure with
+    automatic load-balancing ("choose fastest responding" algorithm).
+
+  - add / remove / modify layers with no code changes.
+

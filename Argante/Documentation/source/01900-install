@@ -1,0 +1,24 @@
+  Specific installation is not required. First of all, copy argante,
+  tools/agtses and tools/agtback to your PATH - eg. to /usr/local/bin.
+  You can also put modules/*.so in eg /usr/lib/argante, if you want.
+  This can be done automatically using './build install'.
+
+  To set up basic project worskspace, you can use "agtproj" utility.
+
+  To launch the system in background, with no interactive console, use:
+
+  agtback argante SCRIPTNAME ROOTDIR
+
+  You could always access console of such session using agtses command. To run
+  foreground session (debugging purposes, for example), you could use:
+
+  argante SCRIPTNAME ROOTDIR
+
+  SCRIPTNAME - absolute path to boot script
+
+  ROOTDIR - project root directory (argante working directory)
+
+  For details on project root directory, see below sections.
+
+
+

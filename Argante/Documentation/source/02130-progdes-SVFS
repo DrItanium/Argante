@@ -1,0 +1,13 @@
+  SVFS hierarchy should be designed carefully. For example, putting vital
+  system configuration files directly in SVFS is just stupid. If you have
+  to modify local system, you should read details on real system interaction
+  below, and create interface between your processes and real-system tools.
+
+  Symlinks are allowed (and treated just like regular files, as long as
+  they are not dangling ;), but should be used carefully. The same applies
+  to hardlinks. Generally, you should design your project in the way that
+  does not need any kind of links in SVFS.
+
+  Below, you'll find some precautions for mapping NFS objects or objects
+  shared between different AOS instances.
+

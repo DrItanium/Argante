@@ -1,0 +1,44 @@
+  Introduction
+  ------------
+
+  Status: done
+
+  Purpose: displaying basic data on the console from user within a process;
+  debugging etc. NOTE: the module shouldn't be used for user interaction,
+  as this will be solved otherwise. For the time being, it is advised to
+  use the network module.
+
+  Syscalls
+  --------
+
+  Name:       IO_PUTSTRING
+  Inputs:     u0 - character string address
+              u1 - number of characters
+  Outputs:    -
+  Result:     Displays the specified character string.
+  Exceptions: PROTFAULT (attempt to display wrong memory fragment)
+  HAC:        operation=display/output/text object=none
+  ____________________________________________________________________________
+
+  Name:       IO_PUTINT
+  Inputs:     u0 - value to be displayed
+  Outputs:    -
+  Result:     Displays the numeric value.
+  Exceptions: -
+  HAC:        operation=display/output/integer object=none
+  ____________________________________________________________________________
+
+  Name:       IO_PUTFLOAT
+  Inputs:     f0 - value to be displayed
+  Outputs:    -
+  Result:     Displays the numeric value.
+  Exceptions: -
+  HAC:        operation=display/output/float object=none
+  ____________________________________________________________________________
+
+  Name:       IO_PUTCHAR
+  Inputs:     u0 (lowest 8 bits) - character to be displayed
+  Outputs:    -
+  Result:     Displays an ASCII character.
+  Exceptions: -
+  HAC:        operation=display/output/character object=none

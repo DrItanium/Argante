@@ -1,0 +1,9 @@
+  These syscalls have corresponding AHLL library calls, so this knowledge
+  isn't mandatory, but might explain some troubleshooting problems. Also,
+  as there's no AHLL library calls documentation available at the moment,
+  it might be helpful in understanding AHLL procedures.
+
+  NOTE: every module using HAC may return, besides standard exceptions,
+  values: ACL_PROBLEM, NOPERM.
+
+  For rIPC API documentation, see separate chapter.

@@ -1,0 +1,72 @@
+  Technically, the VCPU in Argante is a virtual machine with a limited but
+  easier to use (when compared to traditional machine code) instruction set;
+  three register blocks (for operating on 32-bit unsigned and signed integers
+  and floats, respectively) with 16 registers each; stack space (used only for
+  function return addresses, data storage is done otherwise); an identification
+  number in inter-process communication model; executable program space; space
+  used for allocating memory blocks with an implementation of access control
+  and dynamic reallocation as well as a few other, less significant variables.
+  Allocated memory blocks which can be used for data storage and processing are
+  distinct and overwriting one block when going beyond the limit of another is
+  impossible. As has been mentioned, stack and program code modifications are
+  also impossible.
+
+  Allocated memory addressing, in contrast to 8-bits used in traditional
+  systems, is done with dwords, 32-bit offsets. It entails improved efficiency
+  in most applications and, at the same time, safer data access.
+
+  Code space addressing is similar. Every instruction is coded using 12 bytes.
+  Instructions without arguments, such as NOP, have only the first byte set,
+  referring to the opcode. In other cases, two subsequent bytes mean the
+  parameter type; one byte is a padding, the two another contain parameters.
+  In fact we could do with 10 bytes, but efficiency would decrease (at present
+  we have three times 32-bit dword). Waste of space? Not really, if you read
+  futher specifications. :)
+
+  This solution allows for safer movement within the code segment (including
+  jumps) as well as lessening opcode number and extremal gain as far as
+  the number of parameters needed to perform a given operation is concerned,
+  which is made up for by the size of a single instruction:
+
+        1     2     3     4     5     6     7     8     9     10    11    12
+  +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+    xxxxx xxxxx xxxxx RSRVD xxxxxxxxxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxxxxx
+    |     |     |           |                       |
+    |     |     |           +-----------------------+- two 32-bit parameters
+    |     |     +------------------------------------- second parameter type
+    |     +------------------------------------------- first parameter type
+    +------------------------------------------------- opcode, e.g. MOV
+
+  Parameter types:
+
+  IMMEDIATE - 32-bit number
+  UREG      - unsigned register number
+  SREG      - signed register number
+  FREG      - float register number
+  IMMPTR    - a number pointer to a 32-bit numeric value
+  UPTR      - an unsigned register number containing a pointer to a 32-bit
+              numeric value
+
+  Note: in case of a jump instruction, passing an IMMEDIATE or UREG parameter
+  type refers simply to the address. The case of the MOV instruction is
+  different: if we want to refer to the address of a given memory location,
+  we should use IMMPTR or UPTR types. It is a convention making using commands
+  more effective.
+
+  The following registers are accessible:
+
+    u0 .. u15             - unsigned register types (0..15)
+    s0 .. s15             - signed register types (100..115)
+    f0 .. f15             - float register types (200..215)
+
+  The systems provides type conversions during register operations, however
+  it is time consuming and shouldn't be used too often. Values taken from
+  the memory aren't converted (so when writing the value of the register
+  f0 = 0.123 to the address 1234 and then reading the value from this
+  address to the register u0, we will probably get an unpredictable result;
+  the solution consists in reading the value again to the register f0 and
+  using mov u0,f0).
+
+  The process run on a VCPU can only use the native instruction set called
+  RSIS without the possibility of directly executing the machine code of the
+  real processor.

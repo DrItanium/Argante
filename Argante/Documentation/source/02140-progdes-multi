@@ -1,0 +1,16 @@
+  NOTE: Yes, there are no precautions for launching several instances of
+  Argante on one physical system, with completely different projects. One
+  of its purposes might be testing of distributed/cluster solutions. But
+  you should respect one rule - only one VS instance should be able to write
+  specific real system resource. For example, if you're deciding to put
+  FooBar file, physically located in /TestMe directory, in SVFS space for
+  two different argante instances on the same system at the same time, you
+  should give write access only to VCPU(s) on one virtual machine ("file
+  access manager(s)"), and arrange write-request passing using rIPC.
+
+  The same applies to NFS shared resources - be careful. It's just there's no
+  accurate and portable way to determine if file is locked for writing in
+  real system by other instance, so file damage might occour.
+
+
+

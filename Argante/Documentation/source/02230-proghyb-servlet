@@ -1,0 +1,42 @@
+  In some cases, it is important to invoke Argante programs via unix
+  command-line, from servlets, as a CGI scripts or from SSI. In this case,
+  you can use tools/agtexe utility.
+
+  This program is able to connect to running, background AOS session,
+  load given program, catch any errors (returning apropriate error message
+  or return code). It will continue running until program will be terminated
+  (if it happened due to exception, it might display message or return
+  specific code), eventually arranging I/O session between process and its
+  console. Argante VCPU will be automatically terminated if any signal will be
+  caught by agtexe.
+
+  Usage:
+
+    agtexe program_name f[cwm] pid
+          |              |||  |
+          |              |||  +------- AOS session pid
+          |              |||
+          |              ||+---------- do not display messages on errors
+          |              |+----------- do not wait for process to terminate
+          |              +------------ do not arrange I/O session
+          |
+          +---- you have to use absolute path! all relative paths are
+                relative to AOS cwd, not agtexe CWD!
+
+
+  Examples:
+
+    (execute work/test.img, default settings, find Argante)
+    agtexec $PWD/work/test.img f `ps x|grep ':.. argante'|grep -v grep|cut -b-6|head -1`
+
+    (execute /test/test.img, without console, be silent, given pid)
+    agtexec /test/test.img fcm 12345
+
+  Exit codes:
+
+    0 - successful execution (process terminated by HALT or 'w' option)
+    1 - agtexe caught signal, process terminated
+    2 - execution failure (bad binary image)
+    3 - unhandled exception during execution
+    4 - couldn't attach to Argante session
+

@@ -1,0 +1,47 @@
+  This appendix assumes you have default paths defined in your
+  include/config.h, pointing some guidelines for proper project design.
+  Please read it carefully.
+
+  Complete Argante project means, in fact, one virtual system instance. Project
+  directory should be a subdirectory in real system containing all necessary
+  configuration files, binary images and, preferably, SVFS mapping points
+  for all private data. So, a sample structure looks like this:
+
+      /MyProject
+      |
+      +- boot.scr		- bootup script; take a look on conf/scripts in
+      |                     Argante sources. It should load all necessary
+      |                     modules and executable images in proper order,
+      |                     eventually launching real-system daemons as
+      |                     well.
+      |
+      +- /conf/access.hac - HAC control file; see below
+      |
+      +- conf/fsconv.dat  - SVFS mapping file; see below, map points should
+      |                     be within fs/ subdirectories.
+      |
+      +- /source          - suggested location for AHLL / RSIS sources.
+      |
+      +- /images          - suggested location for binary images (executables)
+      |
+      +- /modules         - eventually, if you don't have modules installed
+      |                     globally, or want specific versions for this
+      |                     instance, you could place your modules here
+      |
+      +- /fs		- suggested "top of the filesystem"
+        |
+        +- /sock-unix    - location of Unix sockets for local inter-process
+        |  |               communication (should exists if you're planning to
+        |  |               use Unix sockets; generally, it's better to use
+        |  |               IPC or rIPC, but, on the other hand, Unix sockets
+        |  |               are not so bad ;).
+        |  |
+        |  +- /external  - location for Unix sockets for external software
+        |                  communication; see section 7.
+        |
+        +- /...          - mapped SVFS directories, in general; you should
+                            use hierarchy that can be easily assigned to
+                            specific task and type of resources, for example:
+
+                            /fs/ftp_server/storage/users/userXXX/
+

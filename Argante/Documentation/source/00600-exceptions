@@ -1,0 +1,174 @@
+  Exceptions are one of the things we decided to move from high-level to
+  low-level. Why? Because this operation doesn't mean more complex RSIS
+  language, nor does it enforce any conventions, except enforcing programmer
+  to handle errors, instead of checking for them occasionally (or not checking
+  at all).
+
+  Exception stack and shrinking at the same time call stack does. You can
+  declare exception handler for current execution level (or cancel it). It
+  will be cancelled when RET is called, and will be inherited during any
+  calls (but can be temporarily shadowed with ONFAIL handler declared in
+  subroutine).
+
+  If there's no exception handler at current execution level, the stack will
+  be shrunk to the nearest handler. For example, if you declared the handler in
+  procedure DoSomething, and then you called DrawABox, which does not have
+  its own exception handler, but caused an exception, execution will
+  return immediately to DoSomething, and the exception handler will be called
+  from the place DrawABox was called.
+
+  If there's no exception handler, the task will be terminated.
+
+  Handlers are not specific. It means, any exception causes handler to be
+  called. u0 register is saved (it will be restored after RET to code which
+  caused first exception), then it's overwritten with exception code (these
+  codes are specific for different modules, and are described below).
+
+  Exception handlers are not cancelled at the time they're called, but, if
+  an exception will appear in exception handler code, lower-level handler
+  will be called instead of calling current handler again.
+
+  Handler can decide, if it wants to cover current exception (and then, for
+  example, return to code using RET), or to pass the exception to low-level
+  handler (it can be done using RAISE u0 if exception code was not matched).
+
+  The accepted policy consists in informing the program (using the non_fatal()
+  function) using raised exceptions about untypical/alarming situations.
+  Thus the syscall checking whether a file exists should not raise an exception
+  if it doesn't exist. On the other hand, the syscall for opening files
+  should raise an exception in these circumstances.
+
+  So, exceptions raised by commands:
+
+  #define ERROR_STACK_OVER                0x1
+
+    Stack overflow. Might happen on CALL or when exception handler
+    is called at current execution level, but there's no stack
+    space available.
+
+  #define ERROR_STACK_UNDER               0x2
+
+    Stack underflow. Might happen on excessive RET attempt. Can be
+    handled only at the lowest-level exception handler, of course,
+    because stack is at "ground" level at the time this exception
+    is raised.
+
+  #define ERROR_OUTSIDE_CODE              0x3
+
+    Instruction pointer outside addressable process space (eg. no
+    HALT at the end of code or exceessive JMP / CALL / ONFAIL).
+
+  #define ERROR_OUTSIDE_REG               0x4
+
+    Excessive register number. Shouldn't happen, because these numbers
+    are validated by compiler, unless you're messing with configuration
+    options.
+
+  #define ERROR_BAD_PARAM                 0x5
+
+    Bad opcode parameter - for example MOV with immediate value as first
+    param. In some cases - eg. REALLOC / FREE - it might mean incorrect
+    memory block number specified.
+
+  #define ERROR_BAD_INSTR                 0x6
+
+    Illegal instruction (compiler brain damage or serious incompatibility).
+
+  #define ERROR_OUTSIDE_MEM               0x7
+
+    Attempt to access non-allocated memory address.
+
+  #define ERROR_PROTFAULT                 0x8
+
+    Syscalls - buffer passed as a parameter is not suitable for reading or
+    writing.
+
+  #define ERROR_TOOBIG                    0x9
+
+    ALLOC / REALLOC attempt with size larger than per-block limit.
+
+  #define ERROR_NOMODULE                  0xa
+
+    No handler for specific syscall number.
+
+  #define ERROR_BAD_SYS_PARAM             0xb
+
+    (obsolete)
+
+  #define ERROR_ACL_PROBLEM               0xc
+
+    HAC subsystem cannot be initialised - missing configuration file. It
+    will cause all HAC-based syscalls to fail.
+
+  #define ERROR_NOPERM                    0xd
+
+    Access permission denied on HAC level
+
+  #define ERROR_NOMEM                     0xe
+
+    No more free memory / memblock slots (ALLOC/REALLOC).
+
+  #define ERROR_DEADLOCK                  0xf
+
+    Deadlock - cannnot access required system resource (eg. entropy pool).
+
+  #define ERROR_NOOBJECT                  0x10
+
+    Filesystem: object can't be located within SVFS mapping hierarchy.
+
+  #define ERROR_FSERROR                   0x11
+
+    General filesystem fault - for example, requested task cannot be
+    completed due to low-level real system syscall error.
+
+  #define ERROR_FS_BAD_PATH               0x12
+
+    Filesystem: path is incorrect; either whole path or one of its elements
+    is too long, or you used relative path but have not current working
+    directory set. It might also indicate path contained illegal
+    non-printable characters.
+
+  #define ERROR_FS_OPEN_ERROR             0x13
+
+    Cannot open file - for example, it does not exist (or disappeared
+    during blocking open call).
+
+  #define ERROR_FS_BAD_OPEN_MODE          0x14
+
+    Requested access mode is invalid.
+
+  #define ERROR_FS_CREATE_ERROR           0x15
+
+    Cannot create file - for example, it exists already.
+
+  #define ERROR_FS_BAD_VFD                0x16
+
+    Incorrect VFD number passed to fs syscall.
+
+  #define ERROR_FS_NOSEEK                 0x17
+
+    File can be accessed in append-only mode, while effective seek operation was
+    requested.
+
+  #define ERROR_FS_EXISTS                 0x18
+
+    Rename: destination object exists.
+
+  #define ERROR_FS_NOFILE                 0x19
+
+    Object does not exist or object type mismatch (dir instead of file / file
+    instead of dir).
+
+  #define ERROR_FS_NODIRENT               0x1a
+
+    LIST_DIR: requested offset is invalid.
+
+  #define ERROR_RESULT_TOOLONG            0x1b
+
+    Result will be longer than buffer passed to store it.
+
+  Take a look at Examples/RSIS/error2.agt if you're still not sure how
+  exceptions work.
+
+
+

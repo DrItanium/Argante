@@ -1,0 +1,60 @@
+  This module can be used for all low-level networking purposes, including:
+  sniffing / packet analysis, packet sending, packet forwarding / firewalling
+  etc.
+
+  Syscall: SYSCALL_LOW_NET_INITDEV
+
+    Initializes RAW listener (sniffer) socket
+
+    Parameters: u0 / u1 - interface name address / len
+    Returns: s0 - socket number
+
+    HAC: operation=net/raw/open/listener, object=net/dev/phys/IFACE_NAME
+
+  Syscall: SYSCALL_LOW_NET_RAW;
+
+    Initializes RAW sender socket
+
+    Parameters: none
+    Returns: s0 - socket number
+
+    HAC: operation=net/raw/open/sender
+
+  Syscall: SYSCALL_LOW_NET_RECV;
+
+    Reads RAW packet thru listener socket
+
+    Parameters: u0 - socket number, u1 / u2 - packet buffer address / len
+    Returns: s1 == 1 - success, data received (s0 - packet length)
+            s1 == 0 - failure, no data present
+
+    No blocking low_net_send for now
+
+  Syscall: SYSCALL_LOW_NET_SEND;
+
+    Sends RAW packet thru sender socket
+
+    Parameters: u0 - socket number, u1 / u2 - packet data address / len
+    Returns: s1 == 1 - success, all data sent
+            s1 == 0 - failure, s2 - data left (not sent)
+
+    No blocking low_net_send for now
+
+  Syscall: SYSCALL_LOW_NET_CLOSE;
+
+    Closes listener or sender socket
+
+    Parameters: u0 - socket number
+
+    No return, no HAC.
+
+  Syscall: SYSCALL_LOW_NET_GETHWADDR
+
+    Parameters: u0, u1 - interface name
+    Return: u0:u1:u2:u3:u4:u5 - hardware address
+
+    HAC: net/raw/hwaddr/get on net/dev/phys/<iface>
+    Exceptions: standard memory access, HAC, internal error (if unable to
+    create temp socket), ERROR_BAD_SYS_PARAM (unknown interface)
+
+

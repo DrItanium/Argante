@@ -1,0 +1,35 @@
+  Assign every type of operation performed in your project specific
+  domain number. For example: 1 - user files access, 2 - network listening,
+  3 - making data connections back to user, 4 - accessing password files,
+  5 - communication with command parser, 6 - communication with user files
+  module (sorry, only numeric domain names are supported for now). You
+  cannot use numbers below 100.
+
+  For every functional module, assign list of domains it have to access
+  (using #compiler !domains a b c d...).
+
+  Before any operation (syscall) accessing specific kind of resources /
+  operations, set domain number respectively. Drop these privileges
+  after finishing specific kind of operations.
+
+  If you want to "act" as some user or subobject within specific domain, you
+  can set domain UID as well. For example, before accessing files owned
+  by user 1234, you can set your privileges to domain=1, domain_uid=1234.
+  By using domain_uid, you'll be able to restrict access to specific
+  resource within group.
+
+  Then, when your HAC hierarchy is completed, and you can do list like:
+
+  domain 2 should be able to bind to all IPs to port 21 EXCEPT specific IP
+  domain 1 uid 1234 should be able to do anything within
+  /fs/ftp_server/users/mark
+
+  ...and so on, you can build conf/access.hac file. Please refer HAC
+  documentation for specific modules. In above example, HAC access file should
+  look this way:
+
+  2:0     net/address/source/tcp/SPECIFIC_IP/21  net/sock/listen   deny
+  2:0     net/address/source/tcp/all/21          net/sock/listen   allow
+  1:1234  fs/ftp_server/users/mark               fs                allow
+  [...]
+

@@ -1,0 +1,30 @@
+  No compromises -- OK, I won't use Polish diacritic marks [impossible to
+  render in English, anyway -- translator].
+
+  I have implemented a limited but fully functional interactive debugging
+  system. Something like gdb. In order to initialise process debugging, it should
+  be loaded with the 'd' command. As a result, the VCPU_FLAG_DEBUG flag,
+  indispensable for debugging purposes, will be set.
+
+  An excerpt from help: ('?')
+    dfn         - load and run binary in debug mode
+    rnn         - show nn vCPU registers
+    xnn addr c  - show c bytes of memory on nn vCPU
+    nnn         - step exactly one instruction of nn vCPU
+    cnn         - continue process on nn vCPU
+    snn         - continue process on nn vCPU to next syscall
+    fnn         - continue process on nn vCPU to next ret
+    lnn         - list breakpoints on nn vCPU
+    bnn zz      - add breakpoint on nn vCPU at zz IP
+    unn zz      - delete zz breakpoint on nn vCPU
+    inn IP c    - disassemble c instructions at IP on VCPU nn
+    tnn         - show stack trace on nn vCPU
+
+  These commands should be clear; moreover, every exception raising
+  (even intercepted) causes process execution to stop
+  (VCPU_STATE_STOPPED).
+
+  Besides the debugger, z33d has also written a disassembler, to be
+  found in the tools/ directory. Although unfinished, it does well what
+  it is supposed to do.
+

@@ -1,0 +1,69 @@
+    Introduction
+    ------------
+
+    Status: being implemented
+
+    Purpose: system resource access
+
+    Access control: HAC
+    Exceptions: standard
+
+    Syscalls
+    --------
+
+    Name:     LOCAL_GETTIME
+    Inputs:   -
+    Outputs:  u0 - seconds
+              u1 - microseconds
+    Result:   Gets current time.
+    HAC:      local/sys/real/time/get
+    __________________________________________________________________________
+
+    Name:     LOCAL_TIMETOSTR
+    Inputs:   u0 - seconds (as returned by GETTIME)
+              u1 - buffer address
+              u2 - buffer size
+    Outputs:  s0 - number of characters written
+    Result:   Converts a the given seconds into a time string.
+    HAC:      -
+    __________________________________________________________________________
+
+    Name:     LOCAL_GETHOSTNAME
+    Inputs:   u0 - buffer address
+              u1 - buffer size
+    Ouputs:   s0 - number of characters written
+    Result:   Writes local computer name to buffer.
+    HAC:      local/sys/real/hostname/get
+    __________________________________________________________________________
+
+    Name:     SYSCALL_GETRANDOM
+    Inputs:   -
+    Outputs:  u0 - random integer
+    Result:   Gets a random number from a local entropy source (/dev/urandom).
+    HAC:      local/sys/random/get
+    __________________________________________________________________________
+
+    Name:     SYSCALL_LOCAL_VS_STAT
+    Inputs:   -
+    Outputs:  u0 - number of active VCPUs
+              u1 - number of idle cycles from start
+              u2 - number of work cycles from start
+              u3 - number of syscalls
+              u4 - number of wrong syscalls
+              u5 - number of fatal errors
+    Result:   Gets some statistics about the virtual system.
+    HAC:      local/sys/virtual/stat
+    __________________________________________________________________________
+
+    Name:     SYSCALL_LOCAL_RS_STAT
+    Inputs:   -
+    Outputs:  u0 - uptime in seconds
+              u1 - load average (1 min)
+              u2 - RAM size in kB
+              u3 - free RAM in kB
+              u4 - swap size in kB
+              u5 - free swap in kB
+              u6 - number of RS processes
+    Result:   Gets some statistics about the real system.
+    HAC:      local/sys/real/stat
+    

@@ -1,0 +1,66 @@
+  Starting from release 1.1, Argante documentation is generated automatically
+  using 'predoc' utility. Predoc can be found in Documentation/ directory. It
+  parses Documentation/predoc files, which are supposed to be in the following
+  format:
+
+  00x00-name     - ASCII text file with single documentation chapter. 'x'
+                    should be changed to reflect chapter order in compiled
+                    documentation
+
+  00x00-name.tag - tagfile, format described below
+
+  Only chapters with tagfile present are parsed. Automated index, table of
+  contents and chapter numbering is done by predoc utility. Tagfile format:
+
+  @ATAG1@
+  I: devel
+  I: first
+  K: naked chicks
+  K: mere mortals
+  S: obsolete
+  T: How to use a computer
+  A: Michal Zalewski <lcamtuf@dione.ids.pl>
+  M: Michal Zalewski <lcamtuf@dione.ids.pl>
+  V: 1.0
+  D: 10/11/2000
+  @END@
+
+    (...everything not matching this format is skipped - put comments etc...)
+
+  Lines starting with 'I: ' are describing documentation profiles in which
+  this chapter should be included. You can specify as many profiles as you want.
+  Currently available set of profiles:
+
+    first       - README.first, a quick guide to Argante
+    concept     - README.concept, Advocacy.txt replacement
+    devel       - README.devel, developer's guide
+    sysprog     - README.sysprog, kernel developer's guide
+    ahll        - README.ahll, high-level language programming guide
+    assembly    - README.assembly, low-level naguage programming
+    admin       - README.admin, administration / services guide
+    cluster     - README.cluster, distributed computing guide
+    hybrid      - README.hybrid, real-system interaction guide
+    examples    - README.examples, bells and whistles
+    internal    - README.internal, AOS developer guide, TODOs, buglist, etc
+    full        - README or README.full, complete documentation
+
+  'K: ' lines should contain important keywords or keyphrases that should be
+  indexed.
+
+  'S: ' line describes status. Allowed status:
+
+    release     - no changes necessary, final version
+    draft       - rough draft
+    outdated    - outdated, needs to be updated / rewritten
+    obsolete    - for bugward compatibility evidence, EXCLUDE FROM BUILD.
+
+  'T: ' line describes chapter title.
+
+  'A: ' line describes author (preferably with e-mail). 'M: ' line describes
+  current maintainer (if different than author). 'V: ' describes Argante version
+  at the moment of last update of this document. 'D: ' should contain date at
+  the moment of last modification. Everything below '@END@' is a comment,
+  please keep ChangeLog there.
+
+  Index is put after the last chapter. Table of contents is placed just after
+  the first chapter (intro).

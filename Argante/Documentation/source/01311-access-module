@@ -1,0 +1,28 @@
+  Introduction
+  ------------
+
+  Status: done
+
+  Purpose: privilege management; active domain (group) and subgroup
+  identifier change. HAC system support.
+
+  Access control: none
+
+  Syscalls
+  --------
+
+  Name:       ACCESS_SETDOMAIN
+  Inputs:     u0 - group number
+  Outputs:    -
+  Result:     Changes active group if the group belongs to the executables
+              DOMAINS set (defined during compile time).
+  Exceptions: NOPERM (the group doesn't belong to the DEMAINS set)
+  HAC:        -
+  ____________________________________________________________________________
+
+  Name:       ACCESS_SETUID
+  Inputs:     u0 - subgroup identifier number
+  Outputs:    -
+  Result:     Changes active subgroup.
+  Exceptions: -
+  HAC:        -

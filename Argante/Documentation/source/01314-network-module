@@ -1,0 +1,145 @@
+  I: input parameters
+  O: return values
+
+  Note: All parameters to network syscalls must be given in host byte order.
+        LLX section describes only exceptions specific to network module.
+
+
+  NET_CONNECT
+    params:	I:	u0 - destination address ($IP)
+        u1 - destination port ($PORT)
+      i	u2 - source address (0 - default) ($IP)
+        u3 - source port (0 - ephemeral) ($PORT)
+        u4 - time limit (usecs, 0 - native OS dependent)
+        u5 - TCP/UDP switch (0/1)
+      O:	s0 - new descriptor (connected socket)
+    effect: connects to inet socket (TCP/UDP)
+    LLX   : NET_PORT_OOR   - destination/source port > 65535
+      NET_SOCK       - can't create new native socket
+      NET_NO_FREE_SD - no free socket descriptors
+      NET_NONBLOCK   - can't make native socket non-blocking
+      NET_BIND       - can't bind native socket
+      NET_TIMEO      - time limit exceeded
+      NETERROR   - some kind of other internal error ...
+    HAC   : oper: net/sock/connect
+      obj : net/address/{tcp,udp}/{source,dest},{$IP,default}/$PORT
+    notes : If timeout is set then u3 is overwritten by syscall.
+
+
+  NET_SUN_CONNECT
+    params: I:	u0 - destination process number ($PID)
+        u1 - destination socket ID ($SID)
+        u4 - time limit
+        u5 - stream/datagram switch (0/1)
+      O:	s0 - new descriptor (connected socket)
+    effect: connects to other process via a Unix socket
+    LLX   : the same as for NET_CONNECT except NET_PORT_OOR, NET_BIND
+    HAC   : oper: net/sock/connect
+      obj : net/address/dest/unix/{$PID,external}/$SID
+    notes : If u0 is excessive (>65535), external program is assumed.
+
+
+  NET_LISTEN
+          params: I:	u0 - local address (0 - all) ($IP)
+        u1 - local port (0 - ephemeral) ($PORT)
+        u2 - backlog (TCP only)
+        u5 - TCP/UDP (0/1)
+      O:	s0 - new descriptor (listening socket)
+          effect:	creates listening socket
+          LLX   : NET_PORT_OOR   - local port >65535
+      NET_BAD_BLOG   - backlog too high (default: >5)
+      NET_SOCK       - can't create new native socket
+      NET_NO_FREE_SD - no free socket descriptors
+                  NET_NONBLOCK   - can't make native socket non-blocking
+      NETERROR   - internal error
+          HAC   : oper: net/sock/listen
+      obj : net/address/source/{tcp,udp}/{$IP,all}/$PORT
+          notes :
+
+
+  NET_SUN_LISTEN
+    params: I:	u1 - socket ID ($SID)
+        u2 - backlog (stream only)
+        u5 - stream/datagram (0/1)
+      O: 	s0 - new descriptor (listening socket)
+    effect: creates a listening Unix socket
+    LLX   : the same as for NET_LISTEN except NET_PORT_OOR
+    HAC   : oper: net/sock/listen
+      obj : net/address/source/unix/{dgram,stream}/self/$SID
+    notes :
+
+
+  NET_ACCEPT
+          params: I:	u0 - descriptor (listening socket)
+        u4 - blocking/non-blocking (1/0)
+      O:	s0 - new descriptor (connected socket)
+          s1 - return code (1 - accepted, 0 - would block)
+          effect: accepts next client on listening socket
+          LLX   : NET_BAD_SD          - invalid (unused ? too high ?) descriptor
+      NET_SOCK_NON_LISTEN - descriptor points to non-listening socket
+      NET_NO_FREE_SD      - no free socket descriptors
+      NET_NONBLOCK        - can't make native socket non-blocking
+      NETERROR            - internal error
+
+          HAC   :
+          notes : Return code is used only when syscall is called non-blocking.
+
+
+  NET_RECV
+          params: I:	u0 - descriptor (connected socket)
+        u1 - data buffer address
+        u2 - buffer length (bytes)
+        u4 - blocking/non-blocking (1/0)
+      O:	s0 - bytes received
+        s1 - return code (1 - received, 0 - would block)
+          effect: Receives data through connection.
+          LLX   : NET_BAD_SD        - invalid (unused ? too high ?) descriptor
+      NET_EPIPE         - broken pipe
+      NET_EOF           - remote party disconnected (TCP/stream only)
+      NET_SOCK_NOT_CONN - descriptor points to not connected socket
+                  PROTFAULT         - can't access buffer for writing
+      NETERROR          - internal error
+          HAC   :
+          notes : Return code is used only when syscall is called non-blocking.
+
+
+  NET_SEND
+          params: I:      u0 - descriptor (connected socket)
+                          u1 - data buffer address
+                          u2 - buffer length (bytes)
+                          u4 - blocking/non-blocking (1/0)
+                  O:      s0 - bytes sent
+                          s1 - return code (1 - sent, 0 - would block)
+                          s2 - if s1 == 0, bytes still waiting to be sent
+          effect: Sends data through connection.
+          LLX   : The same as for NET_RECV except that PROTFAULT means no perms
+                  for reading from buffer.
+          HAC   :
+          notes : Return code is used only when syscall is called non-blocking.
+                  This syscall, unlike in most Unices, returns s1 == 1 when
+                  working in non-blocking mode ONLY if whole data has been
+                  send. Otherwise, amount of bytes waiting to be sent is put
+                  in s2.
+
+
+  NET_SHUTDOWN
+          params: I:	u0 - descriptor
+        u1 - how
+          effect: closes opened connection
+          LLX   : NET_BAD_SD  - invalid (unused ? too high ?) descriptor
+      NET_BAD_HOW - invalid 'how' parameter
+      NETERROR    - internal error
+          HAC   :
+          notes :
+
+
+  NET_ISWAITING
+          params: I:	u0 - descriptor
+      O:	s0 - result (1 - client, 0 - no clients)
+          effect: checks if there are pending connections to listening socket
+          LLX   : NET_BAD_SD          - invalid (unused ? too high ?) descriptor
+      NET_SOCK_NON_LISTEN - descriptor points to non-listening socket
+      NETERROR	    - internal error
+          HAC   :
+          notes : this function is non-blocking of course ;P
+

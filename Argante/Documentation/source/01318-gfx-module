@@ -1,0 +1,61 @@
+  GFX MODULE MANUAL
+
+  version 0.000000000000000[...]01 (it's one "zero" less than in 1st version
+                                                                  of manual)
+
+  manual (and, by the way, GFX module) was written by Lukasz Jachowicz
+                <honey@linux.net.pl>
+
+  Hi,
+
+  I've just finished writing the Very First^H^H^H^H^HSecond version of
+  a graph module for Argante OS. I know it's not ideal but I already have
+  some nice ideas and I'll code them ASAP. At the moment you can use some
+  functions described below.
+
+
+
+  SYSCALL_GFX_MODE
+  Inits svgalib in case it wasn't inited before. Then sets current videomode
+  to u0. Returns nonzero value in u1 in case of problems, so your software
+  can react in a way you want it to react. But - remember - you won't be able
+  to set the mode that is DENIED or unavaiable on your graphics hardware - the
+  program will stop with an error message ("I can't use this mode")...
+  You can find list of avaiable modes (and their numbers) in
+  Argante/hll/include/gfx.hll.
+
+  SYSCALL_GFX_CHECKMODE
+  Send the mode you want to check to u0 and then call this function.
+  u0 will tell you if the mode is (nonzero) or is not (u0=0) supported
+  by your hardware and allowed by Argante's HAC
+
+  SYSCALL_GFX_CLEARSCREEN
+  If you want to clear the mess on your screen - this function is for you.
+
+  SYSCALL_GFX_MEMCOPY
+  The most important function in this library. Copies some amount (set it
+  in u1) of data from *u0 and sends directly to your graphic card
+  memory... So if you were a asm-coder on demoscene, you're at home...
+
+  SYSCALL_GFX_SETPALETTESNGL
+  Let's assume you want to change the background color from black to white.
+  Let's assume your background is filled with color nr "0". What do you do?
+  You just put the color's value to u0, and the new rgb to (u1,u2,u3) and...
+  done :)  Oh, don't forget to call this #$#@$ function ;)
+
+  SYSCALL_GFX_SETPALETTE
+  Using the function presented above for every color avaiable could be a little
+  boring. So prepare the table with (r,g,b,r,g,b,r,g,b,...) values for some
+  colors, decide, which color's number is the 1st one to be changed (put its
+  value to u1), put number of colors in the table to u2, put the pointer to
+  this magic place in memory to u0 and call this function. Done.
+
+  SYSCALL_GFX_SETCLUT8
+  I don't know why, but svga lib uses just 4 bits/pixel when you change a value
+  in color palette. Call this function to change it to 8 bits/pixel...
+
+  SYSCALL_GFX_VC
+  If you want to stop people from moving to another virtual console,
+  just insert zero to u0 and syscall $GFX_VC. To allow 'em changing
+  - put any nonzero value to u0 and call this function.
+

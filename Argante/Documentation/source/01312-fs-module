@@ -1,0 +1,158 @@
+  Introduction
+  ------------
+
+  Status: done
+
+  Purpose: access to SVFS.
+
+  Access control: HAC + existing objects in the SVFS hierarchy.
+  Exceptions: standard + FSERROR - SVFS resources access error.
+
+  Syscalls
+  --------
+
+  Name:     FS_OPEN_FILE
+  Inputs:   u0 - filename address
+            u1 - filename length
+            u2 - flags: FS_FLAG_READ, FS_FLAG_WRITE,
+                        FS_FLAG_APPEND, FS_FLAG_NONBLOCK
+  Outputs:  s0 - VFD (virtual file descriptor); -1 = locked file
+  Result:   Opens the specified file in the given mode.
+  Note:     If the flag NONBLOCK is not given and an attempt to open the file
+            for writing and at the same time another process is writing data
+            to the file, process enters the state IOWAIT until it receives
+            access; NONBLOCK causes immediate return of -1.
+  HAC:      fs/fops/open/file/{read|write|append}
+  ____________________________________________________________________________
+
+  Name:     FS_CREATE_FILE
+  Inputs:   u0 - filename address
+            u1 - filename length
+            u2 - flags: FS_FLAG_WRITE, FS_FLAG_APPEND
+  Outputs:  s0 - VFD (virtual file descriptor)
+  Result:   Creates a given file in appropriate mode
+  HAC:      fs/fops/create/file/{write|append}
+  ____________________________________________________________________________
+
+  Name:     FS_CLOSE_FILE
+  Inputs:   u0 -  VFD number
+  Outputs:  -
+  Result:   Closes the VFD; ends working with the file. If file is open for
+            writing, it is truncated at current offset.
+  HAC:      -
+  ____________________________________________________________________________
+
+  Name:     FS_WRITE_FILE
+  Inputs:   u0 - VFD number
+            u1 - pointer
+            u2 - length (in bytes)
+  Outputs:  -
+  Result:   Writes data to the file if access rules to VFD and memory permit
+            it.
+  HAC:      -
+  ____________________________________________________________________________
+
+  Name:     FS_READ_FILE
+  Inputs:   u0 - VFD number
+            u1 - pointer
+            u2 - length (in bytes)
+  Outputs:  -
+  Result:   Reads data from file to memory, if access rules to VFD and memory
+            permit it.
+  HAC:      -
+  ____________________________________________________________________________
+
+  Name:     FS_SEEK_FILE
+  Inputs:   u0 - number VFD
+            u1 - position
+            u2 - type
+  Outputs:  s0 - position
+  Result:   Syntax analogous to lseek() in libc. With files in the append()
+            mode, only u1=0, u2=1 (current) is accepted (returns the current
+            position).
+  HAC:      -
+  ____________________________________________________________________________
+
+  Name:     FS_MAKE_DIR
+  Inputs:   u0 - name
+            u1 - name length
+  Outputs:  -
+  Result:   Creates a directory with the specified name.
+  HAC:      fs/fops/create/directory
+  ____________________________________________________________________________
+
+  Name:     FS_DELETE
+  Inputs:   u0 - name
+            u1 - name length
+  Outputs:  -
+  Result:   Removes file or directory.
+  HAC:      fs/fops/delete/{directory|file}
+  ____________________________________________________________________________
+
+  Name:     FS_RENAME
+  Inputs:   u0 - name
+            u1 - name length
+            u2 - new name
+            u3 - new name length
+  Outputs:  -
+  Result:   Changes file or directory name.
+  HAC:      fs/fops/delete/{directory|file} for old name
+            fs/fops/create/{directory|file} form new name
+  ____________________________________________________________________________
+
+  Name:     FS_PWD
+  Inputs:   u0 - buffer
+            u1 - buffer size
+  Outputs:  s0 - actual length written
+  Result:   Writes current directory to buffer.
+  HAC:      -
+  ____________________________________________________________________________
+
+  Name:     FS_CWD
+  Inputs:   u0 - buffer
+            u1 - buffer length
+  Outputs:  -
+  Result:   Changes current working directory.
+  Note:     Doesn't verify whether the directory exists!
+  HAC:      -
+  ____________________________________________________________________________
+
+  Name:     FS_END_DIR
+  Inputs:   -
+  Outputs:  -
+  Result:   Directory cache allocated for FS_LIST_DIR is freed.
+  HAC:      -
+  ____________________________________________________________________________
+
+  Name:     FS_LIST_DIR
+  Inputs:   u0 - start new session (0 - no, 1 - yes)
+            if new session:
+                u1 - address to directory name
+                u2 - length of name
+            else:
+                u3 - directory entry number
+                u1 - buffer
+                u2 - buffer size
+  Outputs:  if new session:
+                s0 - number of directory entries
+            else:
+                u1 - entry name
+                u2 - entry length
+                s0 - entries left
+  Note:     This syscall is designed to operate on frozen image of requested
+            directory, to avoid dir-scanning races (eg. hiding files or so).
+            It's good to free allocated cache after finishing. It will be
+            automatically freed if new session starts.
+  HAC:      object=directory, operation=fs/fops/list/directory
+  ____________________________________________________________________________
+
+  Name:     FS_STAT
+  Inputs:   u0 - resource name
+            u1 - name length
+  Outputs:  u0 - last modification time
+            u1 - 0 = no access to resource
+                 1 = resource is a file
+                 2 = resource is a directory
+            u2 - file size
+  Result:   Gets some stats about the file or directory.
+  HAC:      fs/fops/stat

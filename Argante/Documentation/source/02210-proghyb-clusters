@@ -1,0 +1,43 @@
+  Making redundant solutions using rIPC is really simple. You can connect
+  your servers, even if they're in different countries, using redundant
+  structure - so, your cluster connections might like this way:
+
+      New York
+          | |
+          | +------------------------------ Chicago
+          |                                    |
+          |                                    |
+          Warsaw ---------+       +-------------+
+                          |       |
+                          +--- London
+
+  Even so simple structure will be fault-tolerant - crash of single link
+  won't cause cluster to stop working - only rIPC communication will be
+  routed using other way. But, of course, your cluster might be connected
+  much better, eg by adding link between New York and London, rIPC routing can
+  be improved.
+
+  By launching the same modules in different part of the world, you can
+  put authentication database in London, listener in Warsaw and command
+  processors all around the globe, and it will work just fine, even if
+  most of processes / machines will be overloaded.
+
+  Moreover, adding new object to the hierarchy can be done without
+  human intervention and without need for sophisticated code. It requires
+  pre-installed Argante, knowledge of IP address of only one HUB (listener)
+  point in the rIPC network (well, ANY location where specific authorization
+  key is valid can be used for initialization), and - obviously - valid
+  initial authorization key ;) You don't have to plan whole rIPC network
+  when starting work on your distributed application - you can start with
+  two arbitrary boxes, and add new ones instantly. Futher configuration can be
+  done automatically, by downloading current rIPC network hierarchy configuration
+  (so redundant / fault-tolerant links are set up automatically, if programmer
+  wishes so, eventually relocating new box to the most desirable location in
+  the logical and physical structure). For details on rIPC daemon and setting
+  up rIPC circuits, please refer rIPC documentation (in part I of this
+  README).
+
+  Local cluster morphing can be implemented easily by arranging local
+  communication with agtses to load / unload specific programs, or, if
+  you're using hybrid systems, to start / stop specific services on local
+  machines.

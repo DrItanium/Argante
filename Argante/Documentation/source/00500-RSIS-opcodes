@@ -1,0 +1,321 @@
+  A coarse description of the machine commands of the system:
+
+  Mnemonic:       NOP
+  Parameters:     -
+  Opcode:         0
+  Description:    do nothing
+  Result:         -
+  Exceptions:     -
+
+
+  Mnemonic:       JMP <addr>
+  Paramaters:     <addr> = IMMEDIATE, UREG, IMMPTR, UPTR
+  Opcode:         1
+  Description:    conditionless jump to an absolute address
+  Result:         IP change
+  Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+  Mnemonic:       IFEQ <x> <y>
+  Paramaters:     <x> = any, <y> = any
+  Opcode:         2
+  Description:    execution of the next statement if <x> = <y>
+  Result:         conditioned IP change
+  Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+  Mnemonic:       IFNEQ <x> <y>
+  Paramaters:     <x> = any, <y> = any
+  Opcode:         3
+  Description:    execution of the next statement if <x> != <y>
+  Result:         conditioned IP change
+  Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+  Mnemonic:       IFABO <x> <y>
+  Paramaters:     <x> = any, <y> = any
+  Opcode:         4
+  Description:    execution of the next statement if <x> > <y>
+  Result:         conditioned IP change
+  Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+  Mnemonic:       IFBEL <x> <y>
+  Paramaters:     <x> = any, <y> = any
+  Opcode:         5
+  Description:    execution of the next statement if <x> < <y>
+  Result:         conditioned IP change
+  Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+  Mnemonic:       CALL <addr>
+  Paramaters:     <addr> = IMMEDIATE, UREG, IMMPTR, UPTR
+  Opcode:         6
+  Description:    conditionless jump to an absolute address with address push
+  Result:         IP change, pushing the addres on stack
+  Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT, STACK_OVER
+
+
+  Mnemonic:       RET <cnt>
+  Paramaters:     <cnt> = IMMEDIATE, UREG, IMMPTR, UPTR
+  Opcode:         7
+  Description:    return to the address <cnt> popped from the stack
+  Result:         IP change, popped from the stack
+  Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT, STACK_UNDER
+
+
+  Mnemonic:       HALT
+  Paramaters:     -
+  Opcode:         8
+  Description:    termination of VCPU work; also in respawn mode
+  Result:         -
+  Exceptions:     -
+
+
+  Mnemonic:       SYSCALL <nr>
+  Paramaters:     <nr> = IMMEDIATE, UREG, IMMPTR, UPTR
+  Opcode:         9
+  Description:    syscall execution
+  Result:         dependent on syscall
+  Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT, NOMODULE +
+                  syscall dependent
+
+
+  Mnemonic:       ADD <x> <y> - opcode 10
+                  SUB <x> <y> - opcode 11
+                  MUL <x> <y> - opcode 12
+                  DIV <x> <y> - opcode 13
+                  MOV <x> <y> - opcode 19
+  Paramaters:     <x> = UREG, FREG, SREG, IMMPTR, UPTR
+                  <y> = IMMEDIATE, UREG, FREG, SREG, IMMPTR, UPTR
+  Description:    arithmetic operations (+, -, *, /, assignment)
+  Result:         first argument value change
+  Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+  Mnemonic:       LDB <dst addr>, <src addr>
+  Opcode:         (fixme!!!)
+  Parameters:     <src addr> - address of source memory address / reg
+                  <dst addr> - address of destination memory address / reg
+                  s0 - source byte offset
+  Description:    single byte accessibility (endian-independent)
+  Result:         dst will contain src[s0] (single bytes)
+                  negative indexing is possible in memory-based
+                  addressing; register-based addressing requires s0 to be in
+                  range 0 to 3
+
+
+  Mnemonic:       STOB <dst addr>, <src addr>
+  Opcode:         (fixme!!!)
+  Parameters:     <src addr> - address of source memory address / reg
+                  <dst addr> - address of destination memory address / reg
+                  s0 - destination byte offset
+  Description:    single byte accessibility (endian-independent)
+  Result:         dst[s0] will contain src youngest byte (single bytes)
+                  negative indexing is possible in memory-based
+                  addressing; register-based addressing requires s0 to be in
+                  range 0 to 3
+
+
+  Mnemonic:       MOD <x> <y> - opcode 14
+                  XOR <x> <y> - opcode 15
+                  REV <x> <y> - opcode 16 (unimplemented for now)
+                  AND <x> <y> - opcode 17
+                  OR  <x> <y> - opcode 18
+  Paramaters:     <x> = UREG, SREG, IMMPTR, UPTR
+                  <y> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+  Description:    binary operations
+  Result:         first parameter value change
+  Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+  Mnemonic:       CWAIT <x>
+  Paramaters:     <x> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+  Opcode:         20
+  Description:    puts the process to sleep for <x> SMTA ticks
+  Result:         -
+  Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+  Mnemonic:       TWAIT <x>
+  Paramaters:     <x> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+  Opcode:         21
+  Description:    puts the process to sleep for [at least] <x> microseconds
+  Result:         -
+  Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+  Mnemonic:       ALLOC <size> <prot>
+  Paramaters:     <size> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+                  <size> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+  Opcode:         22
+  Description:    allocates a memory block with size <size> and access flags
+                  <prot>
+  Result:         u0 - id block number, u1 - map address
+  Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT, NOMEM
+
+
+  Mnemonic:       REALLOC <nr> <size>
+  Paramaters:     <nr> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+                  <size> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+  Opcode:         23
+  Description:    reallocates a memory block with number <nr> so that it has
+                  size <size>. NOTE: if <size> is '0', u0 is examined to
+      modify memory block permissions.
+  Result:         -
+  Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT, NOMEM
+
+
+  Mnemonic:       DEALLOC <nr>
+  Paramaters:     <nr> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+  Opcode:         24
+  Description:    deallocates a memory block with number <nr>
+  Result:         -
+  Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+  Mnemonic:       CMPCNT <addr1> <addr2>
+  Paramaters:     <addr1> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+                  <addr2> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+                  s0 - dwords count
+  Opcode:         25
+  Description:    compares <addr1> and <addr2> within s0 bytes
+  Result:         u0 - 0 = comparison succeeded, !0 - negative
+  Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+  Mnemonic:       CPCNT <addr1> <addr2>
+  Paramaters:     <addr1> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+                  <addr2> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+                  s0 - dwords count
+  Opcode:         26
+  Description:    copies <addr2> to <addr1> within s0 bytes
+  Result:         -
+  Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+  Mnemonic:       ONFAIL <addr>
+  Paramaters:     <addr> = IMMEDIATE, UREG, IMMPTR, UPTR
+  Opcode:         27
+  Description:    a jump to an absolute address on exception; discarded after RET
+                  under current execution level
+  Result:         -
+  Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+  Mnemonic:       NOFAIL
+  Paramaters:     -
+  Opcode:         28
+  Description:    remove ONFAIL on current execution level
+  Result:         -
+  Exceptions:     -
+
+
+  Mnemonic:       LOOP <addr>
+  Paramaters:     <addr> = IMMEDIATE, UREG, IMMPTR, UPTR
+                  s0 - loop counter
+  Opcode:         29
+  Description:    jump to an absolute address if s0 is greater than zero,
+                  s0 is increased by one
+  Result:         IP change, s0 change
+  Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+  Mnemonic:       RAISE <nr>
+  Paramaters:     <nr> = IMMEDIATE, UREG, IMMPTR, UPTR
+  Opcode:         30
+  Description:    raise exception <nr>
+  Result:         exception raised
+  Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+  These commands were introduced to provide userspace meta-stack
+  implementation. To create re-entrant subroutines that might be called
+  recursively, you might use the following combination (I assume u15
+  register is reserved in your implementation for stacking purposes):
+
+    // Somewhere in the memory, we have writable playfield we can
+    // use for stack. I assume its address can be found in u1
+    // and its size in dwords (!) is stored in u2:
+
+    mov u0, 0
+    SETSTACK u1, u2
+
+  :Reentrant_Routine
+    PUSHS u15
+    ALLOC <space required for local objects>, <protection flags>
+    MOV u15, u1
+    // Now, we can use local stack space by accessing address stored in u15.
+    // You can call Reentrant_Routine again, and u15 or your local,
+    // private space won't be damaged.
+    ...
+    // On exit from Reentrant_Routine:
+    DEALLOC <block num derived from u15>
+    POPS u15
+    RET 1
+
+  More advanced implementations might catch user stack exceptions to
+  resize stack. So, metastack structure looks this way:
+
+  +--<---< this is a metastack
+  |
+  |
+  +--- <local buffers of function nested()>
+  |
+  |
+  +--------- <local buffers of function called_from_nested()>
+  |
+  |
+  +-------------- <local buffers of function...>
+
+
+  WARNING: There's no automatic cleanup or shrinking of user stack on
+  exceptions! You have to perform eventual cleanup on your own (PUSHing
+  magic value when declaring exception handler might be useful).
+
+  Mnemonic:       SETSTACK <addr>,<size>
+  Parameters:     both IMMEDIATE, UREG, IMMPTR, UPTR
+                  u0 -- initial stack ptr
+  Opcode:         31
+  Description:    set user-stack pointer (size=0 - disable stack)
+  Result:         modified VCPU internals
+  Exceptions:     -
+
+  Mnemonic:       PUSHS <dword>
+  Parameters:     IMMEDIATE, UREG, IMMPTR, UPTR
+  Opcode:         32
+  Description:    set user-stack pointer (size=0 - disable stack)
+  Result:         modified VCPU internals
+  Exceptions:     NOUSTACK, USTACK_OVER
+
+
+  Mnemonic:       POPS <dword>
+  Parameters:     UREG, IMMPTR, UPTR
+  Opcode:         33
+  Description:    set user-stack pointer (size=0 - disable stack)
+  Result:         modified VCPU internals and
+  Exceptions:     NOUSTACK, USTACK_UNDER
+
+
+  As you have probably noticed, memory management was not placed in a separate
+  module and is an integral part of the system. It's an exception aimed at
+  improving efficiency and functionality,although it is perfectly possible to
+  create a sophisticated memory management system using syscalls.
+
+  Another important remark: some people complained thet the limited RSIS
+  instruction set doesn't allow, say, for effective graphics operations or
+  memory operations in general. In RSIS (as well as in C, for example),
+  the basic language offers only the simplest operations and constructions
+  allowing one to control execution flow etc. All advanced functions, however,
+  as for example memfrob() and similar, don't belong to the language but
+  to libraries. E.g. in Argante you can write the module advgraph.c,
+  responsible for complex operations on graphical objects and communication
+  with the card, but you cannot expect it from RSIS (so there will be no
+  Argante MMX release ;). Although the module for graphics services is not
+  currently planned, many functions useful for working with memory blocks
+  and textual data will be placed in the advmem.c module.
+
+  For the same reasons, we're not following Inferno authors, and not putting
+  for example garbage collection, array addressing and so on at the low-level,
+  and not using specific string-related conventions. We'd like to give the
+  developers freedom in implementing things in the way they want to.

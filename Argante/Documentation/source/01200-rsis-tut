@@ -1,0 +1,134 @@
+  A sample source file displaying numbers from 10 to 0 and making a bit
+  of noise:
+
+  --
+  !SIGNATURE      "lcamtuf's test program"
+
+  .DATA
+
+  :Enter
+
+          "\n"
+
+  :Tekst
+
+          " Hello world\n"
+
+  :Die
+
+          "Aghrrr... I die.\n\n"
+
+  .CODE
+
+    mov u0,:Enter
+    mov u1,^Enter
+    syscall $IO_PUTSTRING
+
+    mov s0,0xa
+
+  :Again
+
+    mov u0,s0
+    syscall $IO_PUTINT
+
+    mov u0,:Tekst
+    mov u1,^Tekst
+    syscall $IO_PUTSTRING
+
+    twait 500000
+
+    loop :Again
+
+    mov u0,:Die
+    mov u1,^Die
+    syscall $IO_PUTSTRING
+
+    halt
+
+  .END
+  --
+
+  You can find different examples (*.agt files) in the subdirectory
+  compiler/examples: apart from a similar "hello world", there is also
+  an example of exception handling (error.agt) and filesystem management
+  (fs.agt).  The syntax of the language itself is as follows:
+
+  .DATA, .CODE - definitions of subsequent segments (.data is optional).
+          Thanks to bulba, you can switch between segments whenever you
+          want :)
+
+  .END         - ends code segment
+
+  :xxx         - in the code segment, as well as in data segment: it refers to
+                a symbolic name used to point to an object in the next line;
+          it must occur in a separate line, in the data segment all
+          objects must be named.
+
+          Data may have the following format:
+
+                  "xxxx" - a sequence of characters
+                  123    - an integer (32 bit)
+                  123.0  - a float (32 bit)
+                  0x123  - a hexadecimal value (32 bit)
+
+                  NN repeat 123 - a block of 123  repeats of the NN value
+                                  (float or integer)
+
+                  block 100 - next 100 lines will contain values
+                              (dwords) to be entered into structures
+
+      References to symbols passed as parameters must have the
+      following form: ':Symbol'. Another possibilities are:
+
+                  - '^Symbol' - returns object length in bytes, useful for
+                  text strings
+      - '%Symbol' - returns object length in dwords.
+
+  !xxx         - compilation directive, defines process parameters.
+        Accepted values:
+
+                !DOMAINS x x x     - list of execution groups
+                !PRIORITY x        - program priority
+                !IPCREG x          - starting IPC identifier
+                !INITDOMAIN x      - starting execution group
+                !SIGNATURE x       - code signature (author, description)
+                !INITUID x	  - initial subgroup identifier
+
+  Defining syscalls with their symbols is acceptable, provided it is
+  known to the compiler. The list of syscalls can be found in syscall.h
+  in the modules/ directory. The syscall name has to be preceded by the $
+  sign, e.g.: 'syscall $io_putstring' (note: we omit the syscall_ suffix).
+  In the same way you can refer to exception numbers: their names are in
+  include/exception.h, and we omit error_.
+
+  Oh, and priority '1' is the default value, although it is not reasonable.
+  I suggest priorities ranging from 10 to 10000, as in that case in each cycle
+  more machine operations are executed, and parsing them at once is more
+  effective than subsequent jumps.
+
+  Registers should be used in the format of "xNN", where NN is register number
+  and x is one of the following: 'u' (ureg), 's' (sreg), 'f' (freg). For example,
+  'u0' refers to ureg[0].
+
+  If a numeric value, symbol or an 'u' register is preceded by '*', it refers
+  to the value located at that address. For example:
+
+  mov u0,*:Test
+
+  will write to the register u0 the value from the address Test, whereas
+
+  mov u0,:Test
+
+  will write to the address pointed to the identifier 'Test' to the register
+  u0.
+
+  The compiler, at least in the current version, doesn't support arithmetics
+  at compilation level. The system doesn't support many separate memory
+  blocks assigned when the binary file is loaded.
+
+  Compiler is run by typing "compiler/agtc plik.agt". As a result, you will
+  receive a binary file plik.img, which can be loaded with the $ command from
+  the management console.
+
+
+

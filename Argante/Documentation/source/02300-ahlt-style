@@ -1,0 +1,35 @@
+  This section is unfinished as for AOSr1 - please take a look at Examples/AHLL
+  directory for guidelines on designing .ahh files and .ahl code.
+
+  Except the limitations I have described before, there are some language
+  bugs we have no time to solve in this release:
+
+  - parameterless functions are not working,
+
+  - you have to finish all structural / array initializers with ',',
+
+  - /* */ comments when #defining something _might_ be harmful,
+
+  - generally, lack of separators _might_ be harmful, so write x := 1 rather
+    than x:=1.
+
+  Please take a look on Examples/AHLL - you will find numerous small AHLL
+  examples there:
+
+    dir.ahl    - this cute program will dump the listing of SVFS directory
+                contents.
+
+    gfx.ahl    - simple but juicy example of SVGAlib connectivity (on Linux,
+                requires modules/gfx.so to be loaded)
+
+    hello.ahl  - "nn green bottles standing on the wall"...
+
+    ptrs.ahl   - some pointer manipulation examples
+
+    http/      - sources for Mini-HTTP server.
+
+  I guess both http/httpd.ahl and, let's say, gfx.ahl, are pretty good
+  examples of AHLL style. Programs are perfectly readable and self-commenting.
+
+
+

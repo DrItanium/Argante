@@ -1,0 +1,73 @@
+  Preferred way to interact with real system space is to use Unix sockets.
+  For this purpose, you have fs/unix-sock/external/ directory. You can
+  request both CONNECT or LISTEN operation for datagram or stream sockets
+  for given numerical ID. This socket is mapped into real filesystem
+  entry: /Project_Directory/fs/unix-sock/external/nnn, where nnn is
+  choosen ID.
+
+  So, if you want to modify machine IP address from Argante program, you should
+  choose specific ID, let's say 1234, and then attach small helper utility
+  to a chosen Unix socket in listen mode. Helper should validate received
+  command (datagram mode is good in most cases), and then, execute requested
+  action.
+
+  You can reverse this scheme, and listen at the AOS side, if this is necessary.
+  Most interesting use of such interaction is to communicate with locally
+  running daemons / services in real systems, while requests are propagated
+  using rIPC cluster - so, in this case, Argante become load balancing
+  cluster management software.
+
+  Argante, both using local system components and network functionality, can
+  modify current network structure (eg. reconfigure managable switching
+  devices, routers etc), or intercepting functions of machine that
+  crashed. So, you can create cluster of five machines, where Argante
+  is receiving requests on one IP, and distributing it within cluster (maybe
+  to real-system software), causing equal load of all machines. If one
+  machine crashes, fastest box intercepts its network functionality (changing
+  IP number). In this solution, you have no "weak point", and don't have
+  to modify server software nor to implement separated load balancing.
+  Consider this example, quite classical:
+
+                        [ UPLINKS ]
+                          |     |
+                          +--+--+
+                          |     |
+                          / \   / \ primary and secondary LoadBalancer
+                          ~~~   ~~~
+                          |     |
+                          +-+-+-+
+                          | | | |
+                          Servers
+
+  In this case, loads are not always equal, and only two load balancers are the
+  weak point. "Heartbeat" solutions are better, but quite often they're lacking
+  several functionality - ability to do good load balancing, for example ;)
+  Unlimited request propagation capabilities, unlimited dispersion, ability to
+  split functional parts of one program between several machines, implementing
+  redundancy, ability to auto-configure - all lacking. Argante can be used to
+  detect new "plugged" device with pre-installed Argante cluster software,
+  and then, to easily measure load of specific services, automatically
+  configure services on this box and so on; that's not all - it can automatically
+  configure active network devices to rearrange vLANs and place box in proper
+  location in network structure (if you have for example one line of web
+  servers, then, database layer, and then maybe other layers). And all without
+  need for very sophisticated, non-portable software tools - hybrid,
+  almost-perfect cluster of Solaris, Linux and BSD boxes can be arranged in
+  plug-and-play manner with really simple Argante rIPC code. At the beginning,
+  you should just know what you want to serve and implement basic morphing
+  features :) Such project for Argante will be developed and included in
+  futher releases, but I guess reading rIPC description shows how simple
+  it is.
+
+  NOTE: avoid sending strings through Unix sockets! Send numerical IP or
+  perform strong validation of input before passing received data to any
+  other programs! We're not allowing direct real-system calls from Argante
+  because we want you to think about doing input validation before executing
+  program. Also, DO NOT write helpers calling eg system(AOS_supplied_data).
+  Think twice before doing anything. YOU'RE INTERACTING WITH REAL SYSTEM!
+  BY MAKING A MISTAKE, IT MIGHT BECOME VULNERABLE.
+
+  NOTE: you should make sure other users are not able to interact with
+  your helper. Best way to do it is to restrict access to fs/unix-sock/external
+  in specific project to specific group.
+

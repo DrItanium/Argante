@@ -1,0 +1,73 @@
+  Argante has very poor display module. Well, in fact, it is provided
+  for console-based debugging purposes only. Argante, while running in
+  background, provides no access to console.
+
+  But this does NOT mean your process cannot use fully-featured terminals,
+  like local console, screen window, telnet terminal, xterm terminal etc.
+  It can.
+
+  Console support is provided by vcpucons utility, which can be found in
+  tools/ subdirectory. It can be used in really simple manner. Let's consider
+  some examples:
+
+  - you want to access process console by hand - then all you have to do
+    is to run vcpucons; using 'exec vcpucons' you can eg. replace current
+    screen window with process console etc.
+
+  - you want to access process console permanently, replacing one of the
+    local consoles - then you have to launch vcpucons from /etc/inittab
+    instead of mingetty session.
+
+  - you want to launch process console instead of login shell for remote
+    user (after local authorization) - well, all you have to do is to
+    use vcpucons instead of login shell in /etc/passwd,
+
+  - you want to launch process console instead of authorization eg. from
+    in.telnetd - use in.telnetd -L /path/to/vcpucons in inetd.conf.
+
+  - etc - no limitations at all.
+
+  Ok, but how the VCPU is supposed to handle such requests? How can you
+  write something on the console? It's simple! Consoles, from the programmer's
+  point of view, are working extactly the same way as unix sockets are.
+
+  Process should create listening, stream mode unix socket and wait for the
+  connection. When vcpucons is invoked with specific parameters, it tries
+  to connect to given unix socket and enters proxy mode. In this mode,
+  all data read from the terminal is transferred to the process (and can
+  be received as if it comes from network) and all data sent by process is
+  put on the terminal.
+
+  This link works in char-by-char mode, preserving all terminal control
+  codes, until:
+
+  a) process will close the connection endpoint
+  b) process will exit / die
+  c) vcpucons will catch fatal signal (SIGHUP, SIGINT etc)
+
+  Please note that vcpucons can be used multiple times on the same socket
+  and at the same time. It's process decision whether it wants to accept
+  next connections and how to handle them.
+
+  Usage:
+
+    vcpucons [ -l ] path/to/sockets/VCPUid-socketid
+            |      |
+            |      +- This path should point to external VCPU unix socket
+            |         which is supposed to listen for vcpucons to connect.
+            |         For example, you can use fs/unix-sock/2-123. VCPU 2
+            |         should wait for the connections - eg. using the following:
+            |         Listen_Unix(123,nn,NET_SOCK_STREAM,sock)
+            |         [ nn = connection backlog ]
+            |
+            +-------- One session vs loop. Without this option, console will
+                      quit after disconnect or on connect failure; wit it,
+                      it will keep reconnecting forever.
+
+  By handling numerous connections to single unix socket, numerous vcpucons
+  sessions can be handled differently.
+
+  You can find nice, very simple example in hll/examples/console.ahl - just
+  run it, connect to it using vcpucons fs/unix-sock/0-123... And that's it :)
+
+

@@ -1,0 +1,54 @@
+
+  We've decided to release Argante 1.0 not because we're sure it is bug-free,
+  perfectly stable and has all necessary features. We're doing it to
+  stimulate futher development, receive useful criticism, suggestions and
+  concepts.
+
+  Due to static code segment and no ability to execute external code, Argante
+  is very resistant to bugs. The only kind of bugs that can be exploited are
+  serious DoS or validation error conditions in syscalls invoked from
+  specific code with user-dependent parameters. These problems can be
+  qualified as security / stability bugs. Other problems have no direct
+  impact for existing code, but, of course, are worth fixing.
+
+  In both cases, we strongly suggest to report bugreports to <argante@cgs.pl>
+  directly. You might, of course, report your findings to full-disclosure
+  lists like BUGTRAQ, but - in such case - please contact us first.
+
+  The following bugs are known:
+
+  [0001] Console lockup [type: other] [severity: marginal]
+
+         svgalib and libreadline don't mix; if console is launched on terminal
+         directly (without agtses/agtback) and is compiled with libreadline
+         support, after using graphic apps, you might notice libreadline
+         lockup or no ability to read user input in graphics mode.
+
+  [0002] Math module bugs [type: other] [severity: medium]
+
+         This isn't a specific bug, but the math module seems to have numerous
+         problems and is extremely ineffecient; it should be partially rewritten,
+         please do not use it if not necessary.
+
+  [0003] AHLL bugs [type: validation errors] [severity: medium]
+
+         AHLL compiler doesn't check for parameter types and has numerous other
+         problems with code parsing; it will be completely rewritten soon - if
+         you encounter any strange problems, feel free to contact us.
+
+  [0004] ripcd bugs [type: other] [severity: medium]
+
+         rIPC is a huge piece of C code; it has been finished just a few hours
+         before AOSr1 release and should be intensively tested and debugged.
+
+         A lot of compilation-time warnings are present :P
+
+  [0005] Portability problems [type: other] [severity: medium]
+
+         packet.c is completely Linux-dependent
+         ipc.c *might* behave strangely on some boxes (reports are welcome!)
+         ripcd daemon won't compile on Solaris
+         locallib.c is Linux-dependent
+
+  We are aware of these problems. All fixes and suggestions are welcome.
+

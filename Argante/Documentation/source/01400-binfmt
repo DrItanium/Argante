@@ -1,0 +1,45 @@
+  Executable file header format is described below:
+
+    unsigned int magic1;
+
+      COnstant file signature, has the value of 0xdefaced
+
+    char domains[MAX_EXEC_DOMAINS];
+
+      List of domains the program belongs to, ends with 0.
+
+    unsigned int flags;
+
+      Starting process flags. Currently no flags are supported.
+
+    unsigned int priority;
+
+      Priority defines how long a timeslice is assigned to a process in every
+      processing cycle. Priority of 1 means that every time the process can
+      execute one instruction.
+
+    unsigned int ipc_reg;
+
+      Starting IPC identifier IPC. If the value is greater than 0, it will be
+      rewritten to VCPU.
+
+    unsigned int init_IP;
+
+      Starting instruction pointer, usually it is enough to assign it 0.
+
+    int current_domain;
+    int domain_uid;
+
+      Current execution domain and UID. Honoured only when greater than 0.
+
+    unsigned int bytesize;
+
+      Code image size.
+
+    unsigned int memflags;
+
+      Memory flags (READ|WRITE, etc)...
+
+    unsigned int datasize;
+
+      Data image size.

@@ -1,0 +1,131 @@
+  Whenever I write "management scripts" or "operator" I don't mean a special,
+  privileged superuser account, but a management console, controlled from
+  the level of kernel-space. When the system boots up, starting scripts are
+  executed (which can be used, among other things, to load modules and
+  start rIPC session connections, as well as load processes).
+
+  Remember: the console, in fact, is an unified "boot script interpreter" and
+  debugger. It is not intended to be process working console. See section
+  17 for more details on process consoles.
+
+  Management of the virtual system's operation is not performed from the level
+  of tasks executed inside the system (at least, it isn't by default; you
+  can always insert the connectivity layer between your VS programs and
+  the console using unix socket daemon).
+
+  Managing the work of the virtual system is not performed from the level
+  of tasks executed inside the system
+  Argante console offers quite a simple command set, used mostly for starting
+  processes and library management. These commands are listed below:
+
+  ?               - help
+
+  !               - system statistics
+
+  $fn             - load binary image from file fn and run it on the first
+                    VCPU available
+
+  %fn		- as above, loads a task in RESPAWN mode (it will be run
+        again if the process will be terminated by any command
+              different than HALT)
+
+        NOTE: this mode is used for executing programs which
+        should work all the time; in general, however, one should
+        focus on proper functioning of the process and
+        exception handling in all situations, and on creating
+        redundant processes in the IPC hierarchy; this option
+        should be an auxiliary solution.
+
+        As a means of protection against abuse of this mode,
+        there exists a variable MIN_CYCLES_TO_RESPAWN defined in
+        the file config.h, which defines the minimal work cycle
+        number before a situation leading to the death of a given
+        process (32). If an error is encountered before, the
+        program will not be restarted.
+
+  >fn             - load library from file fn to a free slot
+
+  <id             - remove library in slot 'id'
+
+  #               - list libraries with statistics
+                    (supported syscalls, number of calls)
+
+  @fn             - run a console script
+
+  -nn             - kill a process on VCPU number nn
+
+  =nn             - display statistics for a process on VCPU number nn
+
+  .               - system halt
+
+  *nn             - execute nn system ticks without checking input
+                    on management console; useful in scripts
+
+  :xx             - subshell exit and execution of "xx"
+
+  |xx             - "nothing" - comment in scripts
+
+  ^               - reread HAC table
+
+  w nn tmout      - wait for process nn termination fot tmout seconds
+
+  There are also other commands used for debugging, described
+  elsewhere in this document.
+
+  As you have probably noticed, the console is a part of the system, in the
+  sense that management can be done directly after booting. Naturally, it's
+  only a feature for your comfort, you can access Argante sessions otherwise
+  (check commands "agtback" and "agtses"). For the time being, we have not
+  considered separating console code from the system to be essential, as this
+  solution is by no means "expensive" (it doesn't decrease efficiency), but
+  makes management easy in all situations.
+
+  SYSTEM CONSOLE IS NOT A PROCESS CONSOLE! Agsin, see section 17 for details on
+  system consoles.
+
+  Script syntax is analogous to console commands. After booting, the
+  script argboot.scr is run (or another script, if it has been specified
+  in the command line; if a second parameter has been given, this
+  directory will be treated as a starting directory for the execution of
+  that script, with configuration files, filesystem etc., as long as the
+  file config.h doesn't define absolute but relative paths).
+
+  Sample script:
+
+  --
+  |
+  | Argente system test script
+  | (C) 2000 Michal Zalewski
+  |
+
+  ~Loading system modules...
+  >modules/display.so
+  >modules/access.so
+  >modules/fs.so
+  ~
+  ~  ***************************
+  ~  * Lcamtuf's Test Script *
+  ~  ***************************
+  ~
+  :compiler/agtc compiler/hello.agt
+  $compiler/hello.img
+  w 0 10
+  ~End of job ;>
+  .
+  --
+
+  The default console is stdin of the 'argante' process when it's started.
+  Certainly, it may not be what an administrator might expect. For that reason
+  it is possible to start Argante in the background as follows:
+
+  tools/agtback path-to-argante [ script-name ]
+
+  Please note that there should exist a suitable starting environment
+  in the current directory: modules, starting scripts in respective
+  directories.
+
+  Working on a background session console is possible with the tool agtses.
+  It should be given Argante process number as a parameter.
+
+
+
