@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 SYS=`uname -s`
 
@@ -10,10 +10,14 @@ echo " **********************************************************************"
 echo " * PLEASE READ Documentation/Portability REGARDING YOUR OPERATING     *"
 echo " * SYSTEM IF YOU NOTICE ANY COMPILATION TIME OR RUNTIME PROBLEMS      *"
 echo " **********************************************************************"
-echo "" 
+echo ""
+
+echo -n "Remaking symbolic links..."
+source ./make-links.sh
+echo "done."
 
 X=`cat kernel/.argbuild 2>/dev/null`
-let X=X+1 
+let X=X+1
 echo $X >kernel/.argbuild
 ADDFLAGS=" -DBUILD=$X"
 
