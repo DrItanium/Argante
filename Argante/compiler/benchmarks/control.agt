@@ -5,7 +5,7 @@
 # performed:
 #
 # + Function call overhead, ie. CALL and RET.
-#
+# + LOOP instruction overhead
 
 !SIGNATURE      "Flow control benchmark"
 !PRIORITY       10000
@@ -18,6 +18,9 @@
     "\n"
 :sFunctionCalls
     "Function calls / second: "
+
+:sLoops
+    "Loops / second: "
 
 .CODE
     twait   2000            # Wait for the prompt so it doesn't screw
@@ -38,6 +41,60 @@
     loop    :loop
 
     syscall $LOCAL_GETTIME
+
+    call    :calcTime       # Calculate time difference
+
+    mov     u0,TIMES
+    add     u0,1            # Compensate
+    mov     f0,u0           # Convert to float
+    div     f0,f1           # Calculate function calls / second
+
+    syscall $IO_PUTFLOAT
+
+    mov     u0,:sNL
+    mov     u1,^sNL
+    syscall $IO_PUTSTRING
+
+    mov     u0,:sLoops
+    mov     u1,^sLoops
+    syscall $IO_PUTSTRING
+    
+    mov     s0,TIMES        # Initialize loop counter
+    
+    syscall $LOCAL_GETTIME
+    mov     u4,u0           # Save the seconds
+    mov     u5,u1           # Save the microseconds
+    
+:loop2
+    loop    :loop2
+    
+    syscall $LOCAL_GETTIME
+    
+    call    :calcTime       # Calculate the time difference
+    
+    mov     u0,TIMES
+    add     u0,1            # Compensate
+    mov     f0,u0           # Convert to float
+    div     f0,f1           # Calculate function calls / second
+
+    syscall $IO_PUTFLOAT
+
+    mov     u0,:sNL
+    mov     u1,^sNL
+    syscall $IO_PUTSTRING
+
+    halt
+
+:func
+    ret     0               # Return immediately
+
+:calcTime
+    # Inputs:  u0 - seconds of first timevalue
+    #          u1 - microseconds of first timevalue
+    #          u4 - seconds of second timevalue
+    #          u5 - microseconds of second timevalue
+    # Outputs: f1 - difference between second timevalue and first in float format 
+    
     sub     u0,u4           # Calculate seconds elapsed
     mov     u4,u0           # Save the result
 
@@ -56,18 +113,4 @@
     div     f2,1000000.0    # Recalculate microseconds to seconds
     add     f1,f2           # Add them together
 
-    mov     u0,TIMES
-    add     u0,1            # Compensate
-    mov     f0,u0           # Convert to float
-    div     f0,f1           # Calculate function calls / second
-
-    syscall $IO_PUTFLOAT
-
-    mov     u0,:sNL
-    mov     u1,^sNL
-    syscall $IO_PUTSTRING
-
-    halt
-
-:func
-    ret     0               # Return immediately
+    ret     0
