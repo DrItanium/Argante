@@ -1,0 +1,55 @@
+
+  01234567 01234567 <param1a> <param1b> <param1c> <param1d> ....
+  |        aaaabbbb
+  |        | params 
+  | 
+  |
+  +---- opcode
+
+  10 bytes.
+
+  NOP x
+  MOV x
+  ADD x
+  SUB x
+  MUL x
+  DIV x
+  ROLL x x x
+  AND x
+  OR x
+  XOR x
+  NOT x
+  LDB 
+  STOB 
+  STACK x
+  POP x
+  PUSH x
+  IFEQ x
+  IFNEQ x
+  IFLT x
+  IFGT x
+  CALL x
+  JMP x
+  RET x
+  SYSCALL x
+  ALLOC x
+  REALLOC x
+  FREE x
+  HALT x
+  WAIT x
+  HANDLER x 
+  RAISE x
+  LOOP x 
+
+  immediate signed integer    (-123, s:123)
+  immediate unsigned integer  (123, u:123)
+  immediate float             (123.3, f:123)
+  register signed integer     (s:r30)
+  register unsigned integer   (r30, u:r30)
+  register float              (f:r30)
+  pointer to signed integer   (s:*123)
+  pointer to unsigned integer (*123, u:123)
+  pointer to float            (f:*123)
+
+  
+

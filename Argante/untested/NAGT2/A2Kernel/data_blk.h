@@ -25,4 +25,4 @@ struct data_pkt {
 		char dt_string[4];
 	} u;
 	char type;
-};
+} __attribute__ ((packed));

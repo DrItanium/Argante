@@ -1,0 +1,10 @@
+cmd.c: In function `cmd_alloc':
+cmd.c:307: warning: implicit declaration of function `mem_alloc'
+cmd.c: In function `cmd_realloc_size':
+cmd.c:317: warning: implicit declaration of function `mem_realloc'
+cmd.c: In function `cmd_realloc_perm':
+cmd.c:321: warning: implicit declaration of function `mem_changeperm'
+cmd.c: In function `cmd_free':
+cmd.c:326: warning: implicit declaration of function `mem_dealloc'
+cmd.c: In function `cmd_handler':
+cmd.c:405: warning: implicit declaration of function `set_handler'

@@ -61,7 +61,7 @@ struct stable {
   unsigned char place;		// code or data?
   unsigned int size;		/**** NEW ****/
   char fn[MAX_SNAME];		// Name
-};
+} __attribute__ ((packed));
 
 /* Note that reloc entries always come just after their respective symbol. */
 #define RELOC_ADDR		1
@@ -72,6 +72,6 @@ struct reloc {
 	unsigned int addr;
 	unsigned char place; /* Is place in code or data? */
 	unsigned char type; /* What sort of reference - RELOC_ADDR etc. */
-};
+} __attribute__ ((packed));
 	
 #endif /* not _HAVE_BFORMAT */
