@@ -743,9 +743,9 @@ void cmd_mul_freg () {
          }
 
 	if ((t2 == TYPE_FREG) || (t2==TYPE_IMMEDIATE) || (t2==TYPE_IMMPTR)) {
-		FREG(A1)*=*((float *)&work2);
+		FFREG(A1)*=*((float *)&work2);
 	} else {
-		FREG(A1)*=work2;
+		FFREG(A1)*=(float)work2;
 	}
 }
 
