@@ -4,6 +4,9 @@
  * 
  * Use under GPL; just like GCC. I have no claim
  * over the images you produce with this.
+ * ---------------------------------------------
+ *
+ * 30/4/02. Backported bugfixes and blue-defines from A2.
  */
 #define _GNU_SOURCE
 
@@ -31,11 +34,14 @@ struct sdes sys[]={
 
 #define SCNUM (sizeof(sys)/sizeof(struct sdes))
 
-/* Defines - lifted, as you can see... */
+/* Defines - strange passing resembance to AGTC */
 struct defines {
-    char 		*name;
-    char 		*value;
-    struct defines	* next;
+	 char 		*name;
+	 char 		*value;
+	 struct defines	* next;
+	 int isblue; /* Yes! It's TRUE! */
+	 int val_len;
+	 int nam_len;
 };
 
 struct defines 		*defined = NULL;
@@ -71,52 +77,69 @@ int linking=0;
 #define WHITESPACE " \t\n\r"
 #define my_isspace(a) strchr(WHITESPACE, a)
 
-void error(char *message)
+void Nerror(char *message)
 {
 	fprintf(stderr, "<!> Line %d: %s\n", lineno, message);
 	exit(1);
 }
 
-void warn(char *message)
+void Nwarn(char *message)
 {
 	fprintf(stderr, "<+> Line %d: %s\n", lineno, message);
 }
 
-/* BlEh! Defines. A Hack... */
-int subst_define(char *in, char *s1, char *s2, char **ret)
+/* Defines. A little less of a hack, 25/1/02 JSK */
+static int subst_define(char **in, size_t *size, struct defines *d)
 {
-	char *t, *l;
-	t=strstr(in, s1);
-	if (!t) return 0;
+	char *t, *last;
+	size_t newsz, rmdr;
 
-	*ret=malloc(strlen(in) - strlen(s1) + strlen(s2) + 1);
-	memcpy(*ret, in, t-in);
-	l=*ret+(t-in);
-	memcpy(l, s2, strlen(s2) + 1);
-	l+=strlen(s2);
-	memcpy(l, t+strlen(s1), strlen(t) - strlen(s1));
+	last=*in;
+	newsz=0;
 
-	return 1;
+	while((t=strstr(last, d->name))) {
+		rmdr=strlen(t + d->nam_len);
+		newsz=(t - *in) + d->val_len + rmdr + 1;
+		if (*size < newsz) {
+			int offs;
+			/* Should we use Power-of-Two here? */
+			offs=last-*in;
+			t=realloc(*in, newsz);
+			if (!t) Nerror("Malloc failure (out of memory!)");
+			*in=t;
+			*size=newsz;
+			last=*in+offs;
+			t=strstr(last, d->name);
+			if (!t) Nerror("Macro name vanished! (internal error?)");
+		}
+
+		/* The first part of the string's OK, but
+			the last mustn't be overwritten. */
+		memmove(t+d->val_len, t+d->nam_len, rmdr + 1);
+		memcpy(t, d->value, d->val_len);
+		last=t + d->val_len;
+	}
+
+	return (newsz > 0) ? 1 : 0;
 }
 
-char *run_define(char *in)
+static void run_define(char **in, size_t *size)
 {
-	char *old, *new;
 	struct defines *d;
 
-	old=strdup(in);
 	d=defined;
-
 	while(d)
 	{
-		while (subst_define(old, d->name, d->value, &new))
-		{
-			free(old);
-			old=new;
-		}
+		if (!d->isblue && subst_define(in, size, d)) {
+			d->isblue=1;
+			d=defined;
+		} else d=d->next;
+	}
+	d=defined;
+	while(d) {
+		d->isblue=0;
 		d=d->next;
 	}
-	return old;
 }
 
 /* Symbols */
@@ -137,8 +160,8 @@ void add_depend(int type, int loc, symbol *to)
 {
 	depend *new;
 
-	new=malloc(sizeof(new));
-	if (!new) error("Malloc failure (out of memory!)");
+	new=malloc(sizeof(depend));
+	if (!new) Nerror("Malloc failure (out of memory!)");
 	
 	new->next=to->dep;
 	new->reftype=type;
@@ -183,7 +206,7 @@ symbol *find_symbol_f(char *symname)
 	context_head->syms=d;
 	strncpy(d->name, symname, sizeof(d->name));
 
-	if (strlen(symname) >= sizeof(d->name)) warn("Symbol name too long, clipping enforced.");
+	if (strlen(symname) >= sizeof(d->name)) Nwarn("Symbol name too long, clipping enforced.");
 	d->name[sizeof(d->name) - 1]=0; /* It's easier if it's null-terminated */
 	
 	return d;
@@ -263,7 +286,7 @@ void define_symbol()
 					i=curr_symbol->size / 4;
 					break;
 				default:
-					error("Unknown reftype! (internal error)");
+					Nerror("Unknown reftype! (internal error)");
 			}
 			fwrite(&i, sizeof(int), 1, f);
 			fseek(f, 0, SEEK_END);
@@ -317,7 +340,7 @@ void begin_context()
 	context *new;
 
 	new=malloc(sizeof(context));
-	if (!new) error("Out of memory while creating context");
+	if (!new) Nerror("Out of memory while creating context");
 
 	new->syms=NULL;
 	new->prev=context_head;
@@ -405,7 +428,7 @@ void do_symbol(char *ln)
 		if ((s=find_symbol_in(ln, x)))
 		{
 			if (s->defined)
-				error("Symbol doubly defined");
+				Nerror("Symbol doubly defined");
 
 			curr_symbol=s;
 			curr_symbol_context=x;
@@ -424,9 +447,9 @@ void do_symbol(char *ln)
 		strncpy(curr_symbol->name, ln, sizeof(curr_symbol->name));
 	}
 /*	else
-		warn("Prototype ref found here"); */
+		Nwarn("Prototype ref found here"); */
 
-	if (strlen(ln) >= sizeof(curr_symbol->name)) warn("Symbol name too long, clipping enforced.");
+	if (strlen(ln) >= sizeof(curr_symbol->name)) Nwarn("Symbol name too long, clipping enforced.");
 	curr_symbol->name[sizeof(curr_symbol->name) - 1]=0; /* It's easier if it's null-terminated */
 
 	curr_symbol->defined=0;
@@ -440,7 +463,7 @@ void do_option(char *ln)
 	int itmp, itmp2;
 	
 	if (state != STATE_OPTION)
-		error("Option not allowed in .code or .data block");
+		Nerror("Option not allowed in .code or .data block");
 	
 	ln++; /* Ignore ! */
 
@@ -451,12 +474,12 @@ void do_option(char *ln)
 	itmp=strspn(tmp, WHITESPACE);
 	arg2=&tmp[itmp];
 	if (!*arg2)
-		error("Option without arguments");
+		Nerror("Option without arguments");
 	
 	if (!strcasecmp(ln, "SIGNATURE"))
 	{
 		if (*arg2 != '"') {
-			warn("!signature not enclosed in quotes");
+			Nwarn("!signature not enclosed in quotes");
 			itmp=0;
 		} else {
 			itmp=1;
@@ -502,7 +525,7 @@ void do_option(char *ln)
 		}
 	}
 	else
-		error("Unknown option");
+		Nerror("Unknown option");
 }
 
 void do_pragma(char *ln)
@@ -532,16 +555,19 @@ void do_pragma(char *ln)
 	{
 		char *name, *val;
 		struct defines *d;
-		if (!arg) error("Define without arguments");
+		if (!arg) Nerror("Define without arguments");
 		name=strtok(arg, " \t\n\r");
 		val=strtok(NULL, " \t\n\r");
-		
-		if (!name || !val) error("Define requires two arguments");
+
+		if (!name || !val) Nerror("Define requires two arguments");
 
 		/* Add a definition! */
 		d=malloc(sizeof(struct defines));
 		d->name=strdup(name);
 		d->value=strdup(val);
+		d->isblue=0;
+		d->val_len=strlen(val);
+		d->nam_len=strlen(name);
 		d->next=defined;
 		defined=d;
 	}
@@ -549,7 +575,7 @@ void do_pragma(char *ln)
 	{
 	}
 	else
-		error("Unknown pragma");
+		Nerror("Unknown pragma");
 
 }
 
@@ -579,7 +605,7 @@ char *do_data(char *ln)
 		while (*(++ln)!='"')
 		{
 			if (!(*ln))
-				error("Unterminated string constant.");
+				Nerror("Unterminated string constant.");
 			else if (*ln=='\\')
 			{
 				ln++;
@@ -589,13 +615,13 @@ char *do_data(char *ln)
 					{ /* Shellcode in Argante? Cool! */
 						static char nu[3]; /* Ick... like the only static buffer here */
 						ln++;
-						if (!(nu[0]=*ln)) error("Bad \\x sequence.");
+						if (!(nu[0]=*ln)) Nerror("Bad \\x sequence.");
 						ln++;
-						if (!(nu[1]=*ln)) error("Bad \\x sequence.");
+						if (!(nu[1]=*ln)) Nerror("Bad \\x sequence.");
 						nu[2]=0;
 
 						*ln=strtol(&nu[0], &ret, 0x10); /* Hex radix */
-						if (ret && *ret) error("Bad \\x sequence."); /* Trailing garbage? */
+						if (ret && *ret) Nerror("Bad \\x sequence."); /* Trailing garbage? */
 						break;
 					}
 					case 'n': *ln='\n'; break;
@@ -603,7 +629,7 @@ char *do_data(char *ln)
 					case 'e': *ln='\e'; break;
 					case 'b': *ln='\b'; break;
 					case 't': *ln='\t'; break;
-					case 0: error("Unterminated escape sequence.");
+					case 0: Nerror("Unterminated escape sequence.");
 				}
 			}
 			fputc(*ln, out_data);
@@ -638,14 +664,14 @@ char *do_data(char *ln)
 	
 		/* Get repct */
 		ct=strtol(next, &ret, 0) - 1; /* We already wrote one block of data */
-		if (ret==next) { warn(next); error("Garbage numeric"); }
+		if (ret==next) { Nwarn(next); Nerror("Garbage numeric"); }
 
 		if (ct<0 || ct>MAX_ALLOC_MEMBLK)
-			error("Senseless repeat count");
+			Nerror("Senseless repeat count");
 
 		/* Get data to repeat */
 		sz=ftello(out_data) - rep_data_offs; /* Amount of data to repeat */
-		if (!sz) error("No data given to repeat");
+		if (!sz) Nerror("No data given to repeat");
 		
 		next=malloc(sz);
 		/* Read data... */
@@ -671,7 +697,7 @@ char *do_data(char *ln)
 	if(ln[strlen(ln)-1]=='f' || strchr(ln, '.'))
 	{
 		float f;
-		if (sizeof(float) != sizeof(long)) error("sizeof(float) is somewhat odd");
+		if (sizeof(float) != sizeof(long)) Nerror("sizeof(float) is somewhat odd");
 		f=strtod(ln, &ret);
 		fwrite(&f, sizeof(float), 1, out_data);
 	}
@@ -682,7 +708,7 @@ char *do_data(char *ln)
 		fwrite(&i, sizeof(int), 1, out_data);
 	}
 
-	if (ret==ln) error("Garbage numeric.");
+	if (ret==ln) Nerror("Garbage numeric.");
 	return next;
 }
 
@@ -702,7 +728,7 @@ void arg_parse(char *ln, unsigned long *out, char *type, int offs)
 	{
 		float f;
 		long *z;
-		if (sizeof(float) != sizeof(long)) error("sizeof(float) is somewhat odd");
+		if (sizeof(float) != sizeof(long)) Nerror("sizeof(float) is somewhat odd");
 		f=strtod(ln, &ret);
 		z=(long *) &f;
 		*out=*z;
@@ -722,7 +748,7 @@ void arg_parse(char *ln, unsigned long *out, char *type, int offs)
 					return;
 				}
 			}
-			error("Unknown syscall");
+			Nerror("Unknown syscall");
 			return;
 		case '*': /* uptr */
 			arg_parse(z, out, type, offs);
@@ -731,7 +757,7 @@ void arg_parse(char *ln, unsigned long *out, char *type, int offs)
 			else if (*type==TYPE_IMMEDIATE)
 				*type=TYPE_IMMPTR;
 			else
-				error("Pointer requires immediate or ureg");
+				Nerror("Pointer requires immediate or ureg");
 			return;
 		case ':': /* Pointer */
 			s=find_symbol_f(z);
@@ -765,7 +791,7 @@ void arg_parse(char *ln, unsigned long *out, char *type, int offs)
 	i=strtoul(z, &ret, 0);
 	*out=i;
 	printf("'%s' -> 0x%lx\n", z, *out);
-	if (ret==z) error("Garbage numeric.");
+	if (ret==z) Nerror("Garbage numeric.");
 }
 
 /*
@@ -822,20 +848,20 @@ void do_code(char *ln)
 			 * One day we will want 0,1 and 2-arg versions of halt... */
 			if (ict!=op[itmp].params)
 			{
-				error("Wrong number of parameters");
+				Nerror("Wrong number of parameters");
 			}
 			bop.bcode=op[itmp].bcode;
 			break;
 		}
 	}
-	if (itmp>=OPS) error("Unknown mnemonic!");
+	if (itmp>=OPS) Nerror("Unknown mnemonic!");
 
 	/* Check types. */
 	if (ict > 0 && !((1 << bop.t1) & op[itmp].tparam1))
-		error("Type mismatch for argument 1");
+		Nerror("Type mismatch for argument 1");
 
 	if (ict > 1 && !((1 << bop.t2) & op[itmp].tparam2))
-		error("Type mismatch for argument 2");
+		Nerror("Type mismatch for argument 2");
 
 	/* Phew. */
 	fwrite(&bop, sizeof(bop), 1, out_bcode);
@@ -843,7 +869,7 @@ void do_code(char *ln)
 
 int main(int argc, char *argv[])
 {
-	char *inl, *o;
+	char *inl;
 	size_t n;
 	int z=1;
 	char *ln, *tmp;
@@ -901,10 +927,9 @@ int main(int argc, char *argv[])
 		tmp=strchr(inl, '\n');
 		if (tmp) *tmp=0;
 
-		/* Yick. */
-		o=ln=run_define(inl);
+		run_define(&inl, &n);
 		/* Strip off leading whitespace. */
-		tmp=ln;
+		tmp=ln=inl;
 		while (*tmp && my_isspace(*tmp))
 		{
 			ln=tmp;
@@ -938,7 +963,7 @@ int main(int argc, char *argv[])
 		} else if (ln[0]=='}') {
 			end_context();
 			if (!context_head)
-				error("Global context undefined: you don't want to do that");
+				Nerror("Global context undefined: you don't want to do that");
 		} else {
 			if (state==STATE_DATA)
 			{
@@ -948,9 +973,8 @@ int main(int argc, char *argv[])
 			else if (state==STATE_CODE)
 				do_code(ln);
 			else
-				error("Command not understood in this state");
+				Nerror("Command not understood in this state");
 		}
-		free(o);
 	}
 
 	define_symbol();

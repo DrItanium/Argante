@@ -68,7 +68,7 @@ void push_on_dpoint(long loc)
 {
 	dpoint *d;
 	
-	d=malloc(sizeof(dphead));
+	d=malloc(sizeof(dpoint));
 	d->loc=loc;
 	d->next=dphead;
 	dphead=d;
