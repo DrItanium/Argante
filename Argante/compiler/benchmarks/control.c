@@ -10,7 +10,7 @@ void calcTime(struct timeval *t1, struct timeval *t2, float n)
 	float sec;
 	sec=t1->tv_sec - t2->tv_sec + ((float) t1->tv_usec - t2->tv_usec) / 1000000;
 
-	printf("%f\n", n / sec); 
+	printf("%e\n", n / sec); 
 }
 
 int main()

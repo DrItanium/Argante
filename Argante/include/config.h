@@ -42,7 +42,8 @@
 // "Secure" limits:
 
 #define MAX_LOAD_BYTESIZE	 500000	// Max exec code size (in packets)
-#define MAX_ALLOC_MEMBLK       16000000 // Max allocated memblk (dwords)
+#define MAX_ALLOC_MEMBLK  ((1<<18) - 2) // Max allocated memblk (dwords)
+					// 2^32 = MAX_MEMBLK*(MAX_ALLOC_ + 2)
 #define MAX_PRIORITY	       10000000 // Highest priority
 #define MIN_CYCLES_TO_RESPAWN	    32	// Min number of work cycles for task
 				        // to be respawned (see documentation)

@@ -13,6 +13,7 @@
 1:0	fs/ftp                  fs/fops/create                  allow
 1:0	fs/ftp                  fs/fops/list/directory          allow
 10:0   net                     net/sock			            allow
+1:0	fs/ftp			fs/fops/delete			allow
 
 # Wildcard test for actest
 

@@ -52,6 +52,7 @@
     syscall $IO_PUTSTRING
 
     mov     s0,DWORDS       # Initialize loop counter
+    sub     s0,1	    # Compensate 
     mov     u2,*:src
     mov     u3,*:dest
 
@@ -63,9 +64,7 @@
     mov     *u3,*u2
     add     u2,1
     add     u3,1
-    sub     s0,1
-    ifabo   s0,0
-    jmp     :loop
+    loop    :loop
 
     syscall $LOCAL_GETTIME
 
