@@ -1,0 +1,520 @@
+/*
+    Argante Virtual OS
+    ------------------
+
+    Interface definitions for the GGI module.
+*/
+
+/*** Exceptions *************************************************************/
+
+#define ERROR_GGI_INVALID_VISUAL    2000 // No such visual
+#define ERROR_GGI_OPEN              2001 // Could not open visual
+#define ERROR_GGI_CONTROL           2002 // Generic control function failure
+#define ERROR_GGI_OUTPUT            2003 // Generic output function failure
+#define ERROR_GGI_INPUT             2004 // Generic input function failure
+
+/*** Syscalls ***************************************************************/
+
+#define SYSCALL_GGI_ADDEVENTMASK        901
+#define SYSCALL_GGI_ADDFLAGS            902
+#define SYSCALL_GGI_CHECKGRAPHMODE      903
+#define SYSCALL_GGI_CHECKMODE           904
+#define SYSCALL_GGI_CHECKSIMPLEMODE     905
+#define SYSCALL_GGI_CHECKTEXTMODE       906
+#define SYSCALL_GGI_CLOSE               907
+#define SYSCALL_GGI_COPYBOX             908
+#define SYSCALL_GGI_CROSSBLIT           909
+#define SYSCALL_GGI_DBGETBUFFER         910
+#define SYSCALL_GGI_DBGETNUMBUFFERS     911
+#define SYSCALL_GGI_DRAWBOX             912
+#define SYSCALL_GGI_DRAWHLINE           913
+#define SYSCALL_GGI_DRAWVLINE           914
+#define SYSCALL_GGI_DRAWLINE            915
+#define SYSCALL_GGI_DRAWPIXEL           916
+#define SYSCALL_GGI_EVENTREAD           918
+#define SYSCALL_GGI_EVENTSEND           919
+#define SYSCALL_GGI_EVENTSQUEUED        920
+#define SYSCALL_GGI_FILLSCREEN          923
+#define SYSCALL_GGI_FLUSH               924
+#define SYSCALL_GGI_FLUSHREGION         925
+#define SYSCALL_GGI_GETBOX              926
+#define SYSCALL_GGI_GETDISPLAYFRAME     927
+#define SYSCALL_GGI_GETEVENTMASK        928
+#define SYSCALL_GGI_GETFLAGS            929
+#define SYSCALL_GGI_GETGCBACKGROUND     930
+#define SYSCALL_GGI_GETGCCLIPPING       931
+#define SYSCALL_GGI_GETGCFOREGROUND     932
+#define SYSCALL_GGI_GETGAMMA            933
+#define SYSCALL_GGI_GETGAMMAMAP         934
+#define SYSCALL_GGI_GETHLINE            935
+#define SYSCALL_GGI_GETMODE             936
+#define SYSCALL_GGI_GETPALETTE          937
+#define SYSCALL_GGI_GETPIXEL            938
+#define SYSCALL_GGI_GETPIXELFORMAT      939
+#define SYSCALL_GGI_GETREADFRAME        940
+#define SYSCALL_GGI_GETVLINE            941
+#define SYSCALL_GGI_GETWRITEFRAME       942
+#define SYSCALL_GGI_GETC                943
+#define SYSCALL_GGI_JOININPUTS          945
+#define SYSCALL_GGI_KBHIT               946
+#define SYSCALL_GGI_MAPCOLOR            947
+#define SYSCALL_GGI_OPEN                948
+#define SYSCALL_GGI_PACKCOLORS          949
+#define SYSCALL_GGI_PUTBOX              953
+#define SYSCALL_GGI_PUTHLINE            954
+#define SYSCALL_GGI_PUTPIXEL            955
+#define SYSCALL_GGI_GETORIGIN           956
+#define SYSCALL_GGI_PUTVLINE            957
+#define SYSCALL_GGI_PUTC                958
+#define SYSCALL_GGI_PUTS                959
+#define SYSCALL_GGI_REMOVEEVENTMASK     960
+#define SYSCALL_GGI_REMOVEFLAGS         961
+#define SYSCALL_GGI_RESOURCEACQUIRE     962
+#define SYSCALL_GGI_RESOURCEMUSTACQUIRE 963
+#define SYSCALL_GGI_RESOURCERELEASE     964
+#define SYSCALL_GGI_SETCOLORFULPALETTE  966
+#define SYSCALL_GGI_SETDISPLAYFRAME     967
+#define SYSCALL_GGI_SETEVENTMASK        968
+#define SYSCALL_GGI_SETFLAGS            969
+#define SYSCALL_GGI_SETGCBACKGROUND     970
+#define SYSCALL_GGI_SETGCCLIPPING       971
+#define SYSCALL_GGI_SETGCFOREGROUND     972
+#define SYSCALL_GGI_SETGAMMA            973
+#define SYSCALL_GGI_SETGAMMAMAP         974
+#define SYSCALL_GGI_SETGRAPHMODE        975
+#define SYSCALL_GGI_SETMODE             976
+#define SYSCALL_GGI_SETORIGIN           977
+#define SYSCALL_GGI_SETPALETTE          978
+#define SYSCALL_GGI_SETREADFRAME        979
+#define SYSCALL_GGI_SETSIMPLEMODE       980
+#define SYSCALL_GGI_SETTEXTMODE         981
+#define SYSCALL_GGI_SETWRITEFRAME       982
+#define SYSCALL_GGI_UNMAPPIXEL          983
+#define SYSCALL_GGI_UNPACKPIXELS        984
+
+/*** Possible values for ggi_flag *******************************************/
+
+#define GGIFLAG_ASYNC   0x0001
+
+/*** Possible values for ggi_attr *******************************************/
+
+#define ATTR_FGCOLOR    0x0000FF00      /* fgcolor clut index    */
+#define ATTR_BGCOLOR    0x000000FF      /* bgcolor clut index    */
+#define ATTR_NORMAL     0x00000000      /* normal style          */
+#define ATTR_HALF       0x00010000      /* half intensity        */
+#define ATTR_BRIGHT     0x00020000      /* high intensity        */
+#define ATTR_INTENSITY  0x00030000      /* mask to get intensity */
+#define ATTR_UNDERLINE  0x00040000      /* underline attribute   */
+#define ATTR_BOLD       0x00080000      /* bold style            */
+#define ATTR_ITALIC     0x00100000      /* italic style          */
+#define ATTR_REVERSE    0x00200000      /* reverse fg/bg         */
+#define ATTR_BLINK      0x00800000      /* enable blinking       */
+#define ATTR_FONT       0xFF000000      /* font table            */
+
+/*** Possible values for ggi_graphtype ***************************************/
+
+#define GT_DEPTH_SHIFT          0
+#define GT_SIZE_SHIFT           8
+#define GT_SUBSCHEME_SHIFT      16
+#define GT_SCHEME_SHIFT         24
+
+/*** Type definitions ********************************************************/
+
+type ggi_visual is unsigned;
+type ggi_flags is unsigned;
+type ggi_attr is unsigned;
+type ggi_graphtype is unsigned;
+type ggi_pixel is unsigned;
+
+/*** (don't remove this comment, or you will feel the wrath of ahlt) ***/
+/*** Wrapper procedures ***/
+
+procedure ggiOpen( name : String, writable visual : ggi_visual ) {
+    syscall( SYSCALL_GGI_OPEN,
+             u1 := name.data, u2 := name.length,
+             visual := u0 );
+}
+
+procedure ggiClose( visual : ggi_visual, writable error : signed ) {
+    syscall( SYSCALL_GGI_CLOSE,
+             u0 := visual,
+             error := s0 );
+}
+
+procedure ggiSetFlags( visual : ggi_visual, flags : ggi_flags,
+                       writable error : signed ) {
+    syscall( SYSCALL_GGI_SETFLAGS,
+             u0 := visual, u1 := flags,
+             error := s0 );
+}
+
+procedure ggiGetFlags( visual : ggi_visual, writable flags : ggi_flags ) {
+    syscall( SYSCALL_GGI_GETFLAGS,
+             u0 := visual,
+             flags := u1 );
+}
+
+procedure ggiAddFlags( visual : ggi_visual, flags : ggi_flags,
+                       writable error : signed ) {
+    syscall( SYSCALL_GGI_ADDFLAGS,
+             u0 := visual, u1 := flags,
+             error := s0 );
+}
+
+procedure ggiRemoveFlags( visual : ggi_visual, flags : ggi_flags,
+                          writable error : signed ) {
+    syscall( SYSCALL_GGI_REMOVEFLAGS,
+             u0 := visual, u1 := flags,
+             error := s0 );
+}
+
+procedure ggiSetSimpleMode( visual : ggi_visual, width : unsigned,
+                            height : unsigned, frames : unsigned,
+                            graphtype : unsigned, writable error : signed ) {
+    syscall( SYSCALL_GGI_SETSIMPLEMODE,
+             u0 := visual, u1 := width, u2 := height,
+             u3 := frames, u4 := graphtype,
+             error := s0 );
+}
+
+procedure ggiSetGraphMode( visual : ggi_visual, width : unsigned,
+                           height : unsigned, vwidth : unsigned,
+                           vheight : unsigned, graphtype : unsigned,
+                           writable error : signed ) {
+    syscall( SYSCALL_GGI_SETGRAPHMODE,
+             u0 := visual, u1 := width, u2 := height, u3 := vwidth,
+             u4 := vheight, u5 := graphtype,
+             error := s0 );
+}
+
+procedure ggiSetTextMode( visual : ggi_visual, cols : unsigned,
+                          rows : unsigned, vcols : unsigned,
+                          vrows : unsigned, fontx : unsigned,
+                          fonty : unsigned, graphtype : unsigned,
+                          writable error : signed ) {
+    syscall( SYSCALL_GGI_SETTEXTMODE,
+             u0 := visual, u1 := cols, u2 := rows, u3 := vcols, u4 := vrows,
+             u5 := fontx, u6 := fonty, u7 := graphtype,
+             error := s0 );
+}
+
+procedure ggiSetOrigin( visual: ggi_visual, x : signed, y : signed,
+                        writable error : signed ) {
+    syscall( SYSCALL_GGI_SETORIGIN,
+             u0 := visual, s1 := x, s2 := y,
+             error := s0 );
+}
+
+procedure ggiGetOrigin( visual: ggi_visual, writable x : signed,
+                        writable y : signed, writable error : signed ) {
+    syscall( SYSCALL_GGI_GETORIGIN,
+             u0 := visual,
+             x := s1, y := s2, error := s0 );
+}
+
+procedure ggiSetDisplayFrame( visual: ggi_visual, frame : unsigned,
+                              writable error : signed ) {
+    syscall( SYSCALL_GGI_SETDISPLAYFRAME,
+             u0 := visual, u1 := frame,
+             error := s0 );
+}
+
+procedure ggiGetDisplayFrame( visual: ggi_visual, writable frame : unsigned ) {
+    syscall( SYSCALL_GGI_GETDISPLAYFRAME,
+             u0 := visual,
+             frame := u1 );
+}
+
+procedure ggiSetReadFrame( visual: ggi_visual, frame : unsigned,
+                           writable error : signed ) {
+    syscall( SYSCALL_GGI_SETREADFRAME,
+             u0 := visual, u1 := frame,
+             error := s0 );
+}
+
+procedure ggiGetReadFrame( visual: ggi_visual, writable frame : unsigned ) {
+    syscall( SYSCALL_GGI_GETREADFRAME,
+             u0 := visual,
+             frame := u1 );
+}
+
+procedure ggiSetWriteFrame( visual: ggi_visual, frame : unsigned,
+                            writable error : signed ) {
+    syscall( SYSCALL_GGI_SETWRITEFRAME,
+             u0 := visual, u1 := frame,
+             error := s0 );
+}
+
+procedure ggiGetWriteFrame( visual: ggi_visual, writable frame : unsigned ) {
+    syscall( SYSCALL_GGI_GETWRITEFRAME,
+             u0 := visual,
+             frame := u1 );
+}
+
+procedure ggiSetColorfulPalette( visual : ggi_visual, writable index : signed ) {
+    syscall( SYSCALL_GGI_SETCOLORFULPALETTE,
+             u0 := visual,
+             index := s0 );
+}
+
+procedure ggiSetGamma( visual : ggi_visual, red : float, green : float,
+                       blue : float, writable error : signed ) {
+    syscall( SYSCALL_GGI_SETGAMMA,
+             u0 := visual, f0 := red, f1 := green, f2 := blue,
+             error := s0 );
+}
+
+procedure ggiGetGamma( visual : ggi_visual, writable red : float,
+                       writable green : float, writable blue : float,
+                       writable error : signed ) {
+    syscall( SYSCALL_GGI_GETGAMMA,
+             u0 := visual,
+             red := f0, green := f1, blue := f2, error := s0 );
+}
+
+procedure ggiSetGCForeground( visual : ggi_visual, color : ggi_pixel,
+                              writable error : signed ) {
+    syscall( SYSCALL_GGI_SETGCFOREGROUND,
+             u0 := visual, u1 := color,
+             error := s0 );
+}
+
+procedure ggiGetGCForeground( visual : ggi_visual, writable color : ggi_pixel,
+                              writable error : signed ) {
+    syscall( SYSCALL_GGI_GETGCFOREGROUND,
+             u0 := visual,
+             color := u1, error := s0 );
+}
+
+procedure ggiSetGCBackground( visual : ggi_visual, color : ggi_pixel,
+                              writable error : signed ) {
+    syscall( SYSCALL_GGI_SETGCBACKGROUND,
+             u0 := visual, u1 := color,
+             error := s0 );
+}
+
+procedure ggiGetGCBackground( visual : ggi_visual, color : ggi_pixel,
+                              writable error : signed ) {
+    syscall( SYSCALL_GGI_GETGCBACKGROUND,
+             u0 := visual,
+             color := u1, error := s0 );
+}
+
+procedure ggiSetGCClipping( visual : ggi_visual, left : signed, top : signed,
+                            right : signed, bottom : signed,
+                            writable error : signed ) {
+    syscall( SYSCALL_GGI_SETGCCLIPPING,
+             u0 := visual, s1 := left, s2 := top, s3 := right, s4 := bottom,
+             error := s0 );
+}
+
+procedure ggiGetGCClipping( visual : ggi_visual, writable left : signed,
+                            writable top : signed, writable right : signed,
+                            writable bottom : signed, writable error : signed ) {
+    syscall( SYSCALL_GGI_GETGCCLIPPING,
+             u0 := visual,
+             left := s1, top := s2, right := s3, bottom := s4, error := s0 );
+}
+
+procedure ggiFlush( visual : ggi_visual ) {
+    syscall( SYSCALL_GGI_FLUSH,
+             u0 := visual );
+}
+
+procedure ggiFlushRegion( visual : ggi_visual, x : signed, y : signed,
+                          width : signed, height : signed ) {
+    syscall( SYSCALL_GGI_FLUSHREGION,
+             u0 := visual, s1 := x, s2 := y, s3 := width, s4 := height );
+}
+
+procedure ggiMapColor( visual : ggi_visual, red : unsigned, green : unsigned,
+                       blue : unsigned, alpha : unsigned,
+                       writable pixel : ggi_pixel ) {
+    syscall( SYSCALL_GGI_MAPCOLOR,
+             u0 := visual, u1 := red, u2 := green, u3 := blue, u4 := alpha,
+             pixel := u1 );
+}
+
+procedure ggiUnmapPixel( visual : ggi_visual, pixel : ggi_pixel,
+                         writable red : unsigned, writable green : unsigned,
+                         writable blue : unsigned, writable alpha : unsigned,
+                         writable error : signed ) {
+    syscall( SYSCALL_GGI_UNMAPPIXEL,
+             u0 := visual, u1 := pixel,
+             red := u1, green := u2, blue := u3, alpha := u4, error := s0 );
+}
+
+procedure ggiFillscreen( visual : ggi_visual, writable error : signed ) {
+    syscall( SYSCALL_GGI_FILLSCREEN,
+             u0 := visual,
+             error := s0 );
+}
+
+procedure ggiPutPixel( visual : ggi_visual, x : signed, y : signed,
+                       pixel : ggi_pixel, writable error : signed ) {
+    syscall( SYSCALL_GGI_PUTPIXEL,
+             u0 := visual, s1 := x, s2 := y, u1 := pixel,
+             error := s0 );
+}
+
+procedure ggiGetPixel( visual : ggi_visual, x : signed, y : signed,
+                       writable pixel : ggi_pixel, writable error : signed ) {
+    syscall( SYSCALL_GGI_GETPIXEL,
+             u0 := visual, s1 := x, s2 := y,
+             pixel := u1, error := s0 );
+}
+
+procedure ggiDrawPixel( visual : ggi_visual, x : signed, y : signed,
+                        writable error : signed ) {
+    syscall( SYSCALL_GGI_DRAWPIXEL,
+             u0 := visual, s1 := x, s2 := y,
+             error := s0 );
+}
+
+procedure ggiPutHLine( visual : ggi_visual, x : signed, y : signed, width : signed,
+                       buffer : unsigned, writable error : signed ) {
+    syscall( SYSCALL_GGI_PUTHLINE,
+             u0 := visual, s1 := x, s2 := y, s3 := width, u1 := buffer,
+             error := s0 );
+}
+
+procedure ggiGetHLine( visual : ggi_visual, x : signed, y : signed, width : signed,
+                       buffer : unsigned, writable error : signed ) {
+    syscall( SYSCALL_GGI_GETHLINE,
+             u0 := visual, s1 := x, s2 := y, s3 := width, u1 := buffer,
+             error := s0 );
+}
+
+procedure ggiDrawHLine( visual : ggi_visual, x : signed, y : signed, width : signed,
+                        writable error : signed ) {
+    syscall( SYSCALL_GGI_DRAWHLINE,
+             u0 := visual, s1 := x, s2 := y, s3 := width,
+             error := s0 );
+}
+
+procedure ggiPutVLine( visual : ggi_visual, x : signed, y : signed, height : signed,
+                       buffer : unsigned, writable error : signed ) {
+    syscall( SYSCALL_GGI_PUTVLINE,
+             u0 := visual, s1 := x, s2 := y, s3 := height, u1 := buffer,
+             error := s0 );
+}
+
+procedure ggiGetVLine( visual : ggi_visual, x : signed, y : signed, height : signed,
+                       buffer : unsigned, writable error : signed ) {
+    syscall( SYSCALL_GGI_GETVLINE,
+             u0 := visual, s1 := x, s2 := y, s3 := height, u1 := buffer,
+             error := s0 );
+}
+
+procedure ggiDrawVLine( visual : ggi_visual, x : signed, y : signed, height : signed,
+                        writable error : signed ) {
+    syscall( SYSCALL_GGI_DRAWVLINE,
+             u0 := visual, s1 := x, s2 := y, s3 := height,
+             error := s0 );
+}
+
+procedure ggiDrawLine( visual : ggi_visual, x : signed, y : signed,
+                       xe : signed, ye : signed, writable error : signed ) {
+    syscall( SYSCALL_GGI_DRAWLINE,
+             u0 := visual, s1 := x, s2 := y, s3 := xe, s4 := ye,
+             error := s0 );
+}
+
+procedure ggiPutBox( visual : ggi_visual, x : signed, y : signed, width : signed,
+                     height : signed, buffer : unsigned, writable error : signed ) {
+    syscall( SYSCALL_GGI_PUTBOX,
+             u0 := visual, s1 := x, s2 := y, s3 := width, s4 := height, u1 := buffer,
+             error := s0 );
+}
+
+procedure ggiGetBox( visual : ggi_visual, x : signed, y : signed, width : signed,
+                     height : signed, buffer : unsigned, writable error : signed ) {
+    syscall( SYSCALL_GGI_GETBOX,
+             u0 := visual, s1 := x, s2 := y, s3 := width, s4 := height, u1 := buffer,
+             error := s0 );
+}
+
+procedure ggiDrawBox( visual : ggi_visual, x : signed, y : signed, width : signed,
+                      height : signed, writable error : signed ) {
+    syscall( SYSCALL_GGI_DRAWBOX,
+             u0 := visual, s1 := x, s2 := y, s3 := width, s4 := height,
+             error := s0 );
+}
+
+procedure ggiCopyBox( visual : ggi_visual, x : signed, y : signed, width : signed,
+                      height : signed, newx : signed, newy : signed,
+                      writable error : signed ) {
+    syscall( SYSCALL_GGI_COPYBOX,
+             u0 := visual, s1 := x, s2 := y, s3 := width, s4 := height,
+             s5 := newx, s6 := newy,
+             error := s0 );
+}
+
+procedure ggiCrossBlit( src_visual : ggi_visual, src_x : signed, src_y : signed,
+                        width : signed, height : signed, dst_visual : ggi_visual,
+                        dst_x : signed, dst_y : signed, writable error : signed ) {
+    syscall( SYSCALL_GGI_CROSSBLIT,
+             u0 := src_visual, s1 := src_x, s2 := src_y, s3 := width, s4 := height,
+             u1 := dst_visual, s5 := dst_x, s6 := dst_y,
+             error := s0 );
+}
+
+procedure ggiPutc( visual : ggi_visual, x : signed, y : signed, c : Character,
+                   writable error : signed ) {
+    syscall( SYSCALL_GGI_PUTC,
+             u0 := visual, s1 := x, s2 := y, u1 := c,
+             error := s0 );
+}
+
+procedure ggiPuts( visual : ggi_visual, x : signed, y : signed, str : String,
+                   writable error : signed ) {
+    syscall( SYSCALL_GGI_PUTS,
+             u0 := visual, s1 := x, s2 := y, u1 := str.data, u2 := str.length,
+             error := s0 );
+}
+
+procedure ggiKbhit( visual : ggi_visual, writable status : signed ) {
+    syscall( SYSCALL_GGI_KBHIT,
+             u0 := visual,
+             status := s0 );
+}
+
+procedure ggiGetc( visual : ggi_visual, writable c : Character ) {
+    syscall( SYSCALL_GGI_GETC,
+             u0 := visual,
+             c := u1 );
+}
+
+procedure ggiSetEventMask( visual : ggi_visual, mask : unsigned,
+                           writable error : signed ) {
+    syscall( SYSCALL_GGI_SETEVENTMASK,
+             u0 := visual, u1 := mask,
+             error := s0 );
+}
+
+procedure ggiGetEventMask( visual : ggi_visual, writable mask : unsigned ) {
+    syscall( SYSCALL_GGI_GETEVENTMASK,
+             u0 := visual,
+             mask := u1 );
+}
+
+procedure ggiAddEventMask( visual : ggi_visual, mask : unsigned,
+                           writable error : signed ) {
+    syscall( SYSCALL_GGI_ADDEVENTMASK,
+             u0 := visual, u1 := mask,
+             error := s0 );
+}
+
+procedure ggiRemoveEventMask( visual : ggi_visual, mask : unsigned,
+                              writable error : signed ) {
+    syscall( SYSCALL_GGI_REMOVEEVENTMASK,
+             u0 := visual, u1 := mask,
+             error := s0 );
+}
+
+procedure ggiEventsQueued( visual : ggi_visual, mask : unsigned,
+                           writable error : signed ) {
+    syscall( SYSCALL_GGI_EVENTSQUEUED,
+             u0 := visual, u1 := mask,
+             error := s0 );
+}
