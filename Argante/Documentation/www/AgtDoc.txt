@@ -1,0 +1,4667 @@
+
+               "[We] use bad software and bad machines for the wrong things."
+							-- R.W. Hamming
+    ___   ___   ___   ___   ___  |_   ___
+   '___| |   ` |   | '___| |   | |   |___|
+   |___| |     |___| |___| |   | |__ |___.
+               .___|       
+                               version 1.1b
+             
+(C) 2000, 2001 Michal Zalewski <lcamtuf@tpi.pl>
+(C) 2000, 2001 Argante Development Team <argante@cgs.pl>
+
+Argante Development Team:
+
+  Michal Zalewski <lcamtuf@tpi.pl>   Maurycy Prodeus <z33d@eth-security.net>
+  Bulba <bulba@intelcom.pl>          Marcin Dawcewicz <marcel@linux.com.pl>
+  Artur Skura <arturs@people.pl>     ArtGabi team [http://www.artgabi.com.pl]
+  bikappa <bikappa@itapac.net>       Adam Podstawczyñski <adam@english.w3.pl>
+  scrippie <ronald@grafix.nl>        Lukasz Jachowicz <honey@linuxnews.pl>
+  eru <eru@ibbrain.ibb.waw.pl>       Jaroslaw Pyszny <arghil@bigfoot.com>
+  James Kehl <ecks@optusnet.com.au>  Mariusz Woloszyn <woloszyn@ipartners.pl>
+    
+Our website and mailing list:
+
+  Homepage:     http://agt.buka.org
+  Souce code:   http://lcamtuf.na.export.pl/arg.tgz 
+  Mirrors:      see Documentation/MIRRORS
+  Mailing list: mail -s 'subscribe' argante-request@cgs.pl </dev/null
+  WWW archive:  http://argante.buka.org
+
+
+========
+CONTENTS
+========
+
+** Part I: Argante design and implementation
+
+ 1. Introduction and credits
+ 2. Why Argante? How is it different from other systems?
+ 3. SMTA - a multi-process model 
+ 4. VCPU - virtual architecture
+ 5. The RSIS command set
+ 6. Low Level Exceptions (LLX)
+ 7. HAC - Hierarchical Access Control
+ 8. SVFS - filesystem architecture
+ 9. IPC/rIPC - inter-process comunication, DVR concepts
+10. Scripts and console management
+11. Using the RSIS-assembler
+12. Using the AHLL interpreter
+13. Standard modules specification
+14. Module creation
+15. Executable file format
+16. Built-in debugger
+17. Process console support
+18. Appendix A: FAQ
+19. Contact, bug reporting
+
+** Part II: Development guidelines
+
+ 1. AOS installation
+ 2. Programming: project directory
+ 3. Programming: Modular design
+ 4. Programming: SVFS mapping
+ 5. Programming: HAC lists
+ 6. Programming: Multiple instances / NFS
+ 7. Programming: Real System Interaction (hybrid solutions)
+ 8. Programming: Clusters, redundancy
+ 9. AHLL: style guidelines
+10. Embeded in RS: command-line interaction, servlets
+
+
+                *********************************************
+                * Part I: Argante design and implementation *
+                *********************************************
+
+
+----------------------------
+ 1. Introduction and credits
+----------------------------
+
+"Argante" is a virtual operating system, created in a big part during a few
+days. In the present stage of its implementation I take care of most things
+and monitor code developement, but I hope many other people will join the 
+project :) You're currently reading the (almost) complete documentation for
+Argante OS release 1. This is quite early version of this system, so many
+things are still scheduled for futher development. Our goal is to show this
+solution to the open-source community, to discuss our ideas and concepts,
+and to decide if we should continue our work on this system.
+
+The rationale for its creation and what makes it different from other systems
+will be explained in section 2 of this text. In the meantime I would like to 
+thank all those, who even minimally contributed to the present form of the
+system (I have deliberately omitted co-authors of the code and who have been
+mentioned earlier):
+
+  Maja :)                       - for her being and that's it...
+  S³awomir Krawczyk             - for usual sarcastic remarks ;)
+  Agnieszka S³ota               - for her interest in the idea and care
+  Filip Niedorezo               - for the First Independent Program ;>
+  Marek Bia³og³owy              - for "you are scaring me"
+  Wojciech Purczyñski           - for nice polemics
+  Jarek Sygitowicz              - for plans of world domination
+  negativ			- good ideas :)
+  eloy				- mailing list
+  maxiu				- ideas, ideas concerning optimalisation
+
+This list is rather short, I hope it will change :) If you feel you have been
+omitted, write to me. Write also if you think tsi project is interesting or
+if you have some critical points to make, some ideas etc. Every idea is very 
+precious. But first of all it is essential to acqaint oneself with the whole 
+document and try to find answers for questions coming to your mind there.
+Programmers accustomed to Unices, classic assembler and trditional 
+constructions, may find many things here "don't make sense", but I assure you
+almost every element of Argante is justified by something; with some
+good will you will find this justification here :)
+
+We'd especially like to thank the ArtGabi team - you can visit their webpage
+at http://www.artgabi.com.pl. They created Argante logo and designed our
+website for free.
+
+Essential literature:
+
+  Steven Muchnick, "Advanced Compiler Design and Implementation"
+  Andrew S. Tanenbaum, "Distributed Operating Systems"
+  Doreen L. Galli, "Distributed Operating Systems - concepts & practice"
+  Andrew S. Tanenbaum, "Modern Operating Systems"
+  Eric S. Raymond, "The Cathedral & the Bazaar"
+  Illiad, "Evil Geniuses in a Nutshell"
+
+  (I don't have more at hand ;)
+
+This documentation is split into two parts. First part, which you're
+currently reading, described concepts and implementation of Argante OS.
+Second part describes practical approach to Argante and programming
+and development guidelines.
+
+
+--------------------------------------------------------
+ 2. Why Argante? How is it different from other systems?
+--------------------------------------------------------
+
+Argante is a fully virtual environment for running applications on Unix
+systems. This makes many people think about Java and its sandbox for example,
+although the technical reasons Argante is based on were totally different.
+
+For one thing, Argante is a complete operating system. It has its own 
+implementation of processes, inter-process communication, filesystem,
+access control... All built on the top of basic real OS low-level
+implementation, but with own control mechanisms, own semantics and so on.
+Why all this? I will try to explain:
+
+The standard architecture of operating systems and hardware (e.g processors)
+falls flat when it comes to security and stability of the software.
+To be short: it lacks low lewel support for general access control, error
+handling (primitive techniques existing in, say, the 80386 series are not
+enough), and the architecture of stack or data segment usage is based on
+some mistaken assumptions.
+
+Trying to fix these errors at a higher level is generally risky and 
+unsuccessful. The authors of Java have created a miserably slow and, as a 
+matter of fact, not always secure / portable solution with very limited
+application range; moreover, they were unable to force software authors to use
+safe, verified architecture models, e.g. OSI, limited trust and interaction
+architecture which presumes that only the two closest data processing layers
+work together and the code itself is divided into functional segments.
+Programs written in C using the model "listener -> fork() -> client handling"
+are still easier to implement and less prone to failure.
+
+In this way the list of these and other remarks concerning the popular
+hardware and software architecture model came into being. Its essence can
+be best summed up in the motto at the beginning of this document:
+
+"[We] use bad software and bad machines for the wrong things."
+					    -- R.W. Hamming
+
+Except complaints I had many ideas which in my opinion should be, and,
+with minimal cost could be, taken into account in implementations at both
+these levels: hardware and software.
+
+At a certain point I had a difficult decision to make: I could modify
+existing implementations, trying to patch them with temporary solutions,
+risking that most of these ideas will never be carried out, and being aware
+that the project will become a series of compromises, among which the sense
+of its realisation will be lost :) I could as well do another thing:
+sit and rewrite everything from scratch. Forgetting about compatibility,
+conventions, trying to create a solution which will defend itself, or one
+nobody will notice :) In this way the idea of Argante started, having at
+its basis the four principal proposals:
+
+- security and stability
+- functionality
+- efficiency
+- simplicity
+
+Argante is supposed to be a system with no compromises. That is why always
+when in the traditional system we would face choice "security or 
+functionality", instead of choosing one variant we concluded the choice
+itself is bad and created its outline from scratch or changed the model in
+order to reconcile our requirements with expectations.
+
+Why, then, is it an "embedded" system? There are many reasons for that. For
+one thing, an embedded implementation does not enforce OS change, makes
+first attempts and projects easy, providing integration with existing 
+solutions on native Unix platforms. In this way Argante introduces an
+additional abstraction and protection layer, acting as a completely independent
+hardware architecture, and without enforcing serious changes. Its being 
+written in C assures efficiency and portability.
+
+Moreover, an implementation which can use existing system drivers, devices,
+system functions, becomes a much simpler task and permits programmers to
+concentrate on the substance instead of implementation details (bootloader,
+drivers etc.).
+
+Naturally, when speaking of stability and security of an embedded system
+I mean its implementing access control systems independent from the native
+platform, its own multi-process model: all these solutions are safe and
+independent of the real system. That's why Argante will be a safe solution
+on almost any Unix (or maybe even Windows?;) provided that elementary
+security of the native platform will be ensured; in the simplest variant,
+all network services should be removed (hybrid solutions, described with
+rIPC and network, constitue a separate case).
+
+In order to satisfy the four enumerated proposals, I have created general
+guidelines for the system. They were as follows:
+
+- the core of the system will be a microkernel providing base functionality;
+  all input/output operations will be performed using loadable modules, easy
+  to implement by the user and added/removed while the system is running;
+  the modules can also contain other, necessary functions, for example 
+  providing advanced operations on text strings and similar procedures,
+
+- the system will provide _any_ functionality permitting software creation,
+  starting from a database server to a graphics application without any
+  need to change system code, and at the same time ensuring the highest 
+  security level,
+
+- the system will have its own, low-level, hardware platform independent
+  virtual machine language; this language will be simple and efficient
+  enough to ensure speed and effectivity, and at the same time it will
+  ensure full separation from the real system and will not allow native
+  code execution,
+
+- system management will be fully separated from processes run in the
+  virtual system; user-space and kernel-space will also be fully separated,
+  without any possibility of interference into kernel-space from the level
+  of user-space,
+
+- every process run in the system will dispose of its own, private address
+  space, separate stack segment which will not be directly addressed
+  (used only by jump/return functions); the same applies to the code segment, 
+  which will not be directly addressable (note: we are providing user-space
+  metastack features for reentrant routines and/or local variables). Only the
+  code segment will be executable,
+  
+- a process will be allowed to allocate memory blocks, separately mapped
+  to its own addressing space (with the possibility of write protection);
+  the system will control all attempts of going beyond the allocated
+  block (buffer),
+
+- the system will support low-level exception handling and will allow the
+  program to handle them (LLX - low-level exceptions),
+
+- the system will have its own, secure and resource-saving implementation
+  of multitasking and its own, static process model (SMTA) with assigned
+  fixed privilege lists; multi-user applications will also be supported
+  by the possibility of defining a subgroup identifier in a given privilege
+  domain,
+
+- a new philosophy of privilege granting and dropping, without risks inherent
+  in the Unix implementation,
+
+- from its very beginning the system will support secure solutions (e.g.
+  unbounded strings instead of null-terminated ones, etc.),
+
+- the system will provide hierarchical, centralized and universal 
+  implementation of Hierarchical Access Control (HAC), permitting
+  defining privileges with arbitrary detail level; additionally, the system 
+  will enforce the "switch" architecture, forcing the programmer to define
+  which privileges are necessary in order to perform a given task without
+  permitting having any others,
+
+- the system will strongly support the OSI architecture, including 
+  distributed architecture, providing advanced mechanisms of inter-process
+  communication IPC (a specific solution, different from the one existing
+  in Unix) and rIPC (remote IPC session distribution among equivalent
+  processes, communication between tasks on different computers transparent
+  for user-space); rIPC will also support transparent cluster architecture
+
+- the system will have its own implementation of a virtual filesystem,
+  accessible from the level of a real filesystem, and at thse same time
+  permitting establishing arbitrary inner structure and full access control
+  compatible with HAC
+
+- changing any functionality will be possible without stopping the system
+
+- to avoid "state of art" coding, Argante can be easily mixed with real
+  system code at any moment, communicating with system daemons, services,
+  being able to set up and modify real system if necessary (and *only* if
+  programmer wants to do it).
+
+Argante favours creating hybrid solutions, for example applications
+of the real systems coordinated / protected by Argante code. This will 
+enable one to transparently create reduntant, heterogenic clusters with
+morphing possibilities, self-assigning new objects in existing hierarchy
+and full redundance as well as load balancing without _any_ programming
+costs. It doesn't matter whether the system will work on one machine or a
+hundred, with redundance and load balancing - the rIPC philosophy solves
+distributed systems problems in a way transparent for applications.
+
+What else? Well, Argante could act not only as a cluster development platform,
+but, in fact, it makes complex development really easy and clean. For
+example, to design distributed, fault-tolerant virtual router, you could
+use only several thousands lines of readable and elegant code, which can
+be maintained for years with no risk.
+
+Well, but that's not all. To prove AOS isn't only the "distributed networking
+software", we decided to develop svgalib connectivity module to demonstrate
+how fast and effective - especially when compared eg to Java - Argante can
+be. Enjoy.
+
+I know it sounds like a wish list, but I'm writing these words having 
+implemented most of the system's code and, to my surprise, I can 
+(no-so-modestly) say that I have suceeded in attaining these aims.
+What have I got?
+
+- security and stability:
+
+  - practically speaking, impossibility of taking control over an application
+    in the system (stack, data segment and buffer control, the approach of
+    passing parameters to syscalls without depending on C conventions, like
+    null-term); because of a quite limited number of RSIS opcodes, privilege
+    control is a trivial matter,
+    
+  - even if it were possible, no possibility of getting privileges enabling
+    one to breach the security of the rest of the virtual system
+    (separation of management from the virtual system, from kernel-space),
+
+  - even if it were possible, lack of any possibility of influencing real 
+    system (separate implementation of multitasking, not using the 
+    implementation of the real system),
+
+  - faciliating programming compatible with the secure OSI architecture,
+    it is simply intuitive in this system,
+
+  - enforcing control of code execution correctness by raising exceptions,
+  
+  - full access control to any resources (HAC), the above mentioned new
+    philosophy of privileges, a new approach to linking privileges
+    with the pricess and a new process model, etc...
+      
+  - destabilisation of the native filesystem is practically impossible,
+
+  - redundance and request distribution support
+  
+- functionality and simplicity:
+
+  - the system is universal by providing commode modules and centralized
+    control as well as an effective virtual processor architecture with
+    limited but efficient command set
+
+  - the possibility of creating distributed systems without having to modify
+    the code; the possibility of request propagation without any need to 
+    modify the code (of an application)
+
+  - exceptions make exception handling easier
+
+  - introducing even serious system changes may happen on the fly by 
+    module exchange
+    
+- efficiency:
+
+   - load balancing, creating clusters, distributing the solution among 
+     machines can be done without modifying the source code of its
+     elements
+
+  - by using a low level virtual code, instead of -- as in the case of Java
+    -- a high level code, efficiency reduction is not so striking, nor does
+    it limit the abilities of the code. Loops of the "idle" kind (i.e. a 
+    repeated jump) is a few times slower than in a compiled C program running
+    on a given hardware platform, which is a very good result. In case of
+    more complicated operations (e.g. I/O), efficiency reduction is much lower,
+    oscillating around 15-30%,
+
+  - the kind of multitasking implemented is far more stable and much more
+    memory-saving than on the native system; it results in part from
+    the fact that a virtual Argante processor needs less information to 
+    maintain a process than Unix does, and also from imperfection of many
+    systems.
+
+We wanted to combine QNX, HURD and all our "loose" ideas to create a 
+really secure and effective solution :) Later, Pawel Krawczyk pointed out
+that Inferno embeded system, developed by Lucent, contains several solutions
+quite similar to Argante. Of course, there are also major differences (Argante
+is all-purpose environment for secure applications that doesn't enforce any
+high-level solutions and focus on the low-level security).
+
+We believe we avoided such strange half-solutions - like moving high-level
+functionality to low-level layer with no good reason (and thus decreasing
+freedom of design and making overgrown code); we decided for such step only
+in specific, well-documented and explained cases, where we're sure it will
+offer some real good for the programmer without enforcing static, complex
+solutions where they are not necessary.
+
+Details on Inferno can be found at:
+http://www.vitanuova.com/inferno/papers/bltj.html.
+
+And another thing: you can view a simple but joyful tutorial starting three
+programs by typing "./build test".
+
+What's still unfinished in Argante? I believe some new modules should be 
+developed to give Argante the access to appliances where it could be usable.
+While making AOSr1, we focused on the things that are absolutely necessary
+to make it interesting and innovative, but also, we had to delay some
+developments (mainly because we do not have enough people). Here's our
+list of things to be done in AOSr2 (more recent version can be found in
+Documentation/TODO file):
+
+1) Endian block translation (in advmem). Assigned person: lcamtuf
+
+2) Solaris/BSD portability for low-level networking (packet.c); well, in
+   fact, someone should write #ifdef code for every platform when it
+   comes to packet sniffing. BPF support would be nice. Assigned
+   person: bikappa (as long as he will found some free time to write AND
+   TEST his code on a few platforms ;)
+
+3) Solaris, BSD, IRIX: ripcd portability; some minor fixes are required
+   to make it portable accross these platforms. Assigned person: (???)
+
+4) Mainstream Argante: HP/UX, AIX ports. Assigned person: (???)
+
+5) Bytecode interpreter JITs (jumps in table) instead of multiple ifs.
+   Almost done by Mariusz Woloszyn.
+
+6) X Window: GTK-based GUI (agtses, agtback functionality; basic
+   console commands as menu items / buttons; vcpucons / agtexe
+   in xterm window). Assigned person: (???)
+
+7) AHLL should be rewritten using some flex/bison-alike stuff.
+   Assigned person: Bulba or lcamtuf (???)
+
+9) Math module should be optimized (floating point arrays -> fixed
+   point or int arrays, etc). Assigned person: z33d
+
+10) Some examples - SMTP, POP3 functionality should be good.
+    Assigned person: (???) - after AHLL rewriting!
+
+11) PDF/sgml/html documentation, completely revised and clean.
+    Assigned person: lcamtuf
+
+12) Modula-3 compiler. Assigned person: Marcin Zukowski
+
+Release date: one day in the future ;)
+
+
+We are seriously considering separating the bytecode interpreter from
+I/O / debugging functionality in future releases of Argante. What do we mean?
+Well, our bytecode interpreter, which is actually pretty easy to implement,
+will be ported to several platforms:
+
+- "software solution" it is right now - where time has to be shared between
+  real system, I/O operations and currently executed code,
+
+- cheap microcontrollers (eg. Motorola 68376) on the PCI/ISA cards - in
+  this case, bytecode interpreter is stored in EEPROM, and controller is
+  executing it, calling Argante I/O modules (running in real system) only
+  if there's such need (on syscalls); controller will have its own
+  memory, and all transfers will be done using DMA. This will really
+  speed-up whole solution, decrease the usage of real system, and made
+  it even more secure - RSIS code won't be executed by main processor.
+  Also, it will become fault-tolerant - even if real system crashes,
+  VCPUs might survive, waiting for real system to resume I/O services :)
+  We're going to design such RSIS-interpreter card in near future, as it
+  isn't really complicated or expensive (M68376 costs $25).
+
+- cheap external "processors" (eg. spare i386 box); in this case, bytecode
+  interpreter will be launched at the boot time, with no OS layer; the problem
+  is to provide fast enough half-duplex link with almost no latency between
+  two boxes with no additional, expensive hardware; dedicated ethernet
+  _might_ be the answer,
+
+- one day, maybe dedicated RSIS hardware solutions - eg. chips implementing
+  RSIS functionality as a native language?:) Well, the last option is
+  S-F for now ;)
+
+What are the consequences? Well, one I/O mid-end might connect several
+solutions - software boxes, dedicated hardware, and so on - providing unified
+input and output for the project, with no risk one box might affect work
+of other boxes. Also, even if mid-end crashes, properly written AOS
+software will survive it and resume its work after rebooting the mid-end.
+
+Ok - we sure this list isn't closed - and so, your comments, ideas and
+suggestions will be more than welcome :)
+
+PLEASE NOTE: this documentation is still evolving; our source code is
+evolving as well. This might cause some minor differences between this
+documentation and source code. Sometimes, one look at the source code
+might be more explainative than 10 pages of documentation. Oh, and feel free
+to report any mistakes and/or corrections to us :)
+
+
+--------------------------------
+ 3. SMTA - a multi-process model
+--------------------------------
+
+The concept of processes in Argante might seem shocking to many people,
+especially to those accustomed to the Unix scheme: one client, one process.
+In Argante processes are static objects -- they are started from the 
+management console or scripts. According to standard Argante semantics
+(which, naturally, can be changed by adding a new syscall), processes
+cannot multiply, create offspring or execute other programs in their place.
+
+Instead, Argante supports the OSI-alike model, where a process is assigned not
+an object (as a connecting client, for example), but a certain function (e.g.
+database or connection service) - depending on programmer's will. Although it
+seems like additional burden, I am sure when you finish reading this document
+you won't think it is  something bad. The process is read into virtual
+processor (VCPU) space and exists there until it finishes its job or a
+critical error arises (like an unhandled exception).
+
+Most process parameters, e.g priority or a "domain" set (which are an
+object similar to supplement groups in Unix), are assigned to the binary
+image of a given executable during compilation. Below is an example
+structure of an ftp daemon fulfilling OSI requirements, easy to implement
+in Argante (maybe simpler than in C), and at the same time much more secure
+and... efficient:
+
+
+  TCP/IP                                    database  user files
+    |                                           |     |           "reality"
+  --|-------------------------------------------|-----|--------------------
+  (net) (ipc)---(ipc)-(ipc)-(ipc) (ipc)-(ipc)  (fs)  (fs)      kernel space
+  --|-----|-------|-----|-----|-----|-----|-----|-----|--------------------
+    |     |       |     |     |     |     |     |     |          user space
+   <A>----+      <B>   <B>   <B>----+    <C>----+----<D>
+
+A - proces handling network connections: accepts a connection, connects to
+    one of the B processes with IPC and transfers commands to them
+
+B - processes serving clients (any number, automatic request propagation);
+    they handle commands, communicate with the authorizing process with IPC;
+    thanks to ease of use of IPC and context support, handling of many sessions
+    in one process is not a problem.
+
+C - the process realizing authorization; using the fd verifies entries in the 
+    local database available in SVFS
+
+D - after authorization, every request is passed from B to D (and back).
+
+When describing the HAC system we will explain how inter-process communication
+and group changing work. For now it should be said that processes will
+never be able to, say, operate using the net and ipc module at the same
+time (the "switch", mentioned earlier), and the process A will never be able
+to communicate with C via IPC.
+
+Firstly, security. Secondly, level of code complication at the level
+not extending the same one written in C. Thirdly, much higher efficiency
+when compared to the model using fork().
+
+How does multitasking work? Generally speaking, it is rather just ;)
+Every process in a given cycle of process handling is assigned as many
+machine cycles of its virtual processor, as is the value of the "priority"
+of the process. Consequently, a process with the priority of 10000 will be
+given 10000 cycles, and a process with the priority of 1 - one cycle.
+
+Obviously, it is advised to give processes reasonable priority values,
+ranging from 100 to 10000.
+
+Processes might be in the state STATE_SLEEPFOR, in which their execution
+is suspended for a determined number of cycles of process handling; the state
+STATE_SLEEPTILL is also possible: it is a condition where the process
+is waiting for a given number of microseconds; or the state 
+STATE_IOWAIT, where the process is waiting until, let's say, it has been
+granted the right to write to a file another process is writing to, or for
+receiving data from a socket (of course only if it is made to enter in this
+state, because it can also execute the function with the NONBLOCK option.
+
+For details on proper project development, please see Part II, where
+you can find practical guidelines and precautions...
+
+
+-------------------------------
+ 4. VCPU - Virtual Architecture
+-------------------------------
+
+Technically, VCPU is a virtual machine with a limited but easier to
+use, when compared to traditional machine code, instruction set;
+three register blocks (for operating on 32-bit unsigned and signed
+integers and floats, respectively) with 16 registers each; stack space
+(used only for function return addresses, data storage is done otherwise); an
+identification number in inter-process communication model; executable
+program space; space used for allocating memory blocks with an implementation
+of access control and dynamic reallocation as well as a few other, less
+significant variables. Allocated memory blocks which can be used for data
+storage and processing are distinct and overwriting one block when
+going beyond the limit of another is impossible. As has been mentioned,
+stack and program code modifications are impossible, either.
+
+Allocated memory addressing, in contrast to 8-bits used in traditional systems,
+is done with dwords, 32-bit jumps. It entails improved efficiency in most
+applications and, at the same time, safer data access.
+
+Code space addressing is similar. Every instruction is coded using
+12 bytes. Instructions without arguments, as NOP etc., have only the
+first byte set, referring to the opcode. In other cases, two subsequent
+bytes mean the parameter type; one byte is a padding, the two another
+contain parameters. In fact we could do with 10 bytes, but efficiency
+would decrease (at present we have three times 32-bit dword). Waste of 
+space? Not really, if you read futher specifications :)
+
+This solution allows for safer movement within the code segment (including
+jumps) as well as lessening opcode number and extremal gain as far as
+the number of parameters needed to perform a given operation is concerned,
+which is made up for by the size of a single instruction:
+
+       1     2     3     4     5     6     7     8     9     10    11    12
+ +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+  xxxxx xxxxx xxxxx RSRVD xxxxxxxxxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxxxxx
+  |     |     |           |                       |
+  |     |     |           +-----------------------+- two 32-bit parameters
+  |     |     +------------------------------------- second parameter type
+  |     +------------------------------------------- first parameter type
+  +------------------------------------------------- opcode, e.g. MOV
+
+Parameter types:
+
+IMMEDIATE - 32-bit number
+UREG      - unsigned register number
+SREG      - signed register number
+FREG      - float register number
+IMMPTR    - a number pointer to a 32-bit numeric value
+UPTR      - an unsigned register number containing a pointer to a 32-bit
+            numeric value
+
+Note: in case of a jump instruction, passing an IMMEDIATE or UREG parameter
+type refers simply to the address. The case of the MOV instruction is
+different: if we want to refer to the address of a given memory location,
+we should use IMMPTR or UPTR types. It is a convention making using commands
+more effective.
+
+The following registers are accessible:
+
+  u0 .. u15             - unsigned register types (0..15)
+  s0 .. s15             - signed register types (100..115)
+  f0 .. f15             - float register types (200..215)
+
+The systems provides type conversions during register operations, however
+it is time consuming and shouldn't be used too often. Values taken from
+the memory aren't converted (so when writing the value of the register
+f0 = 0.123 to the address 1234 and then reading the value from this
+address to the register u0, we will probably get an unpredictable result;
+the solution consists in reading the value again to the register f0 and
+using mov u0,f0).
+
+The process run on a VCPU can only use the native instruction set called
+RSIS without the possibility of directly executing the machine code of the
+real processor.
+
+
+------------------------
+ 5. The RSIS command set
+------------------------
+
+A coarse description of the machine commands of the system:
+
+
+Mnemonic:       NOP
+Parameters:     -
+Opcode:         0
+Description:    do nothing
+Result:         -
+Exceptions:     -
+
+
+Mnemonic:       JMP <addr>
+Paramaters:     <addr> = IMMEDIATE, UREG, IMMPTR, UPTR
+Opcode:         1
+Description:    conditionless jump to an absolute address
+Result:         IP change
+Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+Mnemonic:       IFEQ <x> <y>
+Paramaters:     <x> = any, <y> = any
+Opcode:         2
+Description:    execution of the next statement if <x> = <y>
+Result:         conditioned IP change
+Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+Mnemonic:       IFNEQ <x> <y>
+Paramaters:     <x> = any, <y> = any
+Opcode:         3
+Description:    execution of the next statement if <x> != <y>
+Result:         conditioned IP change
+Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+Mnemonic:       IFABO <x> <y>
+Paramaters:     <x> = any, <y> = any
+Opcode:         4
+Description:    execution of the next statement if <x> > <y>
+Result:         conditioned IP change
+Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+Mnemonic:       IFBEL <x> <y>
+Paramaters:     <x> = any, <y> = any
+Opcode:         5
+Description:    execution of the next statement if <x> < <y>
+Result:         conditioned IP change
+Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+Mnemonic:       CALL <addr>
+Paramaters:     <addr> = IMMEDIATE, UREG, IMMPTR, UPTR
+Opcode:         6
+Description:    conditionless jump to an absolute address with address push
+Result:         IP change, pushing the addres on stack
+Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT, STACK_OVER
+
+
+Mnemonic:       RET <cnt>
+Paramaters:     <cnt> = IMMEDIATE, UREG, IMMPTR, UPTR
+Opcode:         7
+Description:    return to the address <cnt> popped from the stack
+Result:         IP change, popped from the stack
+Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT, STACK_UNDER
+
+
+Mnemonic:       HALT
+Paramaters:     -
+Opcode:         8
+Description:    termination of VCPU work; also in respawn mode
+Result:         -
+Exceptions:     -
+
+
+Mnemonic:       SYSCALL <nr>
+Paramaters:     <nr> = IMMEDIATE, UREG, IMMPTR, UPTR
+Opcode:         9
+Description:    syscall execution
+Result:         dependent on syscall
+Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT, NOMODULE +
+                syscall dependent
+
+
+Mnemonic:       ADD <x> <y> - opcode 10
+                SUB <x> <y> - opcode 11
+                MUL <x> <y> - opcode 12
+                DIV <x> <y> - opcode 13
+                MOV <x> <y> - opcode 19
+Paramaters:     <x> = UREG, FREG, SREG, IMMPTR, UPTR
+                <y> = IMMEDIATE, UREG, FREG, SREG, IMMPTR, UPTR
+Description:    arithmetic operations (+, -, *, /, assignment)
+Result:         first argument value change
+Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+Mnemonic:       LDB <dst addr>, <src addr>
+Opcode:         (fixme!!!)
+Parameters:     <src addr> - address of source memory address / reg
+                <dst addr> - address of destination memory address / reg
+                s0 - source byte offset
+Description:    single byte accessibility (endian-independent)
+Result:         dst will contain src[s0] (single bytes)
+                negative indexing is possible in memory-based
+                addressing; register-based addressing requires s0 to be in 
+                range 0 to 3
+
+
+Mnemonic:       STOB <dst addr>, <src addr>
+Opcode:         (fixme!!!)
+Parameters:     <src addr> - address of source memory address / reg
+                <dst addr> - address of destination memory address / reg
+                s0 - destination byte offset
+Description:    single byte accessibility (endian-independent)
+Result:         dst[s0] will contain src youngest byte (single bytes)
+                negative indexing is possible in memory-based
+                addressing; register-based addressing requires s0 to be in 
+                range 0 to 3
+
+
+Mnemonic:       MOD <x> <y> - opcode 14
+                XOR <x> <y> - opcode 15
+                REV <x> <y> - opcode 16 (unimplemented for now)
+                AND <x> <y> - opcode 17
+                OR  <x> <y> - opcode 18
+Paramaters:     <x> = UREG, SREG, IMMPTR, UPTR
+                <y> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+Description:    binary operations
+Result:         first parameter value change
+Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+Mnemonic:       CWAIT <x>
+Paramaters:     <x> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+Opcode:         20
+Description:    puts the process to sleep for <x> SMTA ticks
+Result:         -
+Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+Mnemonic:       TWAIT <x>
+Paramaters:     <x> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+Opcode:         21
+Description:    puts the process to sleep for [at least] <x> microseconds
+Result:         -
+Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+Mnemonic:       ALLOC <size> <prot>
+Paramaters:     <size> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+                <size> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+Opcode:         22
+Description:    allocates a memory block with size <size> and access flags
+                <prot>
+Result:         u0 - id block number, u1 - map address
+Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT, NOMEM
+
+
+Mnemonic:       REALLOC <nr> <size>
+Paramaters:     <nr> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+                <size> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+Opcode:         23
+Description:    reallocates a memory block with number <nr> so that it has
+                size <size>. NOTE: if <size> is '0', u0 is examined to
+		modify memory block permissions.
+Result:         -
+Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT, NOMEM
+
+
+Mnemonic:       DEALLOC <nr>
+Paramaters:     <nr> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+Opcode:         24
+Description:    deallocates a memory block with number <nr>
+Result:         -
+Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+Mnemonic:       CMPCNT <addr1> <addr2>
+Paramaters:     <addr1> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+                <addr2> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+                s0 - dwords count
+Opcode:         25
+Description:    compares <addr1> and <addr2> within s0 bytes
+Result:         u0 - 0 = comparison succeeded, !0 - negative
+Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+Mnemonic:       CPCNT <addr1> <addr2>
+Paramaters:     <addr1> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+                <addr2> = IMMEDIATE, UREG, SREG, IMMPTR, UPTR
+                s0 - dwords count
+Opcode:         26
+Description:    copies <addr2> to <addr1> within s0 bytes
+Result:         -
+Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+Mnemonic:       ONFAIL <addr>
+Paramaters:     <addr> = IMMEDIATE, UREG, IMMPTR, UPTR
+Opcode:         27
+Description:    a jump to an absolute address on exception; discarded after RET
+                under current execution level
+Result:         -
+Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+Mnemonic:       NOFAIL
+Paramaters:     -
+Opcode:         28
+Description:    remove ONFAIL on current execution level
+Result:         -
+Exceptions:     -
+
+
+Mnemonic:       LOOP <addr>
+Paramaters:     <addr> = IMMEDIATE, UREG, IMMPTR, UPTR
+                s0 - loop counter
+Opcode:         29
+Description:    jump to an absolute address if s0 is greater than zero,
+                s0 is increased by one
+Result:         IP change, s0 change
+Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+Mnemonic:       RAISE <nr>
+Paramaters:     <nr> = IMMEDIATE, UREG, IMMPTR, UPTR
+Opcode:         30
+Description:    raise exception <nr>
+Result:         exception raised
+Exceptions:     OUTSIDE_REG, BAD_PARAM, OUTSIDE_MEM, PROTFAULT
+
+
+These commands were introduced to provide userspace meta-stack
+implementation. To create re-entrant subroutines that might be called
+recursively, you might use the following combination (I assume u15
+register is reserved in your implementation for stacking purposes):
+
+  // Somewhere in the memory, we have writable playfield we can
+  // use for stack. I assume its address can be found in u1
+  // and its size in dwords (!) is stored in u2:
+
+  mov u0, 0
+  SETSTACK u1, u2
+
+:Reentrant_Routine
+   PUSHS u15
+   ALLOC <space required for local objects>, <protection flags>
+   MOV u15, u1
+   // Now, we can use local stack space by accessing address stored in u15.
+   // You can call Reentrant_Routine again, and u15 or your local,
+   // private space won't be damaged.
+   ...
+   // On exit from Reentrant_Routine:
+   DEALLOC <block num derived from u15>
+   POPS u15
+   RET 1
+
+More advanced implementations might catch user stack exceptions to
+resize stack. So, metastack structure looks this way:
+
++--<---< this is a metastack
+|
+|
++--- <local buffers of function nested()>
+|
+|
++--------- <local buffers of function called_from_nested()>
+|
+|
++-------------- <local buffers of function...>
+
+
+WARNING: There's no automatic cleanup or shrinking of user stack on
+exceptions! You have to perform eventual cleanup on your own (PUSHing
+magic value when declaring exception handler might be useful).
+
+Mnemonic:       SETSTACK <addr>,<size>
+Parameters:     both IMMEDIATE, UREG, IMMPTR, UPTR
+                u0 -- initial stack ptr
+Opcode:         31
+Description:    set user-stack pointer (size=0 - disable stack)
+Result:         modified VCPU internals
+Exceptions:     - 
+
+Mnemonic:       PUSHS <dword>
+Parameters:     IMMEDIATE, UREG, IMMPTR, UPTR
+Opcode:         32
+Description:    set user-stack pointer (size=0 - disable stack)
+Result:         modified VCPU internals
+Exceptions:     NOUSTACK, USTACK_OVER
+
+
+Mnemonic:       POPS <dword>
+Parameters:     UREG, IMMPTR, UPTR
+Opcode:         33
+Description:    set user-stack pointer (size=0 - disable stack)
+Result:         modified VCPU internals and
+Exceptions:     NOUSTACK, USTACK_UNDER
+
+
+As you have probably noticed, memory management was not placed in a separate
+module and is an integral part of the system. It's an exception aimed at
+improving efficiency and functionality,although it is perfectly possible to
+create a sophisticated memory management system using syscalls.
+
+Another important remark: some people complained thet the limited RSIS
+instruction set doesn't allow, say, for effective graphics operations or
+memory operations in general. In RSIS (as well as in C, for example),
+the basic language offers only the simplest operations and constructions
+allowing one to control execution flow etc. All advanced functions, however,
+as for example memfrob() and similar, don't belong to the language but
+to libraries. E.g. in Argante you can write the module advgraph.c,
+responsible for complex operations on graphical objects and communication
+with the card, but you cannot expect it from RSIS (so there will be no
+Argante MMX release ;). Although the module for graphics services is not
+currently planned, many functions useful for working with memory blocks
+and textual data will be placed in the advmem.c module.
+
+For the same reasons, we're not following Inferno authors, and not putting
+for example garbage collection, array addressing and so on at the low-level,
+and not using specific string-related conventions. We'd like to give the
+developers freedom in implementing things in the way they want to.
+
+
+------------------------------
+ 6. Low Level Exceptions (LLX)
+------------------------------
+
+Exceptions are one of the things we decided to move from high-level to
+low-level. Why? Because this operation doesn't mean more complex RSIS
+language, nor does it enforce any conventions, except enforcing programmer
+to handle errors, instead of checking for them occasionally (or not checking
+at all).
+
+Exception stack and shrinking at the same time call stack does. You can
+declare exception handler for current execution level (or cancel it). It
+will be cancelled when RET is called, and will be inherited during any
+calls (but can be temporarily shadowed with ONFAIL handler declared in
+subroutine).
+
+If there's no exception handler at current execution level, the stack will
+be shrunk to the nearest handler. For example, if you declared the handler in
+procedure DoSomething, and then you called DrawABox, which does not have
+its own exception handler, but caused an exception, execution will
+return immediately to DoSomething, and the exception handler will be called
+from the place DrawABox was called.
+
+If there's no exception handler, the task will be terminated.
+
+Handlers are not specific. It means, any exception causes handler to be
+called. u0 register is saved (it will be restored after RET to code which
+caused first exception), then it's overwritten with exception code (these
+codes are specific for different modules, and are described below).
+
+Exception handlers are not cancelled at the time they're called, but, if
+an exception will appear in exception handler code, lower-level handler
+will be called instead of calling current handler again.
+
+Handler can decide, if it wants to cover current exception (and then, for
+example, return to code using RET), or to pass the exception to low-level
+handler (it can be done using RAISE u0 if exception code was not matched).
+
+The accepted policy consists in informing the program (using the non_fatal()
+function) using raised exceptions about untypical/alarming situations.
+Thus the syscall checking whether a file exists should not raise an exception
+if it doesn't exist. On the other hand, the syscall for opening files
+should raise an exception in these circumstances.
+
+So, exceptions raised by commands:
+
+#define ERROR_STACK_OVER                0x1
+
+  Stack overflow. Might happen on CALL or when exception handler
+  is called at current execution level, but there's no stack
+  space available.
+
+#define ERROR_STACK_UNDER               0x2
+
+  Stack underflow. Might happen on excessive RET attempt. Can be
+  handled only at the lowest-level exception handler, of course,
+  because stack is at "ground" level at the time this exception
+  is raised.
+
+#define ERROR_OUTSIDE_CODE              0x3
+
+  Instruction pointer outside addressable process space (eg. no
+  HALT at the end of code or exceessive JMP / CALL / ONFAIL).
+
+#define ERROR_OUTSIDE_REG               0x4
+
+  Excessive register number. Shouldn't happen, because these numbers
+  are validated by compiler, unless you're messing with configuration
+  options.
+
+#define ERROR_BAD_PARAM                 0x5
+
+  Bad opcode parameter - for example MOV with immediate value as first
+  param. In some cases - eg. REALLOC / FREE - it might mean incorrect
+  memory block number specified.
+
+#define ERROR_BAD_INSTR                 0x6
+
+  Illegal instruction (compiler brain damage or serious incompatibility).
+
+#define ERROR_OUTSIDE_MEM               0x7
+
+  Attempt to access non-allocated memory address.
+
+#define ERROR_PROTFAULT                 0x8
+
+  Syscalls - buffer passed as a parameter is not suitable for reading or
+  writing.
+
+#define ERROR_TOOBIG                    0x9
+
+  ALLOC / REALLOC attempt with size larger than per-block limit.
+
+#define ERROR_NOMODULE                  0xa
+
+  No handler for specific syscall number.
+
+#define ERROR_BAD_SYS_PARAM             0xb
+
+  (obsolete)
+
+#define ERROR_ACL_PROBLEM               0xc
+
+  HAC subsystem cannot be initialised - missing configuration file. It
+  will cause all HAC-based syscalls to fail.
+
+#define ERROR_NOPERM                    0xd
+
+  Access permission denied on HAC level
+
+#define ERROR_NOMEM                     0xe
+
+  No more free memory / memblock slots (ALLOC/REALLOC).
+
+#define ERROR_DEADLOCK                  0xf
+
+  Deadlock - cannnot access required system resource (eg. entropy pool).
+
+#define ERROR_NOOBJECT                  0x10
+
+  Filesystem: object can't be located within SVFS mapping hierarchy.
+
+#define ERROR_FSERROR                   0x11
+
+  General filesystem fault - for example, requested task cannot be
+  completed due to low-level real system syscall error.
+
+#define ERROR_FS_BAD_PATH               0x12
+
+  Filesystem: path is incorrect; either whole path or one of its elements
+  is too long, or you used relative path but have not current working
+  directory set. It might also indicate path contained illegal
+  non-printable characters.
+
+#define ERROR_FS_OPEN_ERROR             0x13
+
+  Cannot open file - for example, it does not exist (or disappeared
+  during blocking open call).
+
+#define ERROR_FS_BAD_OPEN_MODE          0x14
+
+  Requested access mode is invalid.
+
+#define ERROR_FS_CREATE_ERROR           0x15
+
+  Cannot create file - for example, it exists already.
+
+#define ERROR_FS_BAD_VFD                0x16
+
+  Incorrect VFD number passed to fs syscall.
+
+#define ERROR_FS_NOSEEK                 0x17
+
+  File can be accessed in append-only mode, while effective seek operation was
+  requested.
+
+#define ERROR_FS_EXISTS                 0x18
+
+  Rename: destination object exists.
+
+#define ERROR_FS_NOFILE                 0x19
+
+  Object does not exist or object type mismatch (dir instead of file / file 
+  instead of dir).
+
+#define ERROR_FS_NODIRENT               0x1a
+
+  LIST_DIR: requested offset is invalid.
+
+#define ERROR_RESULT_TOOLONG            0x1b
+
+  Result will be longer than buffer passed to store it.
+
+Take a look at Examples/RSIS/error2.agt if you're still not sure how
+exceptions work.
+
+
+----------------------------------
+ 7. HAC - privilege control system
+----------------------------------
+
+A unified privilege management mechanism (HAC) has been created.
+A sample entry in the file access.set, the configuration file of the
+subsystem:
+
+12345:00000     fs/ftp/users          fs/fops/new/dir         allow
+|               |                       |                       |
+| +-------------+                       |      entry description|
+| | +-----------------------------------+     - allow or deny
+| | |
+| | +-- hierarchical identfier of acces type: acces space is 'fs'; a branch
+| |     for file operations (fops), operation type: object creation
+| |     (new), object type: directory (dir). This convention is recommended,
+| |     although as I said earlier the kernel is not responsible for 
+| |	authorisation - it is done by modules, passing the data to the 
+| |     function is_permitted().
+| |
+| +---- hierarchical resource identifier; in this case object space,  
+|       filesystem space (ftp file) and a concrete catalog are described.       
+|
++------ group membership; the value of '0' means the rule is of
+        "generic" type and refers to all grups; the value after ':'
+        refers to a the supgroup. In the case of rules specyfying
+        a non-zero group, the value must be integer.
+
+The sequence of entries in the configuration file decides of their priority.
+Consequently, more specific entries (e.g. containing denial of access to
+resources for a given subgroup) should be given before more general ones.
+
+NOTE: If operation identifier in in the configuration file is, say, 
+'fs/fops', it means someone fulfilling other criteria and requesting access 
+to 'fs/fops/new/file/text' will be granted access. Obviously, it doesn't
+work both ways and the entry 'fs/fops/new/file/text' doesn't imply
+access to the whole hierarchy 'fs/fops'. Using '/' as separators is
+necessary: for example the entry 'fs_ops' doesn't mean access
+to the object 'fs_ops_new_file'.
+
+HAC requires detailing operation rules, making one precise their object
+type which is undergoing operation. 
+I
+n this way an entry of the type given below is _ALWAYS_ correct:
+
+    +- wdops ---- cwd
+    |    +------- pwd
+    |
+    +- setup ---- ...
+    |
+fs -+- fops --+-- create -- file ----------+-- binary
+              |      +----- directory      |
+              |                            +-- text
+              +-- delete -- file
+              |      +----- directory
+              |
+              +-- read ---- directory
+                    +------ file
+
+On the other hand, entries like fs/fops/file/delete, fs/fops/file/create, etc.
+are INCORRECT. Although it may seem illogical at a glance, but this second
+entry would actually make rules generalisation impossible (e.g. granting
+privileges to create objects in a given part of the filesystem means entering
+fs/fops/create, whereas if we used the other notation, it would require
+many entries).
+
+As a means of protection against attempts of filing misinformation to
+modules managing the filesystem, the authorising system refuses access to
+objects containing the sequence "/..". The module should take care (and it
+does) of eliminating them.
+
+As for subsystems where it's impossible to define resources, or their 
+defining would be doubling access type (e.g. the module displying text
+on the virtual console - defining operation type is enough in this case),
+the resource should be 'none'.
+
+Rule testing before their ctualisation can be done with the included program
+'actest' (in the 'tools' directory), which provides decent diagnostics HAC. 
+Rules actualisation is done with '^' within the management console (see below).
+
+If you know nothing about modules yet, you can come back here later. I will
+explain the HAC interface for modules below:
+
+>From the point of view of the author of a module, the most comfortable
+interface to access control is the VALIDATE() macro contained in the
+file include/acman.h. The macro accepts three parameters: the processor
+number, resource identifier as well as access type identifier.
+
+For example:
+
+  VALIDATE(c,"net/tcp/destination/10.0.0.1/1234","net/connect");
+
+In case where  access is possible, macro will have no effect. If access is 
+denied, the macrow will raise exception NOPERM with situation description and
+will exit the function syscall_handler() it should be called from.
+
+To handle it in a more refined way, we can use the function is_permitted(), 
+accepting parameters corresponding to the parameters of the VALIDATE() macro,
+but returning the value of 0 (refusal) or 1 (access granted). There is no
+place for function return, nor exception is raised. To be precise, the
+VALIDATE() macro is constructed as a wrapper for the function is_permitted() 
+in the following way:
+
+#define VALIDATE(cp,res,act) { \
+    char errbuf[512]; \
+    if (!is_permitted(cp,res,act)) { \
+      if (!cpu[cp].fail_safe) \
+        snprintf(errbuf,200,"permision denied [%d:%d] act='%s' obj='%s'", \
+                 cpu[cp].current_domain,cpu[(cp)].domain_uid,act,res); \
+      non_fatal(ERROR_NOPERM,errbuf,(cp)); \
+      return; \
+    } \
+  }
+
+The module should also send as detailed requests as it is possible,
+specyfying complete data needed for access verification. The module 
+responsible for graphics should not ask for 'graph', but about
+'graph/control/setmode' and the resource 'graph/res/640/480/16bpp'. 
+Similarly, the rules in the configuration file access.hac should be as 
+precise as possible.
+
+NOTE: for now, HAC supports wildcards in object path. These wildcards are
+supported in two ways. First of all, you can use them in access.hac to
+specify general rules. For example:
+
+1 0     fs/ftp/users/*/mail          fs/fops/list/directory       allow
+
+In this case, HAC request matching domain, uid and operation will be 
+approved if, at the time of HAC call, object path was either:
+fs/ftp/users/mike/mail, fs/ftp/users/david/mail/archive or so. NOTE:
+wildcards are not working accros path segments. This mean access attempt
+to fs/ftp/users/mike/private_files/mail will FAIL, because single '*'
+can substitute single path element only.
+
+/* ...there's no second way at the moment, sorry ;) ... */
+
+Please note: take a look on fs module if you are going to include
+user-supplied data within object path in your own module. It is very
+important to parse it properly, elliminating unwanted wildcards etc! But,
+in fact, it is more important to avoid user/process-supplied strings in
+HAC calls, except for filesystem module.
+
+****** HAC hierarchy tree *******
+
+A) Objects:
+
+         +----- none (object unspecified or determined by operation)
+         |
+         | <fs.so>
+/ -------+----- fs (filesystem objects - recommended mapping start point)
+         |
+         | <network.so>
+         +----- net ------------ address ---- dest ------- unix ------- external --- <sock number>
+         |                          |           |            +--------- <vcpu#> ---- <sock number>
+         |                          |           |
+         |                          |           +---------- tcp ------- <host> ----- <port>
+         |                          |           |
+         |                          |           +---------- udp ------- <host> ----- <port>
+         |                          |
+         |                          +-------- source ------ tcp ------- <host> ----- <port> (listen & connect)
+         |                                      |            |             +-------- default
+         |                                      |            |
+         |                                      |            +--------- default ---- <port>
+         |                                      |            |
+         |                                      |            +--------- all -------- <port> (listen)
+         |                                      |
+         |                                      +---------- udp ------- <host> ----- <port> (listen & connect)
+         |                                      |            |             +-------- default
+         |                                      |            |
+         |                                      |            +--------- default ---- <port>
+         |                                      |            |
+         |                                      |            +--------- all -------- <port> (listen)
+         |                                      |
+         |                                      +---------- unix ------ stream ----- <sockid>
+         |                                                    |
+         |                                                    +-------- dgram ------ <sockid>
+         | <gfx.so>
+         +----- gfx ------------ output ----- text
+         |                          |
+         |                          +-------- <resltn> --- <bpp>
+         |                          :
+         |                          +-------- 320x200 ---- 256 (for example)
+         | <ipc.so>
+         +----- ipc ------------ ipcreg ----- <id>
+                 |
+                 +-------------- target ----- unicast ---- <vsid> ----- <vcpu> ----- <ipcreg>
+                 |                 |
+                 |                 +--------- broadcast
+                 |
+                 +-------------- source ------ <vsid> ------ <vcpu> ------- <ipcreg>
+
+
+B) Operations:
+
+              <display.so>
+            +----- display ----- output ----- text
+            |                      +--------- integer
+            |                      +--------- character
+            | <fs.so>     
+/ ----------+----- fs ---------- fops ------- open ------- file ----- read
+            |                      |                         +-------- write ------ append
+            |                      |
+            |                      +--------- create ----- file ------ write ------ append
+            |                      |            +--------- directory
+            |                      |
+            |                      +--------- delete ----- file
+            |                      |            +--------- directory
+            |                      |
+            |                      +--------- stat
+            |                      |
+            |                      +--------- list ------- directory
+            | <network.so>
+            +----- net --------- sock ------- connect
+            |       |              |
+            |       |              +--------- listen
+            |       | <packet.so> 
+            |       +----------- raw -------- open ------- listener
+            |                                   |
+            |                                   +--------- sender
+            | <local.so>
+            +----- local ------- sys -------- real ------- time ------ get
+            |                     |            |
+            |                     |            +---------- hostname -- get
+            |                     |            |
+            |                     |            +---------- random ---- get
+            |                     |            |
+            |                     |            +---------- stat
+            |                     |
+            |                     +--------- virtual ----- stat
+            | <gfx.so>
+            +----- gfx -------- console ---- vclock
+            |       |
+            |       +---------- init
+            |       |
+            |       +---------- setmode
+            |
+            | <ipc.so>
+            +----- ipc -------- register
+                    |
+                    +---------- msg ------- send
+                    |            +--------- recv
+                    |
+                    +---------- stream ---- req
+                    |            +--------- recv
+                    |
+                    +---------- block ----- create
+                                  +-------- read
+                                  +-------- write
+                                  +-------- recv
+
+----------------------------------
+ 8. SVFS - filesystem architecture
+----------------------------------
+
+The filesystem is defined in the file conf/fsconv.dat. It contains
+virtual filesystem mapping to the real filesystem, separated with
+spaces. The rules for inclusion are similar as in HAC:
+
+
+fs/ftp/test1            /Argante/fs/another directory
+fs/ftp                  /Argante/fs/ftp_server
+
+HAC controls access at the elvel of virtual directories. The above entries
+mean that the fs/ftp/test1 is mapped to another place than the directory
+fs/ftp. If a process has a HAC entry permitting operations like
+fs/create/directory on the object fs/ftp, it will have acces to both
+directories (according to the principles of HAC, provided that this 
+has not been excluded earlier). When creating the directory fs/ftp/nope, 
+the real entry will be created in /Argante/fs/tests/nope. 
+On the other hand, the same operation for fs/ftp/test1/nope, will result
+in the file /Argante/fs/inny_katalog/nope. However, an attempt to access
+the object fs/ftp/../nope will fail - the filesystem module will recognise 
+it as access to the object fs/nope, whereas such an entry doesn't exist
+in the SVFS hierarchy.
+
+The filesystem architecture in Argante presupposes resource access
+control and real filesystem protection, and at the same time the possibility
+of integrating the SVFS filesystem with objects of the real filesystem.
+
+The SVFS system is well simplified but fully functional subset of
+operations on the filesystem. In the original version it doesn't include
+support for symlinks andd hardlinks, however, it supports the ones existing 
+at the real filesystem level.
+
+Including essential resources / system directories directly in the SVFS
+hierarchy is possible (e.g. making the /etc directory accessible), but
+discouraged.
+
+For more details on proper SVFS mapping, see Part II.
+
+
+------------------------------------------------------
+ 9. IPC/rIPC - inter-process comunication, DVR concept
+------------------------------------------------------
+
+Applications developed under control of Argante Operating System are forced to
+use limited interaction and trust architecture. There is no way of forking,
+executing another binary image, or passing parameters directly to other
+processes. Also, enforced OSI model allows only two closest data processing
+layers to work together at the same time. It may look that this makes
+application development harder or at least less efficient, but it's not true.
+Whole interprocess communication is provided by IPC module that allows to
+write code wether or not each part of application is working on the same
+phisical system. This approach helps alot when developing distributed and
+fault-tolerant programs. Once written application, provided that it uses IPC,
+can be run on many system creating cluster-like structure, with request
+distribution and redundancy.
+
+IPC module allows processes to send short messages containing two 32bit words, 
+create stream connections or use block devices. All this is based on limited 
+trust architecture, so targets of each IPC request get all data about requestor
+and then decide to accept or deny it. On the other side, requestor gets
+full information about the process that accepted his request. Additionaly
+by using HAC access control, one can make application to work in OSI style,
+allowing only communication between nearest data processing layers.
+Request destination is specified by structure containing target vcpu number, 
+virtual system number and ipc registered id. This allows to send requests
+that get to one process, many processes, one of group of processes, 
+or even each process on one or each system connected to rIPC network.
+
+For example, we know that authentication processes had registered ipc id 100.
+By sending request to ipc id 100, and marking other address structure fields
+as unimportant we can be sure that this request gets to at least one 
+authentication process. Which one will respond first, depends on system load, 
+amount of authentication tasks on local system and in rIPC network. You may
+assume that the least busy process on the least busy system should answer
+request before the others do.
+
+Almost every IPC module syscall can be called in blocking or nonblocking maner,
+thus allowing to make server applications that must be connected to many
+other processes and switch context between them without any unnecesary delay.
+ArganteOS takes care about request queueing requests, creating accepted
+connections, and data exchange once request has been allowed. In nonblocking
+mode, process just has to check the status of sent request. In blocking mode
+process goes asleep until request is accepted by one or more processes
+or dropped by all targets.
+
+Possible applications of IPC system are ranging from simple process 
+synchronization to distributed cluster-like web servers with load balancing. 
+
+****** DETAILED DESCRIPTION *******
+
+A) rIPC communication basics
+
+Remote Interprocess Communication subsystem in Argante provides basic set
+of communication methods inside Argante:
+
+- unicast messages (process to process)
+- multicast messages (process to process group)
+- unicast stream connections
+- unicast block connections
+
+Unicast and multicast messages work just like UDP network packets. You can
+send one-time message, without establishing rIPC session, to specific target 
+or group of targets, expecting no response.
+
+Stream connections are less or more equal to TCP traffic - they are abstract,
+bidirectional data streams. You have to establish a connection before any
+data exchange might occour.
+
+Block connections are generally related to memory sharing. One process might
+create a block of memory and, after establishing rIPC session, other side
+might read or modify this piece of memory.
+
+All operations have to be confirmed by other side. You might ACK or NACK
+any rIPC request. All operations are controlled by HAC:
+
+- for unicast requests, checking is done on sender's side, there's no
+  HAC for accepting or refusing an request,
+
+- for multicast / broadcast requests, basic checks are performed on
+  sender's side (to verify if sender is able to send such packet at all);
+  then, check is done on recipient's side, to check if specific packet
+  should be delivered. If there's no permission, such packet is silently
+  dropped.
+
+Every packet can be addressed by specyfing some of the following parameters:
+
+- destination rIPC group (ipc_reg number - numerous processes can register
+  under the same number; if any request addressed by ipc_reg will be send,
+  the fastest recipient will be choosen to serve the connection),
+
+- destination system identifier (unique vs_number) - can be used to
+  address processes on specific physical machine,
+
+- destination VCPU identifier - can be used to address specific VCPU number
+  on machine.
+
+All of these parameters together make an unique identifier of rIPC member,
+but every combination is allowed. So, if you send stream session request
+to any rIPC group, any vs_number and VCPU number '2', and if you have
+appropriate permissions, the fastest VCPU (assuming any VCPU with this number
+is interested in accepting your rIPC request, of course) will answer.
+This is somewhat stupid example, but more useful possibilities, like
+addressing the fastest member of specific ipc_reg group (let's say "web
+servers") can be used for smart load balancing purposes.
+
+B) rIPC configuration
+
+There are some configuration options for rIPC module (conf/ipc.conf). Complete
+list is available in section D, while here you can find an explaination for
+the essential features:
+
+    vs_number <number>  - unique IPC subsystem identifier; it is very
+                          important to use UNIQUE identifiers if you are 
+                          going to connect numerous rIPC subsystems
+                          together; right now, there's no automatic conflict
+                          detection, so be careful.
+
+    listen <path>       - if this rIPC should have listener functionality,
+                          please specify unix socket path here (ripcd
+                          daemon or other rIPC subsystems might connect
+                          to it, please REMEMBER TO KEEP APROPRIATE FILE
+                          PERMISSIONS ON THIS SOCKET TO AVOID UNWANTED
+                          LOCAL SESSIONS)
+
+    connect <path>      - if this rIPC should connect to unix socket,
+                          please specify its path here.
+
+'connect' and 'listen' can be used together. Any amount of 'connect' entries
+can be used.
+
+C) ripcd setup
+
+ripcd is a daemon for maintaining rIPC connections. As you've probably noticed,
+rIPC itself can connect or listen on unix sockets, and nothing more. To
+arrange rIPC network, you will need ripcd (or similar tool). This daemon
+is a companion utility provided with Argante, and can be found in tools/.
+
+Basically, ripcd uses OpenSSL for providing secure communication between
+the endpoints (when communication is going thru Internet). If you do not
+have or do not want OpenSSL support, it will work in plaintext mode.
+Plaintext mode is extremely insecure for rIPC networks! You can use it
+when:
+
+- you're doing local tests,
+
+- you have another cryptographic layer (eg. VPN) between rIPC nodes,
+
+- you are going to tunnel the connections over other SSL implementation
+  or, for example, ssh tunnels - but, in this case, you have to do it
+  manually:
+                                               (Internet)
+  rIPC --> ripcd --> (local port) ----> ssh -- - - - - - -> sshd ---+
+                                                                    |
+             rIPC <-- ripcd <-- (local port) <----------------------+
+
+To determine whether incoming connection on specific ripcd network
+listen port should be rejected as unautorized, or passed to the rIPC,
+ripcd uses simple key validation mechanism (which, again, is not
+secure if you're using plaintext connections). ripcd connecting in the
+client mode to ripcd working in server mode should send some "magic key"
+(usually 512 bytes of /dev/urandom should be more than enough for
+authorization purposes in single rIPC network ;). This key is compared
+with expected passphrase.
+
+Locally, it works in one of two ways:
+
+ - rIPC is working in 'connect' mode, while ripcd is listening on
+   unix socket. After accepting local connection, ripcd is connecting
+   to the remote system given in the config file, and sending the magic
+   key; remote ripcd, after verification, will forward the connection
+   to remote rIPC to its listening socket.
+
+ - rIPC is working in 'listen' mode... well, it's the second endpoint
+   of above example.
+
+In both cases, ripcd functionality is completely transparent to rIPC.
+Listening rIPC modules with corresponding ripcd listen ports are 
+called HUBs, because such points can accumulate numerous client
+connections. 
+
+Single ripcd instance can handle numerous listen ports and do proxying
+for numerous rIPC connections.
+
+rIPC network connection models:
+
+L - listening ripcd, connections forwarded to listening rIPC
+C - connecting (client) ripcd, connecting after connect from local rIPC
+
+  C -------> LC ------> L (...)
+
+    The simpliest solution; it is weak and difficult to maintain,
+    there's only one way for travelling packets, and it could be really
+    long in some cases.
+
+  C ------> L <------ C
+           /|\
+            |
+            |
+            C
+
+     This is a "star" model. It has one HUB and is extremely easy to maintain.
+     Packet routes are usually short, but all traffic is travelling via single
+     point. This solution is easy, but is not really fault tolerant and can
+     cause network overload.
+
+
+  LC -------> CL ------> CL --+
+ /|\                          |
+  +---------<-------<---------+ 
+
+     This structure is known as "ring". Packet routes are not too long,
+     network load will be automatically balanced. This solution is fault
+     tolerant because there are always two ways for packet. Unfortunately,
+     ring structure is hard to maintain if you have to add new devices.
+
+  +--------------------------+
+  |                          |
+  C ------> L <------ CL_<---+
+           /|\        ||\
+            |         |   \
+            |         |     \
+            |        \|/      \
+            C ------> L <----- C
+
+      Mixed star/ring structures ("web") are the most useful, combining
+      easy maintaining, fault tolerancy and short packet routes. It is
+      real-life solution, useful if your rIPC network has to be logically
+      separated into two or more subets (eg. databases, content generators
+      and content servers).
+     
+
+Now, a few words about autoconfiguration; to place your subsystem in the
+right place of the rIPC structure, you do not need to do anything. Assuming
+you want to add new machine to your cluster, and expect it to appear in the
+place it is necessary at the moment, you have to configure rIPC to be able
+to connect to *any* HUB in your network (you can provide addresses of more
+than one HUB for accuracy!). Then, you have to map ripcd config file
+somewhere in the SVFS directories and to provide 'rehash file' parameter
+in ripcd command line. This rehash file should be visible within SVFS, as well.
+All these steps can be done only once, and the result can be installed on any
+of systems.
+
+After launching such box, it will automatically connect to your HUB. Then,
+your software might contact any "cluster management" point, which knows
+(having externally provided directives or detecting it heuristically) where
+in the network this box should be placed and what kind of functionality should
+it resume. This information can be used to download or modify configuration
+file, which is present within SVFS. After having all changes done, you have
+to create empty rehash file and wait a few seconds. ripcd will reload the
+configuration file, rearranging rIPC connections and removing rehash file
+to notify the process.
+
+Then, virtual process can resume expected functionality.
+
+NOTE: non-ssl ripcd is not compatible with ssl version and vice versa.
+You have to use the same method on both sides.
+
+ripcd config file format:
+
+method prot ip_addr:port /sock/path /key/path
+|      |    |            |          |
+|      |    |            |          +--- path to authorization key file 
+|      |    |            |               (raw binary of useful size and
+|      |    |            |               random content mathing key file on
+|      |    |            |               the other side of connection)
+|      |    |            |
+|      |    |            +--- path to socket used by rIPC
+|      |    |
+|      |    +--- (see method)
+|      |
+|      +--- ssl == use ssl, text == do not crypt the connection
+|
++---- local == listen on specific address and port for incoming connections;
+      verify connections with /key/path, forward them to /sock/path.
+      inet == listen on /sock/path; after receiving a connection, connect to 
+      specific address and port, send /key/path as a key, and do forwarding.
+
+D) rIPC API:
+
+>>> config file: conf/ipc.conf
+vs_number <number> 		- ipc system identifier 1..255
+			          must be unique, unless you want to break 
+				  your ripc network 
+listen <path>			- path of listening unix socket
+connect <path>			- path of unix socket to connect
+system_max_streams <number> 	- how many streams can be open on this system
+max_interfaces <number> 	- how many rIPC connections with other systems
+max_streams <number> 		- how many streams per process
+max_blocks <number>		- how many blocks per process
+max_stream_buffers <number> 	- how many stream buffers on whole system
+bucket_max <number> 		- how many packet buckets on whole system
+default_ttl <number> 		- rIPC packet default TTL
+
+note:
+    you'd better try to setup variables before trying to listen or connect...
+default values: 
+    vs_number (1), system_max_streams (1024), max_interfaces (16), 
+    max_streams (16), max_blocks (16), max_stream_buffers (512), 
+    max_buckets (512), default_ttl (32)
+
+>>> limitations:
+    max number of hosts in rIPC network - 255
+    max ttl - 255
+
+>>> constants
+    returned status
+    IPC_EOK = 1  	- returned when syscall succesfull
+    IPC_ETRYAGAIN = 0	- in nonblocking mode when no data available
+    IPC_ERROR = -1	- in case of any failure..
+
+    errorcodes
+    IPC_ERR_OK = 0		- :) oh happy day...
+    IPC_ERR_NOTARGET = 1	- target legal but not found
+    IPC_ERR_NACK = 2		- target denied this request
+    IPC_ERR_TIMEOUT = 3		- request timed out
+    IPC_ERR_NORESOURCES = 4	- no resources to complete request
+    IPC_ERR_BADMEM = 5		- when some idiot dealloced memory that
+				  has been pointed as a target of nonblocking
+    			          ipc_block_read/write request
+    IPC_ERR_DEAD = 6		- when system finds out that peer of stream
+				  or block transmision is dead
+
+    request state
+    IPC_RSTATUS_ERROR = -1	- request finished with error
+    IPC_RSTATUS_WAITING = 0	- request is awaiting in queue
+    IPC_RSTATUS_ACCEPTED = 1	- request is alredy accepted
+    IPC_RSTATUS_COMPLETED = 2	- request is done
+
+    flags
+    IPC_FLAG_NONBLOCK = 1 - syscall is nonblocking
+    IPC_FLAG_MULTICAST = 2 - when there are many possible targets, wait till
+		         all of them got this request and accept it or deny
+
+>>> exceptions
+ERROR_IPC_NOMEM 	- in case of module failed to allocate memory 
+ERROR_IPC_BAD_FLAGS 	- when bad flags are supplied to syscall
+ERROR_IPC_BAD_TARGET 	- caused when supplied data specifying target
+		          are illegal (f.e. vcpu < -1 or vcpu > MAX_VCPUS)
+ERROR_IPC_NO_TARGET 	- target specification is legal, but no target found
+ERROR_IPC_NOT_REGISTERED - when trying to call ipc syscalls without registering
+			   with syscall IPC_REGISTER first, or calling
+			   ipc syscalls after unregistering with IPC_REGISTER
+ERROR_IPC_NO_RESOURCES 	- when no new resources available, f.e. limit 
+		          of streams open for this process is reached
+ERROR_IPC_NO_REQUEST 	- when calling syscalls with id of nonexistent ipc 
+			  request f.e. trying to accept timeouted request
+		          (note: this exception can happen when stream request
+			  is targeted to many processes and has been accepted
+			  after your process got queue status, but before you
+			  called ipc_stream_ack)
+ERROR_IPC_REQUEST_TIMEOUTED - in nonblocking mode, when request hasn't been
+			      completed in about 10 seconds
+ERROR_IPC_REQUEST_NACKED - when target denied this request
+ERROR_IPC_STREAM_ID_INVALID - when trying to write/read/stat/close stream
+			      that is not open
+ERROR_IPC_STREAM_CLOSED - when trying to write to stream that is closed by peer
+                          (note: although you cannot write to this stream
+			   you surelly may read data that may be available
+			   till the real end of stream)
+ERROR_IPC_BLOCK_ID_INVALID - guess what?, you gave wrong block id ;)
+ERROR_IPC_DEAD		- hmm, our peer has died
+ERROR_IPC_STREAM_DEADLOCK - trying to go asleep while peer is sleeping with
+			    the same type of transmission
+
+>>> syscalls
+
+syscall IPC_REGISTER:
+---------------------
+parameters:	u0 - new ipc_reg or 0 to unregister
+success:
+failure:
+    exceptions ERROR_NOMODULE, ERROR_NOPERM
+effect:
+    on success returns with registered ipc_reg, or unregistered
+    if 0 passed to u0
+HAC:	object = ipc/ipcreg/<ipc_reg>	oper= ipc/register
+notes:
+    registering ipc_reg is essential to use any of IPC goodies
+    trying to call IPC syscalls without registered ipc_reg
+    causes exception ERROR_IPC_NOTREG most of the times...
+    
+
+
+syscall IPC_MSG_SEND:
+---------------------
+parameters:	u0 - flags (IPC_FLAG_NONBLOCK,IPC_FLAG_MULTICAST)
+		s0 - target #VCPU (or -1 for each VCPU)
+		s1 - target #VS (or -1 for each VS, or 0 for local VS)
+		u1 - target ipc_reg (or 0 for each ipc_reg)
+		u2 - dword1
+		u3 - dword2
+success:
+	NONBLOCKING mode:
+		u0 = id of sent msg (for further status checking)
+	BLOCKING mode:
+		u0 - #VCPU of first who got message
+		u1 - #VS of first who got message
+		u2 - ipc_reg of first who got message
+failure:
+    exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+    ERROR_IPC_BAD_FLAGS, ERROR_IPC_BAD_TARGET, ERROR_IPC_NOMEM,
+    ERROR_IPC_NO_TARGET, ERROR_IPC_REQUEST_TIMEOUTED, ERROR_IPC_REQUEST_NACKED
+effect:
+    target process or processes recive supplied 2*dword message
+notes:
+    if flag IPC_FLAG_MULTICAST is set task is completed when all target 
+    processes get message, else we wait for first one who got message, 
+    nevertheless message is delivered to all possible targets
+
+
+syscall IPC_MSG_RECV:
+---------------------
+parameters:	u0 - flags (IPC_FLAG_NONBLOCK)
+success:
+	BLOCKING mode:
+		u0 - #VCPU of sender
+		u1 - #VS of sender
+		u2 - ipc_reg of sender
+		u3 - dword1
+		u4 - dword2
+	NONBLOCKING mode:
+		all from BLOCKING mode plus
+		s0 = IPC_EOK
+failure:
+    exception ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+    ERROR_IPC_BAD_FLAGS
+    in NONBLOCKING mode:
+		s0 = IPC_ETRYAGAIN when no message in queue
+effect:
+    syscall returns information about first message awaiting in queue
+
+
+syscall IPC_MSG_STAT:
+---------------------
+parameters:	u0 - msg id (got from NONBLOCKING IPC_MSG_SEND syscall)
+success:	
+		s0 - msg state (IPC_RSTATUS_*)
+    in state COMPLETED, or in ACCEPTED (if not MULTICAST msg)
+		u0 - #VCPU of first who got message
+		u1 - #VS of first who got message
+		u2 - ipc_reg of first who got message
+    in ERROR state:
+		u0 - errorcode (IPC_ERR_*)
+failure:
+    exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+    ERROR_IPC_NO_REQUEST
+effect:
+    syscall returns state of NONBLOCKING ipc_msg_send request
+note:
+    if request is in state COMPLETED or ERROR it is destroyed by this syscall
+    when request is not checked for longer than 10 seconds after it got into
+    COMPLETED or ERROR state it's assumed forgoten and is destroyed
+    either of this happened, msg id is no longer valid
+
+
+syscall IPC_STREAM_REQ:
+-----------------------
+parameters:	u0 - flags (NONBLOCKING/BLOCKING)
+    		s0 - #VCPU of target
+		s1 - #VS of target
+		u1 - ipc_reg of target
+success:
+    in nonblocking mode:
+		u0 - stream request id (for further peeking)
+    in blocking mode:
+		u0 - peer #VCPU 
+		u1 - peer #VS 
+		u2 - peer ipc_reg
+		u3 - stream id (for further read/write operations)
+failure:
+    exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+    ERROR_IPC_BAD_FLAGS, ERROR_IPC_BAD_TARGET, ERROR_IPC_NOMEM,
+    ERROR_IPC_NO_TARGET, ERROR_IPC_REQUEST_TIMEOUTED, ERROR_IPC_REQUEST_NACKED,
+    ERROR_IPC_NO_RESOURCES
+effect:
+    if successful establishes stream between peers
+    
+syscall IPC_STREAM_STAT:
+------------------------
+parameters:	u0 - stream request id (got from nonblocking ipc_stream_req)
+success:	s0 - request status (ERROR/WAITING/COMPLETED)
+	when ERROR:
+		u0 - error code (IPC_ERR_*)
+	when COMPLETED:
+		u0 - peer #VCPU
+		u1 - peer #VS
+		u2 - peer ipc_reg
+		u3 - stream id		
+failure:
+    exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED, 
+    ERROR_IPC_NO_REQUEST
+effect:
+    returns information about specified nonblocking stream request,
+    if request completed, returns stream id and peer identity
+    on COMPLETED or ERROR, request is destroyed, stream request id is
+    no longer valid
+
+syscall IPC_STREAM_QUEUE:
+------------------------
+parameters:	u0 - flags (NONBLOCKING/BLOCKING)
+
+success:	u0 - #VCPU of sender
+		u1 - #VS of sender
+		u2 - ipc_reg of sender
+		u3 - stream request id
+    in nonblocking mode:
+		all of them and
+		s0 - IPC_EOK
+failure:
+    exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED, 
+    ERROR_IPC_BAD_FLAGS
+    in nonblocking mode:
+		s0 - IPC_ETRYAGAIN, when no stream request available
+effect:
+    returns id of the first stream request found in this process queue
+    on basis of information about sender, process must decide wheather to
+    deny or accept stream request
+    in blocking mode process is sleeping till any message arrives
+note:
+    next call of icp_stream_chck without acking or nacking previouse request, 
+    returns the same data, unless request time out	
+
+
+syscall IPC_STREAM_NACK:
+------------------------
+parameters:	u0 - request id (got from ipc_stream_queue syscall)
+success:	nothing changes
+failure:	
+    exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+    ERROR_IPC_NO_REQUEST 
+effect:
+    refuses to accept specified stream request, this request is unlinked
+    from process queue, so that further ipc_stream_queue will return new
+    requests
+note:
+    request sender may be woken up with exception ERROR_IPC_NACK
+
+
+syscall IPC_STREAM_ACK:
+-----------------------
+parameters:	u0 - flags (BLOCKING/NONBLOCKING)
+		u1 - stream request id (from ipc_stream_queue syscall)
+success:	
+		u0 - stream id
+	in nonblocking mode 
+		s0 - IPC_EOK
+failure:
+    exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+    ERROR_IPC_NO_REQUEST, ERROR_IPC_NO_RESOURCES, ERROR_IPC_NOMEM
+effect:
+    returns stream id of established connection between processes,
+note:
+    in nonblocking mode you may get an stream id that is not ready for 
+    read/write operations, so don't be supprised if one day you get
+    ERROR_IPC_STREAM_ID_INVALID or ERROR_IPC_DEAD
+    try to use ipc_stream_status syscall to find out if stream is ready
+
+
+syscall IPC_STRAM_WRITE:
+------------------------
+parameters:	u0 - stream id
+		u1 - source buffer address
+		u2 - count in bytes
+		u3 - flags (BLOCKING/NONBLOCKING)
+success:
+		u0 - amount of data written to the stream
+	    in nonblocking mode also:
+		s0 - IPC_EOK
+failure:
+    in nonblocking mode:
+		s0 = IPC_ETRYAGAIN, no room to write data, try again later
+    exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_OUTSIDE_MEM, 
+    ERROR_IPC_STREAM_ID_INVALID, ERROR_IPC_STREAM_CLOSED, ERROR_IPC_BAD_FLAGS
+    ERROR_IPC_STREAM_DEADLOCK, 
+effect:
+    tries to write supplied data to open stream
+note:
+    writting to stream that's closed by peer causes an exception
+    in blocking mode, all data is written to stream, in noblocking mode
+    only amount that can be written without any delay
+
+
+syscall IPC_STREAM_READ:
+------------------------
+parameters:	u0 - stream id
+		u1 - destination buffer address
+		u2 - count in bytes
+		u3 - flags (BLOCKING/NONBLOCKING)
+success:
+		u0 - amount of data read from the stream (0 = EOF)
+	in nonblocking mode also:
+		s0 - IPC_EOK
+failure:
+    in nonblocking mode:
+		s0 = IPC_ETRYAGAIN, no data to read
+    exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_STREAM_ID_INVALID,
+    ERROR_OUTSIDE_MEM, ERROR_IPC_BAD_FLAGS
+effect:
+    tries to read data from open stream
+effect:
+    reading from stream that's closed by peer, doesn't cause an exception,
+    just amount of data read is equal 0
+
+
+syscall IPC_STREAM_INFO:
+--------------------------
+parameters:	u0 - stream id
+success:	u0 - stream status ORed flags (0x1 - ready to read, 
+					       0x2 - ready to write,
+				               0x4 - peer closed connection)
+failure:
+    exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_STREAM_ID_INVALID
+effect:
+    this syscall allows you to check stream status, without blocking,
+    and without risking ERROR_IPC_STREAM_CLOSED exception
+    can be used to emulate unix C function select()
+    also when acking stream request in nonblocking mode this syscall
+    can tell you if system established full connection between parties
+
+
+syscall IPC_STREAM_CLOSE:
+-------------------------
+parameters:	u0 - stream id
+success:	nothing changes
+failure:
+    exceptions ERROR_NOMODULE, ERROR_NOPREM, ERROR_IPC_STREAM_ID_INVALID
+effect:
+    uh, guess what? it's closing stream, making your stream id invalid for 
+    further read/write operations
+    it's necesary to close stream, even after peer closed it's side of this
+    stream, streams aren't automaticly closed because there still may be some
+    data available to read
+
+
+    
+
+syscall IPC_BLOCK_CREATE:
+-------------------------
+parameters:	u0 - size of block device (in dwords)
+success:	u0 - block id (for further use)
+		u1 - begin of block device memory (if you want to play with it)
+failure:
+    exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+    ERROR_IPC_NO_RESOURCES, ERROR_IPC_NOMEM, ERROR_TOOBIG
+effect:
+    create block device, by allocating memory for it
+note:
+    don't try to free memory allocated by this syscall... it may hurt
+
+syscall IPC_BLOCK_DESTROY:
+--------------------------
+parameters:	u0 - block id (got from ipc_block_create syscall)
+success:	nothing changes...
+failure:
+    exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+    ERROR_IPC_BLOCK_ID_INVALID
+effect:
+    destroys block device, block id is no longer valid, any request
+    in queue that targeted this block device are unlinked, senders
+    may get exception ERROR_IPC_NO_TARGET
+
+
+syscall IPC_BLOCK_READ, IPC_BLOCK_WRITE:
+----------------------------------------
+parameters:	u0 - flags (NONBLOCKING/BLOCKING)
+		s0 - target #VCPU
+		s1 - target #VS
+		s2 - target block id (or -1 for any)
+		u1 - target ipc_reg
+		u2 - buffer address
+		u3 - block device offset	  (in dwords)
+		u4 - amount of data to read/write (in dwords)
+success:	
+		u0 - peer #VCPU
+		u1 - peer #VS
+		u2 - peer ipc_reg
+		u3 - block id
+		u4 - amount of data read/written ( 0 : see note)
+    in nonblocking mode:
+		u0 - request id (for further checking)
+failure:
+    exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_OUTSIDE_MEM, ERROR_IPC_NACKED
+    ERROR_IPC_TIMEOUTED, ERROR_IPC_NOT_REGISTERED, ERROR_IPC_BAD_TARGET,
+    ERROR_IPC_BAD_FLAGS, ERROR_IPC_NO_TARGET, ERROR_IPC_NOMEM, ERROR_IPC_DEAD,
+    ERROR_IPC_NO_RESOURCES
+effect:
+    asks for data transfer from/to block device
+    when trying to transfer data outside block device memory then u4 = 0
+    
+
+syscall IPC_BLOCK_QUEUE:
+------------------------
+parameters:	u0 - flags (BLOCKING/NONBLOCKING)
+success:	s1 - READ/WRITE request (0/1)
+		u0 - requestor #VCPU
+		u1 - requestor #VS
+		u2 - requestor ipc_reg
+		u3 - request id (for furter accepting or droping request)
+		u4 - requested block id (if -1 (0xffffffff) any)
+		u5 - requested offset
+		u6 - requested amount of data (in dwords)
+    in nonblocking mode:
+		all of those and
+		s0 = IPC_EOK
+		
+failure:
+    exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED, 
+    ERROR_IPC_BAD_FLAGS
+    in nonblocking mode:
+		s0 = IPC_ETRYAGAIN when no block request available
+effect:
+    returns informations about next in queue request to block device
+    process should accept or deny request...
+
+syscall IPC_BLOCK_NACK:
+-----------------------
+parameters:	u0 - request id (from ipc_block_queue)
+success:	no changes
+failure:
+    exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+    ERROR_IPC_NO_REQUEST
+effect:
+    denies request, sender may get ERROR_IPC_NACKED exception
+    makes request id invalid
+
+syscall IPC_BLOCK_ACK:
+----------------------
+parameters:	u0 - flags (BLOCKING/NONBLOCKING)
+		u1 - request id (from ipc_block_queue)
+		u2 - block id (see note)
+success:	nothing changes...
+failure:
+    exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED, 
+    ERROR_IPC_NO_REQUEST, ERROR_IPC_BLOCK_ID_INVALID, ERROR_IPC_DEAD
+effect:
+    accept request, makes transfer possible
+note:
+    when request doesn't specify exact block id caller may select one
+    by putting it into u2, when request is specific u2 is ignored
+    local request is completed imediatly, network requests may take some
+    time to transfer all data
+    trying to ack request when other nonblocking transmission is in progress
+    is equal to nacking this request, to avoid such situations use 
+    syscall ipc_block_is_busy described later
+
+syscall IPC_BLOCK_STAT:
+-----------------------
+parameters:	u0 - request id
+success:	s0 - reqiest status (IPC_RSTATUS_*)
+	if IPC_RSTATUS_ERROR
+		u0 - errcode (IPC_ERR_*)
+	if IPC_RSTATUS_COMPLETED
+		u0 - peer #VCPU
+		u1 - peer #VS
+		u2 - peer ipc_reg
+		u3 - block id
+		u4 - amount of data transfered (in dwords)
+	if IPC_RSTATUS_ACCEPTED
+		u0 - peer #VCPU
+		u1 - peer #VS
+		u2 - peer ipc_reg
+		u3 - block id
+	if IPC_RSTATUS_WAITING
+		nothing else..
+failure:
+    exception ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+    ERROR_IPC_NO_REQUEST
+effect:
+    check out status of nonblocking request
+note    
+    when stat-ing request with COMPLETED or ERROR status, request is destroyed
+    and request id is no longer valid
+
+syscall IPC_BLOCK_IS_READY:
+--------------------------
+parameters:	u0 - block id (as from ipc_block_create syscall)
+success:	u0 - 0 = when block ready, 1 = when block busy
+failure:
+    exceptions ERROR_NOMODULE, ERROR_NOPERM, ERROR_IPC_NOT_REGISTERED,
+    ERROR_IPC_BLOCK_ID_INVALID
+effect:
+    gives you ipc block status
+
+
+E) DVR howto:
+
+For now, it works on Linux only.
+
+How to use it?
+
+0. Edit conf/ files (you can simply rename the example files, but it's
+   generally better to revise the config); build Argante binaries, then
+   launch it.
+
+1. Connect a few instances of Argante using ripcd. This should be
+   described somewhere in README. Alternatively, you can perform
+   local tests, as well, but you have to provide separate configurations
+   for each DVR instance.
+
+2. Go to work/ and 'make' the project, then load output .img file
+   into Argante sessions on connected boxes or on one box on separate
+   VCPUs or argante instances.
+
+3. Disable packet forwarding on test boxes. Assuming you have the following
+   configuration:
+
+   net1         RT1                           RT2          net2
+   ---------- [ DVR ] ------ (ripcd) ------ [ DVR ] -----------
+   10.1.0.0/16           i n t e r n e t           10.2.0.0./16
+
+   You have to choose one box in net1 and one box in net2, then
+   set route to 10.2.0.0/16 from net1 via RT1 and from net2 to
+   10.1.0.0/16 via RT2. Remember to have packet forwarding disabled on
+   these boxes!
+
+4. Boom. It should work. You can add other locations, build redundant
+   links using ripcd, and so on.
+
+
+Sample configuration can be found at Examples/DVR1 and Examples/DVR2 (two
+complementary routers with basic configuration).
+
+
+
+----------------------------------
+10. Scripts and console management
+----------------------------------
+
+Whenever I write "management scripts" or "operator" I don't mean a special,
+privileged superuser account, but a management console, controlled from
+the level of kernel-space. When the system boots up, starting scripts are
+executed (which can be used, among other things, to load modules and
+start rIPC session connections, as well as load processes).
+
+Remember: the console, in fact, is an unified "boot script interpreter" and 
+debugger. It is not intended to be process working console. See section
+17 for more details on process consoles.
+
+Management of the virtual system's operation is not performed from the level
+of tasks executed inside the system (at least, it isn't by default; you
+can always insert the connectivity layer between your VS programs and
+the console using unix socket daemon).
+
+Managing the work of the virtual system is not performed from the level
+of tasks executed inside the system 
+Argante console offers quite a simple command set, used mostly for starting
+processes and library management. These commands are listed below:
+
+?               - help
+
+!               - system statistics
+
+$fn             - load binary image from file fn and run it on the first
+                  VCPU available
+
+%fn		- as above, loads a task in RESPAWN mode (it will be run
+		  again if the process will be terminated by any command 
+	          different than HALT)
+		  
+		  NOTE: this mode is used for executing programs which
+		  should work all the time; in general, however, one should
+		  focus on proper functioning of the process and 
+		  exception handling in all situations, and on creating
+		  redundant processes in the IPC hierarchy; this option
+		  should be an auxiliary solution.
+                  
+		  As a means of protection against abuse of this mode,
+		  there exists a variable MIN_CYCLES_TO_RESPAWN defined in
+		  the file config.h, which defines the minimal work cycle
+		  number before a situation leading to the death of a given
+		  process (32). If an error is encountered before, the
+		  program will not be restarted.
+
+>fn             - load library from file fn to a free slot
+
+<id             - remove library in slot 'id'
+
+#               - list libraries with statistics
+                  (supported syscalls, number of calls)
+
+@fn             - run a console script
+
+-nn             - kill a process on VCPU number nn
+
+=nn             - display statistics for a process on VCPU number nn
+
+.               - system halt 
+
+*nn             - execute nn system ticks without checking input
+                  on management console; useful in scripts
+
+:xx             - subshell exit and execution of "xx"
+
+|xx             - "nothing" - comment in scripts
+
+^               - reread HAC table
+
+w nn tmout      - wait for process nn termination fot tmout seconds
+
+There are also other commands used for debugging, described
+elsewhere in this document.
+
+As you have probably noticed, the console is a part of the system, in the
+sense that management can be done directly after booting. Naturally, it's
+only a feature for your comfort, you can access Argante sessions otherwise
+(check commands "agtback" and "agtses"). For the time being, we have not 
+considered separating console code from the system to be essential, as this
+solution is by no means "expensive" (it doesn't decrease efficiency), but
+makes management easy in all situations.
+
+SYSTEM CONSOLE IS NOT A PROCESS CONSOLE! Agsin, see section 17 for details on
+system consoles.
+
+Script syntax is analogous to console commands. After booting, the
+script argboot.scr is run (or another script, if it has been specified
+in the command line; if a second parameter has been given, this
+directory will be treated as a starting directory for the execution of
+that script, with configuration files, filesystem etc., as long as the
+file config.h doesn't define absolute but relative paths).
+
+Sample script:
+
+--
+|
+| Argente system test script
+| (C) 2000 Michal Zalewski
+|
+
+~Loading system modules...
+>modules/display.so
+>modules/access.so
+>modules/fs.so
+~
+~  ***************************
+~  * Lcamtuf's Test Script *
+~  ***************************
+~
+:compiler/agtc compiler/hello.agt
+$compiler/hello.img
+w 0 10
+~End of job ;>
+.
+--
+
+The default console is stdin of the 'argante' process when it's started.
+Certainly, it may not be what an administrator might expect. For that reason
+it is possible to start Argante in the background as follows:
+
+tools/agtback path-to-argante [ script-name ]
+
+Please note that there should exist a suitable starting environment
+in the current directory: modules, starting scripts in respective 
+directories.
+
+Working on a background session console is possible with the tool agtses. 
+It should be given Argante process number as a parameter.
+
+
+----------------------------
+11. Using the RSIS assembler
+----------------------------
+
+A sample source file displaying numbers from 10 to 0 and making a bit
+of noise:
+
+--
+!SIGNATURE      "lcamtuf's test program"
+
+.DATA
+
+:Enter
+
+        "\n"
+
+:Tekst
+
+        " Hello world\n"
+
+:Die
+
+        "Aghrrr... I die.\n\n"
+
+.CODE
+
+  mov u0,:Enter
+  mov u1,^Enter
+  syscall $IO_PUTSTRING
+
+  mov s0,0xa
+
+:Again
+
+  mov u0,s0
+  syscall $IO_PUTINT
+
+  mov u0,:Tekst
+  mov u1,^Tekst
+  syscall $IO_PUTSTRING
+
+  twait 500000
+
+  loop :Again
+
+  mov u0,:Die
+  mov u1,^Die
+  syscall $IO_PUTSTRING
+
+  halt
+
+.END
+--
+
+You can find different examples (*.agt files) in the subdirectory
+compiler/examples: apart from a similar "hello world", there is also
+an example of exception handling (error.agt) and filesystem management
+(fs.agt).  The syntax of the language itself is as follows:
+
+.DATA, .CODE - definitions of subsequent segments (.data is optional).
+	       Thanks to bulba, you can switch between segments whenever you
+	       want :)
+
+.END         - ends code segment
+
+:xxx         - in the code segment, as well as in data segment: it refers to
+               a symbolic name used to point to an object in the next line;
+	       it must occur in a separate line, in the data segment all
+	       objects must be named.
+
+	       Data may have the following format:
+
+                "xxxx" - a sequence of characters
+                123    - an integer (32 bit)
+                123.0  - a float (32 bit)
+                0x123  - a hexadecimal value (32 bit)
+
+                NN repeat 123 - a block of 123  repeats of the NN value
+                                (float or integer)
+
+                block 100 - next 100 lines will contain values
+                            (dwords) to be entered into structures
+
+		References to symbols passed as parameters must have the 
+		following form: ':Symbol'. Another possibilities are:
+		
+                - '^Symbol' - returns object length in bytes, useful for 
+                text strings
+		- '%Symbol' - returns object length in dwords.
+
+!xxx         - compilation directive, defines process parameters. 
+	     Accepted values:
+
+               !DOMAINS x x x     - list of execution groups
+               !PRIORITY x        - program priority
+               !IPCREG x          - starting IPC identifier
+               !INITDOMAIN x      - starting execution group
+               !SIGNATURE x       - code signature (author, description)
+               !INITUID x	  - initial subgroup identifier
+
+Defining syscalls with their symbols is acceptable, provided it is
+known to the compiler. The list of syscalls can be found in syscall.h 
+in the modules/ directory. The syscall name has to be preceded by the $
+sign, e.g.: 'syscall $io_putstring' (note: we omit the syscall_ suffix).
+In the same way you can refer to exception numbers: their names are in
+include/exception.h, and we omit error_.
+
+Oh, and priority '1' is the default value, although it is not reasonable.
+I suggest priorities ranging from 10 to 10000, as in that case in each cycle
+more machine operations are executed, and parsing them at once is more
+effective than subsequent jumps.
+
+Registers should be used in the format of "xNN", where NN is register number
+and x is one of the following: 'u' (ureg), 's' (sreg), 'f' (freg). For example,
+'u0' refers to ureg[0].
+
+If a numeric value, symbol or an 'u' register is preceded by '*', it refers
+to the value located at that address. For example:
+
+mov u0,*:Test
+
+will write to the register u0 the value from the address Test, whereas
+
+mov u0,:Test
+
+will write to the address pointed to the identifier 'Test' to the register
+u0.
+
+The compiler, at least in the current version, doesn't support arithmetics
+at compilation level. The system doesn't support many separate memory 
+blocks assigned when the binary file is loaded.
+
+Compiler is run by typing "compiler/agtc plik.agt". As a result, you will 
+receive a binary file plik.img, which can be loaded with the $ command from 
+the management console.
+
+
+-------------------------
+12. Using AHLL translator
+-------------------------
+
+AHLL translator has been written in a hurry. Our goal was to introduce
+a good high-level language for effective programming before releasing
+Argante 1.0.  Unfortunately, writing good and usable HLL compiler,
+and, what's probably the most important, implementing a good language,
+is a complex task. I spent several sleepless nights working on it
+myself, and results are not shocking.
+
+Yes, you're able to write high-level programs in AHLL, but current
+implementation is far, far away from the thing I wanted to achieve. It
+will change in future AOS releases, but for now we cannot delay the
+first release just because AHLL is not perfect.
+
+So, the first thing you should ABSOLUTELY understand: AHLL is *NOT* AN
+INTEGRAL PART OF ARGANTE OS. What do I mean? Well, it's an example on
+how it can be done, and a useful tool, but nothing more. You can
+implement any other language (or, better, its reasonable subset) -- my
+favourite replacement for AHLL is a well-chosen subset of Ada. If
+you're interested in it, let me know.
+
+OK. AHLL code is really dirty, obfuscated and ugly. It's also buggy as
+hell, full of buffer overflows and so on - just deal with it. It should be
+and will be completely rewritten - now all I could do is to make it work.
+I cannot guarantee it will produce usable executables in all cases, but
+I hope so :))) Code generated by AHLL is highly ineffective, and there
+are several restrictions, like:
+
+- Recurrent procedure calls are deadly - YOU SHOULD NOT DO THAT FOR NOW;
+  current version of AHLL is broken (and should be redesigned), so if you
+  enter procedure A once, and then, without leaving it, call A again,
+  and finally, this second call will be finished, you'll notice A
+  parameters / locals were modified by this second call; that's because
+  AHLL does NOT support dynamically allocated call parameters / local 
+  functions stack. If you really need to do that, use parameterless (or 
+  called in constant way) procedures, and implement simple dynamic 
+  allocation. In any other case, you should not use A's local parameters / 
+  variables after calling A within A ;>
+
+- When accessing structures and arrays, only following conventions are
+  available: table[simple_variable], str_table[simple_variable].field,
+  structure.field. So you cannot nest: table[table[table[n]].field], and
+  you cannot directly access arrays inside structures (eg. str.field[nn]).
+  If you need such access, you should use pointer assignments, eg:
+
+  pointer_to_array_copy := str.field;
+  ...and now you can access pointer_to_array_copy[nn];
+
+- There's no complex arithmetics! Only one operator per expression. Also,
+  there's no assign-when-calling-function-when-comparing-to... but I'm
+  in doubt if such C conventions are good at all ;>
+
+- Floating point arithmetics is untouched.
+
+- There are no "helper" statements like for - you have while and loop
+  instead, which are equivalent.
+
+I know it sucks, but I have no time to work on it right now. Please help
+us creating better HLL environment!
+
+Now, let's talk about Another-Hard-to-Learn-Language and its the
+precompiler...  If you're familiar with C, you'll have no problem with
+understanding code constructions - but, in AHLL, you don't have, for
+example, C pointer arithmetics :> Following description is only a
+rough draft, but should be enough to catch the idea.
+
+AHLL is case insensitive.
+
+1) Precompiler
+~~~~~~~~~~~~~~
+
+#include "filename"	- this directive will include file at current
+                          position; there are some standard include files
+                          in hll/include directory.
+
+#define SYMBOL value    - SYMBOL will be replaced with value - no macros
+                          are supported, unlike in C
+
+#compiler ...           - following statement will be passed as-is
+                          to the AGTC RSIS compiler, useful for ! directives.
+
+#cstring name "value"   - specific construction to make string initialization
+                          easier; it has been introduced due to weak
+                          AHLL implementation in AOS 1.0; it will be
+                          described later.
+
+2) Type declarations
+~~~~~~~~~~~~~~~~~~~~
+
+Predefined types: unsigned, signed, float.
+
+You can declare a new type or create a subtype. While subtype is "usable" with
+other similar subtypes, types cannot be mixed without implicit conversion.
+This mechanism is more or less similar to Ada, except in AHLL shipped with
+AOS 1.0 it isn't really accurate ;P
+
+Type declaration:
+
+  [sub]type new_type_name is base_type;
+
+  (subtype can be applied only to simple types, not to arrays, structures
+  and so on)
+
+Arrays:
+
+  type new_type_name is array start .. stop of base_type;
+
+Bytechunks:
+
+  type new_type_name is bytechunk start .. stop;
+
+  Bytechunk is a packed array of bytes of specified length. For now,
+  its fields cannot be accessed directly.
+
+Structures:
+
+  type new_type_name is structure {
+    field_name : [modifiers] type;
+    field_name : [modifiers] type;
+  }
+
+  Possible modifiers: 'pointer to', 'addressable'. "Pointing" variables
+  might be used in the same way as normal variables (there's no difference
+  in calling method or so), except they're "mirroring" base objects, not
+  having their own memory allocated. Only "addressable" variable can be
+  assigned to pointer.
+
+  For pointer examples, see Examples/AHLL/ptrs.ahl - pretty good.
+
+Complex type declarations are not allowed. For example, you cannot use:
+
+  type new_type is array 1 .. 20 of structure { ... };
+
+You have to split such declaration into two typedefs.
+
+Types can be declared only at a high-level (no local type declarations are
+allowed).
+
+
+3) Variable declarations and initializers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Variable declarations may appear in global or local {} scope. In both
+cases, the format is as follows:
+
+ var_name : [modifier] type_name [ := initializer ];
+
+For modifiers, see paragraph 2. An initializer may be an immediate value,
+a string, or a complex initializer. Initializers are not allowed for pointers.
+
+Complex initializer contains list of array / structure fields. No nested
+initializers are allowed (so you cannot initialize array of structures
+at once):
+
+  var_name : type_name := {
+    value_for_field1,
+    value_for_field2,
+    // List MUST end with ','.
+  }
+
+To skip complex types / pointers in structure initializers, use keyword "none".
+
+
+4) Procedures
+~~~~~~~~~~~~~
+
+There are no functions in Argante. A procedure can accept any number of
+parameters, and then modify these marked as "writable" - which are used
+as output data:
+
+procedure ProcedureName ( [writable] param1 : param1_type, [writable]
+                           param2 : param2_type ... ) {
+
+  local {
+    // Local declarations
+  }
+
+  // Local code
+
+  exception {
+    // Exception code
+  }
+}
+
+There's special, parameterless procedure, called Main, which is executed
+at the beginning (entry point). It has to be present in every program.
+
+Procedure calling within local code can be done as follows:
+
+  ProcedureName ( [modifier] param1, [mod] param2, [mod] param3 );
+
+Allowed modifiers: convert - implicit conversion of types
+                   address - address of specific variable
+
+
+5) Exception handling
+~~~~~~~~~~~~~~~~~~~~~
+
+exception {} block is called if exception occurs within guard {} block
+in local code:
+
+  guard {
+    // Some commands...
+  }
+  // Other commands...
+  exception {
+    // Handler
+  }
+
+Only an exception in guarded code will cause execution of exception {} block.
+In this block, you have to use "case" commands to handle specific
+exception numbers (see switch {} block). The differences between exception {}
+code and normal code:
+
+  ignore		- this command will return to the point where exception
+                          happened; not smart.
+
+'return' should be used to return to calling function, 'raise NN' should
+be used to pass the exception to high-level handlers (declared before
+calling this procedure). Exception will be passed after reaching the end
+of exception {} block as well.
+
+AHLL generates some exception code while doing range-checking and
+pointer validation.
+
+
+6) Conditional statements, loops, gotos
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  if [not] one_value { ... }       - executed if non-zero/zero
+  if one_item = other_item { ... } - complex comparison
+  if one_val op other_val { ... }  - simple op ( <, >, =, <>, &, <=, >=).
+
+  while CONDITION { ... }          - where CONDITION can be the same as in
+                                     "if" - repeat code while...
+
+  loop CONDITION { ... }           - like "while", but check is done at the
+                                     end of every pass.
+
+  continue;                        - jump to the check condition of the loop
+
+  break;                           - exit from current loop
+
+  switch simple_value {            - well, you should know; there's no need
+    case val;                        to 'break' before every next case.
+       // Code
+    case other_val;
+       // Code
+    case default;
+       // Code
+  }
+
+  label:			  - local jumps
+  goto label;
+
+
+7) Assignments and arithmetics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  x := y;		- copy (can be used on complex types)
+
+  x [op]= y;            - arithmetics (+, -, |, &, %, *, ^, /, ~)
+
+  create x;             - assign new variable to pointer
+  x := bind y;          - bind pointer to addressable variable
+  destroy x;            - destroy dynamically created variable
+  unbind x;             - unbind pointer
+
+  x := {address|convert} y - see functions.
+
+8) Syscalls
+~~~~~~~~~~~
+
+  To do syscall, you should use following notation
+
+  syscall ( SYSCALL_NAME,		- should be #defined
+            u0 := some_value,
+            u1 := other_value,
+            // ...			- parameters to put in registers
+            something_writable := s0,
+            // ...			- return values
+          );
+
+
+You can find some AHLL examples in Examples/AHLL subdirectory. To compile,
+you should change your working directory to hll/, and then, use ./acc or
+./ahlt (ahlt will produce .agt file from .ahl file - so in fact it's
+the main translator; ./acc will produce .img from .ahl file - so full compilation
+will be done). On systems with /bin/bash, you can run ./acc with -e option
+(eg: ./acc -e examples/dir.ahl) to perform dead-code elimination.
+
+Another example you can find there is Mini-HTTP server. It's trivial, but
+effective tool :)
+
+
+--------------------------------------
+13. Standard module specification
+--------------------------------------
+
+Here is the list of syscalls supported by currently available modules.
+These syscalls have corresponding AHLL library calls, so this knowledge
+isn't mandatory, but might explain some troubleshooting problems. Also,
+as there's no AHLL library calls documentation available at the moment,
+it might be helpful in understanding AHLL procedures.
+
+
+  Module display.c
+  ---------------
+
+  Status: done
+
+  Purpose: displaying basic data on the console from user within a process;
+  debugging etc. NOTE: the module shouldn't be used for user interaction,
+  as this will be solved otherwise. For the time being, it is advised to
+  use the network module.
+
+  Syscall: IO_PUTSTRING
+
+            Parameters: u0 - character string address
+                        u1 - number of characters
+
+            Result: displaying character strings
+
+            Exceptions: BAD_PROTFAULT - attempt to display wrong memory
+			fragment
+
+            HAC: operation=display/output/text object=none
+
+  Syscall: IO_PUTINT
+
+            Parameters: u0 - value to be displayed
+
+            Result: displays numeric values
+
+            Exceptions: -
+
+            HAC: operation=display/output/integer object=none
+
+  Syscall: IO_PUTFLOAT
+
+            Parameters: f0 - value to be displayed
+
+            Result: displays numeric values
+
+            Exceptions: -
+
+            HAC: operation=display/output/float object=none
+
+
+  Syscall: IO_PUTCHAR
+
+            Parameters: u0 (lowest 8 bits) - character to be displayed
+
+            Result: displays an ascii character
+
+            Exceptions: -
+
+            HAC: operation=display/output/character object=none
+
+
+  Module access.c
+  --------------
+
+  Status: done
+
+  Purpose: privilege management; active domain (group) and subgroup
+  identifier change. HAC system support.
+
+  Access control: none
+
+  Syscall: ACCESS_SETDOMAIN
+
+            Parameters: u0 - group number
+
+            Result: active group change
+
+            Condition: group belongs to the !domains set, defined during
+		       compile time
+
+            Exceptions: NOPERM - if the group doesn't belong to the set
+                        mentioned above.
+
+            HAC: unsupported
+
+  Syscall: ACCESS_SETUID
+
+            Parameters: u0 - subgroup identifier number
+
+            Result: changes active subgroup
+
+            Condition: none
+
+            Exceptions: none
+
+            HAC: unsupported
+
+
+  Module fs.c
+  ----------
+
+  Status: done
+
+  Purpose: access to SVFS.
+
+  Access control: HAC + existing objects in the SVFS hierarchy.
+  Exceptions: standard + FSERROR - SVFS resources access error.
+
+  Syscall: FS_OPEN_FILE
+
+            Parameters: u0 - filename address, u1 - filename length
+                       u2 - flags: FS_FLAG_READ, FS_FLAG_WRITE,
+                                   FS_FLAG_APPEND, FS_FLAG_NONBLOCK
+ 
+            Result: opens given file in the given mode:
+                   s0 - VFD (virtual file descriptor); -1 = locked file
+
+            Note:  if the flag NONBLOCK is not given and an attempt to open
+		   the file for writing and at the same time another process
+		   is writing data to the file, process enters the state 
+                   IOWAIT until it receives access; NONBLOCK causes immediate
+		   return of -1.
+
+            HAC: fs/fops/open/file/{read|write|append}
+
+  Syscall: FS_CREATE_FILE
+
+            Parameters: u0 - filename address, u1 - filename length
+                       u2 - flags: FS_FLAG_WRITE, FS_FLAG_APPEND
+ 
+            Result: creates a given file in appropriate mode
+                    returns s0 - VFD (virtual file descriptor)
+
+            HAC: fs/fops/create/file/{write|append}
+
+
+  Syscall: FS_CLOSE_FILE
+
+            Parameters: u0 -  VFD number
+ 
+            Result: closes VFD , ends working with the file. If file is
+                    open for writing, it is truncated at current offset.
+
+            HAC: none
+
+
+  Syscall: FS_WRITE_FILE
+
+            Parameters: u0 - VFD number, u1 - pointer, u2 - length (bytes!)
+ 
+            Result: writing data to the file if access rules to VFD and memory
+                    permit it
+
+            HAC: none
+
+
+  Syscall: FS_READ_FILE
+
+            Parameters: u0 - VFD number, u1 - pointer, u2 - length (bytes!)
+ 
+            Result: reads data from file to memory, if access rules to VFD and 
+		    memory permit it
+
+            HAC: none
+
+
+  Syscall: FS_SEEK_FILE
+
+            Parameters: u0 - number VFD, u1 - position, u2 - typ
+ 
+            Result: syntax analogous to lseek() in libc. With files in the
+		    append() mode, only u1=0, u2=1 (current)
+                    is accepted (returns the current position).
+
+                    s0 - position.
+
+            HAC: none
+
+
+  Syscall: FS_MAKE_DIR
+
+            Parameters: u0 - name, u1 - name length
+ 
+            Result: directory creation ;)
+
+            HAC: fs/fops/create/directory
+
+
+  Syscall: FS_DELETE
+
+            Parameters: u0 - name, u1 - name length
+ 
+            Result: removes file or directory
+
+            HAC: fs/fops/delete/{directory|file}
+
+
+  Syscall: FS_RENAME
+
+            Parameters: u0 - name, u1 - name length
+                       u2 - new name, u3 - new name length
+ 
+            Result: filename or directory name change
+
+            HAC: fs/fops/delete/{directory|file} for old name
+                 fs/fops/create/{directory|file} form new name
+
+
+  Syscall: FS_PWD
+
+            Parameters: u0 - buffer, u1 - buffer size
+ 
+            Result: writes current directory to buffer, writes to s0 
+                    actual name length
+
+            HAC: bnone
+
+
+  Syscall: FS_CWD
+
+            Parameters: u0 - buffer, u1 - buffer name
+ 
+            Result: current working directory change (doesn't verify whether
+                    the directory exists!)
+
+            HAC: none
+
+   Syscall: FS_END_DIR
+
+            Parameters: -
+
+            Result: directory cache allocated for FS_LIST_DIR is freed.
+
+            HAC: none
+
+   Syscall: FS_LIST_DIR
+
+            Parameters: u0 - start new session (0 - no, 1 - yes)
+           
+            New session parameters: u1 - address to directory name, u2 - len
+            New session return: s0 - number of directory entries
+
+            Existing session params: u3 - directory entry number, u1 - buffer,
+                                     u2 - buffer size
+            Existing session return: u1 - entry name, u2 - entry len,
+                                     s0 - entries left
+
+            HAC: object=directory, oper=fs/fops/list/directory
+
+            Note: this syscall is designed to operate on frozen image of
+                  requested directory, to avoid dir-scanning races (eg.
+                  hiding files or so). It's good to free allocated cache
+                  after finishing. It will be automatically freed if new
+                  session starts
+
+  Syscall: FS_STAT
+
+            Parameters: u0 - resource name, u1 - name length
+ 
+            Result: u0 - last modification time
+                    u1 - 0 = no access to resource
+                         1 = resource is a file
+                         2 = resource is a directory
+                    u2 - file size
+
+            HAC: fs/fops/stat
+
+
+  locallib.c module
+  ----------------
+
+  Status: being implemented
+
+  Purpose: system resource access
+
+  Access control: HAC
+  Exceptions: standard
+
+  Syscall: LOCAL_GETTIME
+
+            Result: u0 - seconds, u1 - microseconds
+
+            HAC: local/sys/real/time/get
+
+  Syscall: LOCAL_TIMETOSTR
+
+            Parameters: u0 - returned by GETTIME, u1 - buffer address,
+                        u2 - buffer size
+
+            Result: writes string to buffer, s0 returns number of characters
+
+            HAC: none
+
+  Syscall: LOCAL_GETHOSTNAME
+
+            Parameters: u0 - buffer address, u1 - buffer size
+
+            Result: writes local computer name to buffer, s0 - number of
+                    characters
+
+            HAC: local/sys/real/hostname/get
+
+  Syscall: SYSCALL_GETRANDOM
+
+	    Result: u0 - random dword; function gets dword from a local
+                        entropy source (/dev/urandom)
+
+            HAC: local/sys/random/get
+
+   Syscall: SYSCALL_LOCAL_VS_STAT
+
+            Result: u0 - number of active VCPUs; u1 - number of idle cycles 
+		    from start,
+                    u2 - number of work cycles from start, u3 - number of syscalls,
+                    u4 - number of wrong syscalls, u5 - fatal errors...
+
+            HAC: local/sys/virtual/stat 
+
+   Syscall: SYSCALL_LOCAL_RS_STAT
+
+            Result: u0 - uptime in seconds, u1 - load average (1 min),
+                    u2 - RAM size in kB, u3 - free RAM in kB, u4 - swap size
+                    in kB, u5 - free swap in kB, u6 - number of RS processes
+
+            HAC: local/sys/real/stat
+
+Here's documentation of network module syscalls written by Marcin:
+
+I: input parameters
+O: return values
+
+Note: All parameters to network syscalls must be given in host byte order.
+      LLX section describes only exceptions specific to network module.
+
+
+NET_CONNECT
+	params:	I:	u0 - destination address ($IP)
+			u1 - destination port ($PORT)
+		i	u2 - source address (0 - default) ($IP)
+			u3 - source port (0 - ephemeral) ($PORT)
+			u4 - time limit (usecs, 0 - native OS dependent)
+			u5 - TCP/UDP switch (0/1)
+		O:	s0 - new descriptor (connected socket)
+	effect: connects to inet socket (TCP/UDP)
+	LLX   : NET_PORT_OOR   - destination/source port > 65535
+		NET_SOCK       - can't create new native socket
+		NET_NO_FREE_SD - no free socket descriptors
+		NET_NONBLOCK   - can't make native socket non-blocking
+		NET_BIND       - can't bind native socket
+		NET_TIMEO      - time limit exceeded
+		NETERROR   - some kind of other internal error ...
+	HAC   : oper: net/sock/connect 
+		obj : net/address/{tcp,udp}/{source,dest},{$IP,default}/$PORT
+	notes : If timeout is set then u3 is overwritten by syscall.
+
+
+NET_SUN_CONNECT
+	params: I:	u0 - destination process number ($PID)
+			u1 - destination socket ID ($SID)
+			u4 - time limit
+			u5 - stream/datagram switch (0/1)
+		O:	s0 - new descriptor (connected socket)
+	effect: connects to other process via a Unix socket
+	LLX   : the same as for NET_CONNECT except NET_PORT_OOR, NET_BIND
+	HAC   : oper: net/sock/connect
+		obj : net/address/dest/unix/{$PID,external}/$SID
+	notes : If u0 is excessive (>65535), external program is assumed.
+
+
+NET_LISTEN
+        params: I:	u0 - local address (0 - all) ($IP)
+			u1 - local port (0 - ephemeral) ($PORT)
+			u2 - backlog (TCP only)
+			u5 - TCP/UDP (0/1)
+		O:	s0 - new descriptor (listening socket)
+        effect:	creates listening socket
+        LLX   : NET_PORT_OOR   - local port >65535
+		NET_BAD_BLOG   - backlog too high (default: >5)
+		NET_SOCK       - can't create new native socket
+		NET_NO_FREE_SD - no free socket descriptors
+                NET_NONBLOCK   - can't make native socket non-blocking
+		NETERROR   - internal error
+        HAC   : oper: net/sock/listen
+		obj : net/address/source/{tcp,udp}/{$IP,all}/$PORT
+        notes :
+
+
+NET_SUN_LISTEN
+	params: I:	u1 - socket ID ($SID)
+			u2 - backlog (stream only)
+			u5 - stream/datagram (0/1)
+		O: 	s0 - new descriptor (listening socket)
+	effect: creates a listening Unix socket
+	LLX   : the same as for NET_LISTEN except NET_PORT_OOR
+	HAC   : oper: net/sock/listen
+		obj : net/address/source/unix/{dgram,stream}/self/$SID
+	notes :
+
+
+NET_ACCEPT
+        params: I:	u0 - descriptor (listening socket)
+			u4 - blocking/non-blocking (1/0)
+		O:	s0 - new descriptor (connected socket)
+		  	s1 - return code (1 - accepted, 0 - would block)
+        effect: accepts next client on listening socket
+        LLX   : NET_BAD_SD          - invalid (unused ? too high ?) descriptor
+		NET_SOCK_NON_LISTEN - descriptor points to non-listening socket
+		NET_NO_FREE_SD      - no free socket descriptors
+		NET_NONBLOCK        - can't make native socket non-blocking
+		NETERROR            - internal error
+			
+        HAC   :
+        notes : Return code is used only when syscall is called non-blocking.
+
+
+NET_RECV
+        params: I:	u0 - descriptor (connected socket)
+			u1 - data buffer address
+			u2 - buffer length (bytes)
+			u4 - blocking/non-blocking (1/0)
+		O:	s0 - bytes received
+			s1 - return code (1 - received, 0 - would block)
+        effect: Receives data through connection.
+        LLX   : NET_BAD_SD        - invalid (unused ? too high ?) descriptor
+		NET_EPIPE         - broken pipe
+		NET_EOF           - remote party disconnected (TCP/stream only)
+		NET_SOCK_NOT_CONN - descriptor points to not connected socket 
+                PROTFAULT         - can't access buffer for writing
+		NETERROR          - internal error
+        HAC   :
+        notes : Return code is used only when syscall is called non-blocking.
+
+
+NET_SEND
+        params: I:      u0 - descriptor (connected socket)
+                        u1 - data buffer address
+                        u2 - buffer length (bytes)
+                        u4 - blocking/non-blocking (1/0)
+                O:      s0 - bytes sent 
+                        s1 - return code (1 - sent, 0 - would block)
+                        s2 - if s1 == 0, bytes still waiting to be sent
+        effect: Sends data through connection.
+        LLX   : The same as for NET_RECV except that PROTFAULT means no perms
+                for reading from buffer.
+        HAC   :
+        notes : Return code is used only when syscall is called non-blocking.
+                This syscall, unlike in most Unices, returns s1 == 1 when
+                working in non-blocking mode ONLY if whole data has been
+                send. Otherwise, amount of bytes waiting to be sent is put
+                in s2.
+
+
+NET_SHUTDOWN
+        params: I:	u0 - descriptor
+			u1 - how
+        effect: closes opened connection
+        LLX   : NET_BAD_SD  - invalid (unused ? too high ?) descriptor
+		NET_BAD_HOW - invalid 'how' parameter
+		NETERROR    - internal error
+        HAC   :
+        notes :
+
+
+NET_ISWAITING
+        params: I:	u0 - descriptor
+		O:	s0 - result (1 - client, 0 - no clients)
+        effect: checks if there are pending connections to listening socket
+        LLX   : NET_BAD_SD          - invalid (unused ? too high ?) descriptor
+		NET_SOCK_NON_LISTEN - descriptor points to non-listening socket
+		NETERROR	    - internal error
+        HAC   :
+        notes : this function is non-blocking of course ;P
+
+=> And here's documentation of advmem module by z33d
+ 
+ Module advmem.c
+ --------------
+ 
+ Status: almost done
+ 
+ Purpose: Advanced memory operations
+ 
+ Access control: none
+ Exceptions: standard +
+     ERROR_MEM_FORMAT - when given string isn't convertible
+     ERROR_MEM_OFFSET - when offset < 0
+ 
+ Note: Offset may be bigger than 0..3, then base address (of dwords) is
+       suitably increased. 
+ 
+ Syscall: SYSCALL_MEM_STRCPY
+     u0 - destination address
+     u1 - offset of destination (0..3 in addressed dword)
+     u2 - source address
+     u3 - offset of source
+     u4 - size in bytes
+ 
+ Syscall: SYSCALL_MEM_MEMSET
+     u0 - address
+     u1 - offset
+     u2 - character
+     u3 - size in bytes
+
+ Syscall: SYSCALL_MEM_BZERO
+     u0 - address
+     u1 - offset
+     u2 - size in bytes
+
+ Syscall: SYSCALL_MEM_ENDIAN
+     u0 - address
+     u1 - bytelength
+     u2 - current format
+     u3 - expected format (0 - big endian, 1 - little endian, 2 - native endian)
+     
+ Syscall: SYSCALL_MEM_STRCHR
+     u0 - address
+     u1 - offset
+     u2 - character
+     u3 - size in bytes
+ RETURN: u0 - address of matched dword
+         u1 - offset in this dword
+         u2 - 0 if NOT succeed
+ 
+ Syscall: SYSCALL_MEM_STRRCHR
+     u0 - address
+     u1 - offset
+     u2 - character
+     u3 - size in bytes
+ RETURN: u0 - address of matched dword
+         u1 - offset in this dword
+	 u2 - 0 if NOT succeed
+ 
+ Syscall: SYSCALL_MEM_STRCMP
+     u0 - address of 1st string
+     u1 - offset of 1st string
+     u2 - address of 2nd string
+     u3 - offset of 2nd string
+     u4 - size in bytes
+ RETURN: u0 - like strcmp from libc
+ 
+ Syscall: SYSCALL_MEM_STRCASECMP
+     u0 - address of 1st string
+     u1 - offset of 1st string
+     u2 - address of 2nd string
+     u3 - offset of 2nd string
+     u4 - size in bytes
+ RETURN: u0 - like strcmp from libc
+
+ Syscall: SYSCALL_MEM_STRSTR
+     u0 - address
+     u1 - offset
+     u2 - size of 1st string
+     u3 - addres
+     u4 - offset
+     u5 - size of 2nd string
+ RETURN: u0 - address
+         u1 - offset
+	 u2 - 0 if NOT succeed
+
+ Syscall: SYSCALL_MEM_STRRSTR
+     u0 - address
+     u1 - offset
+     u2 - size of 1st string
+     u3 - addres
+     u4 - offset
+     u5 - size of 2nd string
+ RETURN: u0 - address
+         u1 - offset
+         u2 - 0 if NOT succeed
+ 
+ Syscall: SYSCALL_MEM_TOUPPER
+     u0 - address
+     u1 - offset
+     u2 - size
+
+ Syscall: SYSCALL_MEM_TOLOWER
+     u0 - address
+     u1 - offset
+     u2 - size
+ 
+ Syscall: SYSCALL_MEM_STRTOINT (converts string to integer)
+     u0 - address
+     u1 - offset
+     u2 - size in bytes
+ RETURN: u0 - integer or exception (ERROR_MEM_FORMAT)
+ 
+ Syscall: SYSCALL_MEM_STRTOHEX (converts string to unsigned int)
+     u0 - address
+     u1 - offset
+     u2 - size in bytes
+ RETURN: s0 - value or exception (ERROR_MEM_FORMAT)
+ 
+ Syscall: SYSCALL_MEM_STRTOFLOAT (converts string to float)
+     u0 - address
+     u1 - offset
+     u2 - size in bytes
+ RETURN: f0 - float or exception (ERROR_MEM_FORMAT)
+ 
+ Syscall: SYSCALL_MEM_STRHEXINT (string may begin with '0x' or ...)
+     u0 - address
+     u1 - offset
+     u2 - size in bytes
+ RETURN: s0 - unsigned integer or exception (ERROR_MEM_FORMAT)
+ 
+ Syscall: SYSCALL_MEM_HEXTOSTR (like sprintf("%x" ... in libc)
+     u0 - address
+     u1 - offset
+     u2 - size of buffor
+     s0 - value to convert
+ RETURN: s0 - number of written bytes
+ 
+ Syscall: SYSCALL_MEM_INTTOSTR (like sprintf("%d" ... in libc)
+     u0 - address
+     u1 - offset
+     u2 - size of buffor
+     u3 - value to convert
+ RETURN: s0 - number of written bytes
+
+ Syscall: SYSCALL_MEM_FLOATTOSTR (like sprintf("%f" ... in libc)
+     u0 - address
+     u1 - offset
+     u2 - size of buffor
+     f0 - value to convert
+ RETURN: s0 - number of written bytes
+
+ Module math.c
+ --------------
+ 
+ Status: under development
+ 
+ Purpose: Mathematical routines
+ 
+ Access control: none
+ Exceptions: standard +
+    ERROR_MATH_RANGE - arc-function range checking (-1 .. 1)
+    ERROR_MATH_DIV - math_table_div: division by zero
+    ERROR_MEM_FORMAT - math_table_*: unsigned char conversion isn't implemented
+     
+ Note: When function uses cache returned values may be inaccurate.
+ 
+ Syscall: SYSCALL_MATH_SIN
+    u0 - type (0 - noncached, 1 - cached value)
+    f0 - value in radians
+ RETURN: f0 - sine of given value
+ 
+ Syscall: SYSCALL_MATH_COS
+     u0 - type (0 - noncached, 1 - cached value)
+     f0 - value in radians
+ RETURN: f0 - cosine of given value
+ 
+ Syscall: SYSCALL_MATH_TAN
+     u0 - type (0 - noncached, 1 - cached value)
+     f0 - value in radians
+ RETURN: f0 - tangent of given value
+ 
+ Syscall: SYSCALL_MATH_ASIN
+     u0 - type (0 - noncached, 1 - cached value)
+     f0 - value (-1..1)
+ RETURN: f0 - arcsine of given value or ERROR_MATH_RANGE exception
+ 
+ Syscall: SYSCALL_MATH_ACOS
+     u0 - type (0 - noncached, 1 - cached value)
+     f0 - value (-1..1)
+ RETURN: f0 - arccosine of given value or ERROR_MATH_RANGE exception
+ 
+ Syscall: SYSCALL_MATH_ATAN
+     u0 - type (0 - noncached, 1 - cached value)
+     f0 - value (-1..1) - strange ;>
+ RETURN: f0 - arctangent of given value or ERROR_MATH_RANGE exception
+
+ Syscall: SYSCALL_MATH_FILLSIN
+     u0 - address of buffer
+     s0 - count of sines to write (in dwords or in bytes when u2 == 2)
+     f0 - first value
+     f1 - 'step'
+     u1 - type (0-noncached, 1-cached)
+     u2 - type of results (0-int, 1-float, 2-unsigned char)
+     u3 - value to multiply with results (0 is like 1)
+ RETURN: Table of sine values
+ 
+ Syscall: SYSCALL_MATH_FILLCOS
+     u0 - address of buffer
+     s0 - count of cosines to write (in dwords or in bytes when u2 == 2)
+     f0 - first value
+     f1 - 'step'
+     u1 - type (0-noncached, 1-cached)
+     u2 - type of results (0-int, 1-float, 2-unsigned char)
+     u3 - value to multiply with results (0 is like 1)
+ RETURN: Table of cosine values
+ 
+ Syscall: SYSCALL_MATH_FILLTAN
+     u0 - address of buffer
+     s0 - count of tangents to write (in dwords or in bytes when u2 == 2)
+     f0 - first value
+     f1 - 'step'
+     u1 - type (0-noncached, 1-cached)
+     u2 - type of results (0-int, 1-float, 2-unsigned char)
+     u3 - value to multiply with results (0 is like 1)
+ RETURN: Table of tangent values
+
+ Syscall: SYSCALL_MATH_TABLE_MUL
+     u0 - address of table with values to multiply
+     u1 - size of this table (dword - float and int, byte - unsigned char)
+     u2 - type of values in first table (0 - int, 1 - float, 2 - unsigned char)
+     u3 - address of second table
+     u4 - size
+     u5 - type (0 - int, 1 - float, 2 - unsigned char)
+     u6 - type of results (0 - int, 1 - float, 2 - unsigned char)
+     u7 - value to multiply with results (it's used during float to int
+          conversion, fast operations ... only without float)
+          Ofcourse 0 is like 1.
+	  
+ Syscall: SYSCALL_MATH_TABLE_DIV
+     u0 - address of table with values to division
+     u1 - size of this table (dword - float and int, byte - unsigned char)
+     u2 - type of values in first table (0 - int, 1 - float, 2 - unsigned char)
+     u3 - address of second table
+     u4 - size
+     u5 - type (0 - int, 1 - float, 2 - unsigned char)
+     u6 - type of results (0 - int, 1 - float, 2 - unsigned char)
+     u7 - value to multiply with results (it's used during float to int
+          conversion, fast operations ... only without float)
+ Division by zero will call ERROR_MATH_DIV exception  
+
+ Syscall: SYSCALL_MATH_TABLE_ADD
+     u0 - address of table with values to addition
+     u1 - size of this table (dword - float and int, byte - unsigned char)
+     u2 - type of values in first table (0 - int, 1 - float, 2 - unsigned char)
+     u3 - address of second table
+     u4 - size
+     u5 - type (0 - int, 1 - float, 2 - unsigned char)
+     u6 - type of results (0 - int, 1 - float, 2 - unsigned char)
+     u7 - value to multiply with results (it's used during float to int
+          conversion, fast operations ... only without float)
+ 
+ Syscall: SYSCALL_MATH_TABLE_SUB
+     u0 - address of table with values to subtract
+     u1 - size of this table (dword - float and int, byte - unsigned char)
+     u2 - type of values in first table (0 - int, 1 - float, 2 - unsigned char)
+     u3 - address of second table
+     u4 - size
+     u5 - type (0 - int, 1 - float, 2 - unsigned char)
+     u6 - type of results (0 - int, 1 - float, 2 - unsigned char)
+     u7 - value to multiply with results (it's used during float to int
+          conversion, fast operations ... only without float)
+  
+-- END OF DESCRIPTION --
+
+
+Module: packet.c (beta test version by bikappa)
+-----------------------------------------------
+
+This module can be used for all low-level networking purposes, including:
+sniffing / packet analysis, packet sending, packet forwarding / firewalling
+etc.
+
+Syscall: SYSCALL_LOW_NET_INITDEV
+
+  Initializes RAW listener (sniffer) socket
+
+  Parameters: u0 / u1 - interface name address / len
+  Returns: s0 - socket number
+
+  HAC: operation=net/raw/open/listener, object=net/dev/phys/IFACE_NAME
+
+Syscall: SYSCALL_LOW_NET_RAW;
+
+  Initializes RAW sender socket
+
+  Parameters: none
+  Returns: s0 - socket number
+
+  HAC: operation=net/raw/open/sender
+
+Syscall: SYSCALL_LOW_NET_RECV;
+
+  Reads RAW packet thru listener socket
+
+  Parameters: u0 - socket number, u1 / u2 - packet buffer address / len
+  Returns: s1 == 1 - success, data received (s0 - packet length)
+           s1 == 0 - failure, no data present
+
+  No blocking low_net_send for now
+
+Syscall: SYSCALL_LOW_NET_SEND;
+
+  Sends RAW packet thru sender socket
+
+  Parameters: u0 - socket number, u1 / u2 - packet data address / len
+  Returns: s1 == 1 - success, all data sent
+           s1 == 0 - failure, s2 - data left (not sent)
+
+  No blocking low_net_send for now
+
+Syscall: SYSCALL_LOW_NET_CLOSE;
+
+  Closes listener or sender socket
+
+  Parameters: u0 - socket number
+
+  No return, no HAC.
+
+Syscall: SYSCALL_LOW_NET_GETHWADDR
+
+  Parameters: u0, u1 - interface name
+  Return: u0:u1:u2:u3:u4:u5 - hardware address
+
+  HAC: net/raw/hwaddr/get on net/dev/phys/<iface>
+  Exceptions: standard memory access, HAC, internal error (if unable to
+  create temp socket), ERROR_BAD_SYS_PARAM (unknown interface)
+
+
+--
+
+--- This is a gfx.so module documentation - ask honey for more details,
+    that's all I have:
+
+GFX MODULE MANUAL
+
+version 0.000000000000000[...]01 (it's one "zero" less than in 1st version
+                                                                 of manual)
+
+manual (and, by the way, GFX module) was written by Lukasz Jachowicz 
+							<honey@linux.net.pl>
+
+Hi,
+
+I've just finished writing the Very First^H^H^H^H^HSecond version of 
+a graph module for Argante OS. I know it's not ideal but I already have
+some nice ideas and I'll code them ASAP. At the moment you can use some
+functions described below.
+
+
+
+SYSCALL_GFX_MODE
+Inits svgalib in case it wasn't inited before. Then sets current videomode 
+to u0. Returns nonzero value in u1 in case of problems, so your software
+can react in a way you want it to react. But - remember - you won't be able
+to set the mode that is DENIED or unavaiable on your graphics hardware - the
+program will stop with an error message ("I can't use this mode")...
+You can find list of avaiable modes (and their numbers) in
+Argante/hll/include/gfx.hll.
+
+SYSCALL_GFX_CHECKMODE
+Send the mode you want to check to u0 and then call this function.
+u0 will tell you if the mode is (nonzero) or is not (u0=0) supported
+by your hardware and allowed by Argante's HAC
+
+SYSCALL_GFX_CLEARSCREEN
+If you want to clear the mess on your screen - this function is for you.
+
+SYSCALL_GFX_MEMCOPY
+The most important function in this library. Copies some amount (set it
+in u1) of data from *u0 and sends directly to your graphic card
+memory... So if you were a asm-coder on demoscene, you're at home...
+
+SYSCALL_GFX_SETPALETTESNGL
+Let's assume you want to change the background color from black to white.
+Let's assume your background is filled with color nr "0". What do you do?
+You just put the color's value to u0, and the new rgb to (u1,u2,u3) and...
+done :)  Oh, don't forget to call this #$#@$ function ;)
+
+SYSCALL_GFX_SETPALETTE
+Using the function presented above for every color avaiable could be a little
+boring. So prepare the table with (r,g,b,r,g,b,r,g,b,...) values for some
+colors, decide, which color's number is the 1st one to be changed (put its
+value to u1), put number of colors in the table to u2, put the pointer to
+this magic place in memory to u0 and call this function. Done.
+
+SYSCALL_GFX_SETCLUT8
+I don't know why, but svga lib uses just 4 bits/pixel when you change a value
+in color palette. Call this function to change it to 8 bits/pixel...
+
+SYSCALL_GFX_VC
+If you want to stop people from moving to another virtual console,
+just insert zero to u0 and syscall $GFX_VC. To allow 'em changing
+- put any nonzero value to u0 and call this function.
+
+-- EOF --
+
+NOTE: every module using HAC may return, besides standard exceptions,
+values: ACL_PROBLEM, NOPERM.
+
+For rIPC API documentation, see section 9.
+
+
+---------------------
+14. Creating modules
+---------------------
+
+In the current implementation modules are dynamically linked programs 
+written in C or ADA.
+
+Requirements are as follows:
+
+- there must be syscall_load(int* x); this function is called when the module
+  is loaded; its duty is to fill the table of x values with syscall numbers
+  it will support; the values of these syscalls are to be found in the
+  syscall.h file (of course, new functions should have new ones, added to
+  syscall.h). The list cannot exceed MAX_SERVE from the file config.h and
+  must end with a negative value.
+
+- another function required is syscall_handler(int c,int sysnum) - it will be
+  called if VCPU with the number 'c' calls syscall with the number found
+  in the list registered for this module (the actual number is given in
+  sysnum). The value 'c' permits referring to the structure vcpu_struct
+  declared in task.h (see this file for details).
+
+- optionally, there could be syscall_unload, executed when syscall terminates
+
+- optionally, there could be syscall_task_cleanup, executed whenever any task
+  terminates (removing open descriptors etc.).
+
+I could go on with describing module construction, so I will just paste 
+a sample one, supporting primitive console output:
+
+--
+void syscall_load(int* x) {
+  *x=SYSCALL_IO_PUTSTRING;
+  *(++x)=SYSCALL_ENDLIST;
+  printk("<< Welcome to I/O module >>\n");
+}
+
+void syscall_handler(int c,int num) {
+
+  int cnt;
+  int from;
+  char* start;
+
+  if (num==1) {
+    from=cpu[c].uregs[0];
+    cnt=cpu[c].uregs[1];
+    start=verify_access(c,from,(cnt+3)/4,MEM_FLAG_READ);
+    if (!start) {
+      non_fatal(ERROR_PROTFAULT,"Can't print non-accessible memory",c);
+      return;
+    }
+    write(2,start,cnt);
+  }
+
+}
+
+Function non_fatal is used for reporting exceptions.
+
+Library exchange consists in loading a new one into any free slot, and the
+unloading the old one from its slot. Syscall management will be uninterrupted.
+
+And no, syscalls CANNOT block the system, exactly as it is e.g. in Linux.
+Therefore, when it is necessary to wait for an operation (like recv()),
+it is recommended to set process state (cpu[nn].state) adding the flag
+VCPU_STATE_IOWAIT and at the same time setting cpu[nn].iohandler so that it
+points to the function accepting a single parameter (the number of the VCPU):
+int handler(int cpu_num).
+
+Additionally, the field cpu[nn].iowait_id could be used to define the
+identifier of the resource the process is waiting for.You could use it, but
+don't have to.
+
+>From this point on, the process won't work (the situation is analogous to
+STATE_SLEEP). Instead, in every cycle of serving tasks, the function
+iohandler(numer_cpu) will be called. The function should check the number 
+of the resource the task is waiting for. If it is not accessible, it should
+return 0. If it is accessible, the function should manage the results
+appropriately and return a non-zero value (e.g. 1) to automatically leave 
+the state IOWAIT.
+
+A given module should itself take care of storing information concerning
+where to write return information for a given task, etc.
+
+To enter the IOWAIT state, the safest way is to use the macro:
+
+ENTER_IOWAIT(cpu_number,resource_number,iohandler)
+
+You should remember not to pass nor take from the process "raw" objects
+from the real system, like file descriptor numbers, nor to leave access 
+control to the system (e.g. attempting writing to a file and then checking 
+for success). Argante ensures full control on its own side in a unified way,
+whereas all "real" objects are stored in tables separate for every processor,
+giving the process at most an identifier within these tables. The best
+example of a correct module construction is the fs module.
+
+
+This is a short description of string management philosophy at a low level
+(which will probably be of no interest to an AHLL programmer, but is essential
+when creating modules), which I wrote for Artur:
+
+[...]
+
+Oh, but gethostbyname is a rather good example. In general we do it in
+this way:
+
+- user passes us buffer address and its size (in, say, registers u0 i u1).
+
+- we check whether the user is authorised to perform a given operation - 
+  in your case it is sufficient to use the macro VALIDATE(c,"none",
+  "local/sys/real/uname/get"); the macro will "return" itself if the
+  user isn't authorised to access the object.
+  
+- You have to check whether the address given by the user is writable
+  at all its length: if not, naturally we cannot process its syscall and
+  report an exception:
+
+
+  if (!(sth=verify_access(c,cpu[c].uregs[0],(cpu[c].uregs[1]+3)/4,
+        MEM_FLAG_WRITE))) {
+    non_fatal(ERROR_PROTFAULT,"gethostname: Attempt to access protected"
+                              " memory",c);
+    failure=1;
+    return;
+  }
+
+  verify_access accepts the following parameters: VCPU number, address,
+  size (but note it is in dwords, so we have to recalculate the size given
+  in bytes; as the operator '/' in c on ints is simply idiv ignoring
+  the modulo, we make sure we catch a case like: the user says we can
+  write one byte, 1/4 according idiv = 0, so we check 0 bytes ;-), or
+  as well as access type (READ or WRITE).
+  
+  The function returns either a pointer (already in the real system,
+  normal void*) or NULL: it means it is not authorised to access the block
+  and we should raise an exception, set failure (a convention, for my
+  own comfort, it was justified somehow ;) and stop any further work.
+
+- OK, success, let's assume we have the pointer already, so we take what
+  we need, write max.uregs[1] bytes to the address returned by verify_access,
+  and the we return (say in s0) the number of characters taken.
+
+  NOTE: we don't copy nor count the NULL-terminator which is a normal sign
+  in Argante. Therefore we don't do things like:
+  
+  strncpy(sth,some_buffer,cpu[c].uregs[1]); 
+  
+  but instead:
+
+  memcpy(sth,some_buffer,strlen(some_buffer)) 
+  
+  and we return strlen(some_buffer) w s0. Oh, but we have to check earlier
+  whether strlen(some_buffer)>cpu[c].uregs[1] (i.e. whether we wan to write
+  more than is needed) and possibly we should report an exception.
+
+That's enough about strings from the point of view of kernel-space.
+No, there are no plans for strings hard-linked to byte/word/dword 
+referring to their length: it will be a matter of taste and implementation 
+in HLL, but the information is passed to the kernel loosely :P
+
+More trouble with strings has only poor z33d who has to introduce a new
+value for certain operations ;) i.e. either to return the offset in bytes
+or the address argante + 0..3 of the offset ;> But it's not a big problem, 
+either.
+
+[ z33d was writing the module advmem, responsible for, among others, 
+concatenating / searching texts, etc]
+
+
+-------------------------------
+15. Executable file format
+-------------------------------
+
+Executable file header format is described below:
+
+  unsigned int magic1;
+
+    COnstant file signature, has the value of 0xdefaced
+
+  char domains[MAX_EXEC_DOMAINS];
+
+    List of domains the program belongs to, ends with 0.
+
+  unsigned int flags;
+
+    Starting process flags. Currently no flags are supported.
+
+  unsigned int priority;
+
+    Priority defines how long a timeslice is assigned to a process in every
+    processing cycle. Priority of 1 means that every time the process can 
+    execute one instruction.
+
+  unsigned int ipc_reg;
+
+    Starting IPC identifier IPC. If the value is greater than 0, it will be 
+    rewritten to VCPU.
+
+  unsigned int init_IP;
+
+    Starting instruction pointer, usually it is enough to assign it 0.
+
+  int current_domain;
+  int domain_uid;
+
+    Current execution domain and UID. Honoured only when greater than 0.
+
+  unsigned int bytesize;
+
+    Code image size.
+
+  unsigned int memflags;
+
+    Memory flags (READ|WRITE, etc)...
+
+  unsigned int datasize;
+
+    Data image size.
+
+  char signature[64];
+
+    Author's signature / short description of the program (optional).
+
+  unsigned int magic2;
+
+    Constant signature 0xdeadbeef
+
+What follows next is the code image block (size: 12*bytesize) and data
+block (optional, size = 4*datasize). Both blocks are mapped from the
+address 0 respectively onto the space of code and data.
+
+Bulba's program (tools/binedit.c) is used to modify the content of
+existing program headers.
+
+
+
+---------------------- 
+16. Built-in debugger
+----------------------
+
+Author: z33d
+
+No compromises -- OK, I won't use Polish diacritic marks [impossible to 
+render in English, anyway -- translator].
+
+I have implemented a limited but fully functional interactive debugging
+system. Something like gdb. In order to initialise process debugging, it should
+be loaded with the 'd' command. As a result, the VCPU_FLAG_DEBUG flag, 
+indispensable for debugging purposes, will be set.
+
+An excerpt from help: ('?')
+  dfn         - load and run binary in debug mode
+  rnn         - show nn vCPU registers
+  xnn addr c  - show c bytes of memory on nn vCPU
+  nnn         - step exactly one instruction of nn vCPU
+  cnn         - continue process on nn vCPU
+  snn         - continue process on nn vCPU to next syscall
+  fnn         - continue process on nn vCPU to next ret
+  lnn         - list breakpoints on nn vCPU
+  bnn zz      - add breakpoint on nn vCPU at zz IP
+  unn zz      - delete zz breakpoint on nn vCPU
+  inn IP c    - disassemble c instructions at IP on VCPU nn
+  tnn         - show stack trace on nn vCPU
+
+These commands should be clear; moreover, every exception raising
+(even intercepted) causes process execution to stop
+(VCPU_STATE_STOPPED).
+
+Besides the debugger, z33d has also written a disassembler, to be
+found in the tools/ directory. Although unfinished, it does well what
+it is supposed to do.
+
+
+---------------------------
+17. Process console support
+---------------------------
+
+Argante has very poor display.so module. Well, in fact, it is provided
+for console-based debugging purposes only. Argante, while running in
+background, provides no access to console.
+
+But this does NOT mean your process cannot use fully-featured terminals,
+like local console, screen window, telnet terminal, xterm terminal etc.
+It can.
+
+Console support is provided by vcpucons utility, which can be found in
+tools/ subdirectory. It can be used in really simple manner. Let's consider
+some examples:
+
+- you want to access process console by hand - then all you have to do
+  is to run vcpucons; using 'exec vcpucons' you can eg. replace current
+  screen window with process console etc.
+
+- you want to access process console permanently, replacing one of the
+  local consoles - then you have to launch vcpucons from /etc/inittab
+  instead of mingetty session.
+
+- you want to launch process console instead of login shell for remote
+  user (after local authorization) - well, all you have to do is to
+  use vcpucons instead of login shell in /etc/passwd,
+
+- you want to launch process console instead of authorization eg. from
+  in.telnetd - use in.telnetd -L /path/to/vcpucons in inetd.conf.
+
+- etc - no limitations at all.
+
+Ok, but how the VCPU is supposed to handle such requests? How can you
+write something on the console? It's simple! Consoles, from the programmer's
+point of view, are working extactly the same way as unix sockets are.
+
+Process should create listening, stream mode unix socket and wait for the
+connection. When vcpucons is invoked with specific parameters, it tries
+to connect to given unix socket and enters proxy mode. In this mode,
+all data read from the terminal is transferred to the process (and can
+be received as if it comes from network) and all data sent by process is
+put on the terminal.
+
+This link works in char-by-char mode, preserving all terminal control
+codes, until:
+
+a) process will close the connection endpoint
+b) process will exit / die
+c) vcpucons will catch fatal signal (SIGHUP, SIGINT etc)
+
+Please note that vcpucons can be used multiple times on the same socket
+and at the same time. It's process decision whether it wants to accept
+next connections and how to handle them.
+
+Usage:
+
+  vcpucons [ -l ] path/to/sockets/VCPUid-socketid
+           |      |
+           |      +- This path should point to external VCPU unix socket
+           |         which is supposed to listen for vcpucons to connect.
+           |         For example, you can use fs/unix-sock/2-123. VCPU 2
+           |         should wait for the connections - eg. using the following:
+           |         Listen_Unix(123,nn,NET_SOCK_STREAM,sock)
+           |         [ nn = connection backlog ]
+           |
+           +-------- One session vs loop. Without this option, console will
+                     quit after disconnect or on connect failure; wit it, 
+                     it will keep reconnecting forever.
+
+By handling numerous connections to single unix socket, numerous vcpucons
+sessions can be handled differently.
+
+You can find nice, very simple example in hll/examples/console.ahl - just
+run it, connect to it using vcpucons fs/unix-sock/0-123... And that's it :)
+
+
+-------
+18. FAQ
+-------
+  
+You can find answers to >>the most frequently<< asked questions. Most
+of those answers include information you can find above, but - as
+you probably know - it's very easy to miss something. Anyway, we are
+very often asked about following things:
+
+1) What is it all for?
+
+  
+For pleasure. We're creating Argante not because we want to write another
+Linux - we'd rather like to find out whether it is  possible to create a system that
+would connect security with functionality, performance, universality
+and that, at the same time, would break most conventions used
+in other systems. The second thing - we'd like to see if we can do it :-)
+ 
+Another matter is that some of Argante's solutions can potentially be  
+interesting - for example, the management (plug and play) and the creation 
+of a communication layer inside a cluster system, independent of the
+distribution of systems, and in a transparent (for a programmer, of course)
+way.
+  
+We don't want this OS to be a product, so we've decided to start 
+distributing it under terms and conditions of the LGPL license. The software,
+support and some solutions can be a product, the OS itself - shouldn't be.
+
+2) Where will Argante be useful?
+
+Any distributed servers, where security and efficiency is vital, in
+cluster systems (as mentioned above) and in many more... No, we don't
+expect that Argante will be a desk-end product - we neither want to
+challenge Microsoft nor to duplicate the success of Linux.
+
+Argante is also the perfect solution for distributing network requests -
+including distributed scanning tasks and fault-tolerant networks. Read
+Part II of documentation to find out more.
+
+
+3) Will Argante be a separate system?
+
+I've mentioned it, but it all depends on how it will develop. An embedded
+system has its advantages - among others, the possibility of very precise
+integration (as a part of described hybrid solutions) with a real
+system, and the lack of necessity to port all software at one time.
+
+Of course, we're interested in making Argante more independent one day. Or
+even implementing RSIS at hardware level, who knows? We already thought
+about building a PC card with simple chip and RSIS interpreter in EEPROM,
+plus some memory on the board. Only SYSCALLs, exceptions, and possibly
+debugging traps will be reported to real system using IRQ (so real system
+is responsible for I/O, while code execution is done at the card level).
+Building such card at the cost below $200 shouldn't be a problem for
+someone skilled with electronics and chip programming.
+
+4) What about portability of Unix applications?
+ 
+There will be nothing like it, because Argante has a completely
+different base. We can talk about portability between DOS and Unix -
+on both systems you can run a "Hello, world" software, but more
+advanced software, because of very serious differences, won't be
+portable. That's why we didn't even try to port the C language - of
+course, if anybody wants to do it, he can, even if it's not an
+extremely secure language...
+
+5) Why does Argante has its own programming language?
+
+In fact, Argante would operate on a subset of Ada's commands - on the other
+hand, we use many conventions used in C to control the code and we think
+it's not so bad :)  That's why AHLL is a mixture of good parts of both 
+languages and is very easy to learn.
+
+6) Can I change system settings?
+
+Maximal number of VCPUs, the maximal stack size and most of environmental
+settings can be modified via config.h file; but remember that changing
+some vital parameters (for example, the number of registers) can cause 
+incompatibility or mistakes in software.
+
+7) How does Argante use the power of CPU?
+  
+When all processes are "dead", they wait for something or are in IOWAIT,
+the VS clock slows down, giving most of its power to the real system. In
+case when at least one process is WORKING, the whole processor power
+available to Argante is divided between them. It can be controlled via
+the "nice" value and the scheduling scheme in the real system.
+ 
+It is possible to run more than one Argante at the same time, but
+you should mind the efficiency; you can modify  multitasking
+settings in the real system and Argante's priority.
+
+If you create a hybrid system, in which Argante cooperates
+with some elements of the real OS, we suggest to set priority
+for Argante and the rest of processes in a correct way, so it could
+use a CPU's power in a efficient way.
+
+Running well-designed Argante's applications shouldn't load the
+system too much.
+
+9) Portability
+
+At the moment,  biniaries aren't portable between systems with
+different endians. We plan to put an automatic translator in a
+loader module, but at the moment the only thing portable is 
+source code and - between systems with the same endian - biniaries.
+  
+The source code should be portable without any problems.
+
+10) Problems with compilation?
+  
+In case of "memory exhausted" or "segmentation fault" errors during
+compilation, comment out everything after -Wall in the CFLAGF= line
+in the Makefile for a given OS (you can find it in a sysdep/ directory).
+It can decrease efficiency of Argante, but it will speed up compilation
+and will decrease resources needed to compile it.
+
+
+11) Where will Argante work?
+
+Linux		- native platform (with readline support)
+FreeBSD		- tested
+NetBSD          - not tested, should work
+OpenBSD		- tested
+Solaris		- tested
+AIX             - ??? <if you have access, let us know>
+HP/UX           - beta version present
+IRIX            - tested
+
+...other systems?
+
+
+12) I want to use readline library. Am I able to do it?
+
+The readline library can be used only when you:
+
+- use Linux system
+- have a new version of libc6 (glibc 2.1.x).
+
+Otherwise, the readline support won't be compiled in your Argante.
+This library isn't ideal and we're too busy writing the REALLY IMPORTANT
+CODE, so write your own version of readline or... wait for it :)
+
+13) I'd like to write something - where the h... is the CVS?
+
+At the moment - nowhere. I don't think we will run it before the first
+stable version is ready. Until then - I (lcamtuf@ids.pl) am a CVS 
+and please send all ideas, propositions and diffs (diff -urN) to me. Don't
+send your own snapshots or diffs created with different options - it's
+hard to update the code manually.
+
+--------------------------
+19. Contact, bug reporting
+--------------------------
+
+Report any bugs, problems and suggestions to argante@linuxpl.org :) I
+strongly believe AOS in early testing phase and isn't widely used (for
+now ;), so probably you don't have to report your findings to BUGTRAQ or
+so :)
+
+Thanks in advance.
+
+
+
+
+		  ***********************************
+		  * Part II: Development Guidelines *
+	  	  ***********************************
+
+
+--------------------
+ 1. AOS installation
+--------------------
+
+Specific installation is not required. First of all, copy argante,
+tools/agtses and tools/agtback to your PATH - eg. to /usr/local/bin.
+You can also put modules/*.so in eg /usr/lib/argante, if you want.
+This can be done automatically using './build install'.
+
+To set up basic project worskspace, you can use "agtproj" utility.
+
+To launch the system in background, with no interactive console, use:
+
+agtback argante SCRIPTNAME ROOTDIR
+
+You could always access console of such session using agtses command. To run
+foreground session (debugging purposes, for example), you could use:
+
+argante SCRIPTNAME ROOTDIR
+
+SCRIPTNAME - absolute path to boot script
+
+ROOTDIR - project root directory (argante working directory)
+
+For details on project root directory, see below sections.
+
+
+----------------------------------
+ 2. Programming: project directory
+----------------------------------
+
+This appendix assumes you have default paths defined in your
+include/config.h, pointing some guidelines for proper project design.
+Please read it carefully.
+
+Complete Argante project means, in fact, one virtual system instance. Project
+directory should be a subdirectory in real system containing all necessary
+configuration files, binary images and, preferably, SVFS mapping points
+for all private data. So, a sample structure looks like this:
+
+    /MyProject
+    |
+    +- boot.scr		- bootup script; take a look on conf/scripts in
+    |                     Argante sources. It should load all necessary
+    |                     modules and executable images in proper order,
+    |                     eventually launching real-system daemons as
+    |                     well.
+    |
+    +- /conf/access.hac - HAC control file; see below
+    |
+    +- conf/fsconv.dat  - SVFS mapping file; see below, map points should
+    |                     be within fs/ subdirectories.
+    |
+    +- /source          - suggested location for AHLL / RSIS sources.
+    |
+    +- /images          - suggested location for binary images (executables)
+    |
+    +- /modules         - eventually, if you don't have modules installed
+    |                     globally, or want specific versions for this 
+    |                     instance, you could place your modules here
+    |
+    +- /fs		- suggested "top of the filesystem"
+       |
+       +- /sock-unix    - location of Unix sockets for local inter-process
+       |  |               communication (should exists if you're planning to
+       |  |               use Unix sockets; generally, it's better to use
+       |  |               IPC or rIPC, but, on the other hand, Unix sockets
+       |  |               are not so bad ;).
+       |  |
+       |  +- /external  - location for Unix sockets for external software
+       |                  communication; see section 7.
+       |
+       +- /...          - mapped SVFS directories, in general; you should
+                          use hierarchy that can be easily assigned to
+                          specific task and type of resources, for example:
+
+                          /fs/ftp_server/storage/users/userXXX/
+ 
+
+-------------------------------
+ 3. Programming: Modular design
+-------------------------------
+
+As it's been told, implementation philosophy in Argante is somewhat different
+than eg. in Unix. Instead of treating your project as one big box, try
+to separate functional blocks, drawing connections between them, for example:
+
+  FTP SERVER PROJECT:
+
+     |
+  network listener --- [ network layer ]
+     |
+  command processor -- [ log file ]
+     |
+  authorizator ------- [ access control database ]
+     |
+  filesystem access -- [ user directories ]
+
+Don't split your project into 1000 parts - but try to keep every kind of
+I/O interaction in a different module, avoiding dangerous solutions, like
+giving command processor direct access to filesystem - put authorizator
+between, and filter every filesystem request using authorization data.
+
+In this example, network listener will pass connections to command 
+processor(s). These processors can communicate only with network through
+listener (so no abusive operations are allowed), and authorizator (no
+direct filesystem or password information access). Authorizator, on
+every request passed to filesystem, should verify user information, and
+pass it only if it's correct. The most sensitive layer - command processing -
+is now safely separated from sensitive information.
+
+That's quite simple and deadly effective. You should use rIPC for
+communication between modules, so you can:
+
+- split your project into for example 4 different machines with no
+  code changes,
+
+- launch any number of authorizators, filesystem access processes or
+  command processors in cluster, creating redundant structure with
+  automatic load-balancing ("choose fastest responding" algorithm).
+
+- add / remove / modify layers with no code changes.
+
+
+-----------------------------
+ 4. Programming: SVFS mapping
+-----------------------------
+
+SVFS hierarchy should be designed carefully. For example, putting vital
+system configuration files directly in SVFS is just stupid. If you have
+to modify local system, you should read details on real system interaction
+below, and create interface between your processes and real-system tools.
+
+Symlinks are allowed (and treated just like regular files, as long as
+they are not dangling ;), but should be used carefully. The same applies
+to hardlinks. Generally, you should design your project in the way that
+does not need any kind of links in SVFS.
+
+Below, you'll find some precautions for mapping NFS objects or objects
+shared between different AOS instances.
+
+
+--------------------------
+ 5. Programming: HAC lists
+--------------------------
+
+Assign every type of operation performed in your project specific
+domain number. For example: 1 - user files access, 2 - network listening,
+3 - making data connections back to user, 4 - accessing password files,
+5 - communication with command parser, 6 - communication with user files
+module (sorry, only numeric domain names are supported for now). You
+cannot use numbers below 100.
+
+For every functional module, assign list of domains it have to access
+(using #compiler !domains a b c d...). 
+
+Before any operation (syscall) accessing specific kind of resources /
+operations, set domain number respectively. Drop these privileges
+after finishing specific kind of operations.
+
+If you want to "act" as some user or subobject within specific domain, you
+can set domain UID as well. For example, before accessing files owned
+by user 1234, you can set your privileges to domain=1, domain_uid=1234.
+By using domain_uid, you'll be able to restrict access to specific
+resource within group.
+
+Then, when your HAC hierarchy is completed, and you can do list like:
+
+domain 2 should be able to bind to all IPs to port 21 EXCEPT specific IP
+domain 1 uid 1234 should be able to do anything within 
+/fs/ftp_server/users/mark
+
+...and so on, you can build conf/access.hac file. Please refer HAC
+documentation for specific modules. In above example, HAC access file should
+look this way:
+
+2:0     net/address/source/tcp/SPECIFIC_IP/21  net/sock/listen   deny
+2:0     net/address/source/tcp/all/21          net/sock/listen   allow
+1:1234  fs/ftp_server/users/mark               fs                allow
+[...]
+
+
+-----------------------------------------
+ 6. Programming: Multiple instances / NFS
+-----------------------------------------
+
+NOTE: Yes, there are no precautions for launching several instances of
+Argante on one physical system, with completely different projects. One
+of its purposes might be testing of distributed/cluster solutions. But
+you should respect one rule - only one VS instance should be able to write
+specific real system resource. For example, if you're deciding to put
+FooBar file, physically located in /TestMe directory, in SVFS space for
+two different argante instances on the same system at the same time, you
+should give write access only to VCPU(s) on one virtual machine ("file
+access manager(s)"), and arrange write-request passing using rIPC.
+
+The same applies to NFS shared resources - be careful. It's just there's no
+accurate and portable way to determine if file is locked for writing in
+real system by other instance, so file damage might occour.
+
+
+-----------------------------------------------------------
+ 7. Programming: Real System Interaction (hybrid solutions)
+-----------------------------------------------------------
+
+Preferred way to interact with real system space is to use Unix sockets.
+For this purpose, you have fs/unix-sock/external/ directory. You can
+request both CONNECT or LISTEN operation for datagram or stream sockets
+for given numerical ID. This socket is mapped into real filesystem
+entry: /Project_Directory/fs/unix-sock/external/nnn, where nnn is
+choosen ID.
+
+So, if you want to modify machine IP address from Argante program, you should
+choose specific ID, let's say 1234, and then attach small helper utility
+to a chosen Unix socket in listen mode. Helper should validate received
+command (datagram mode is good in most cases), and then, execute requested
+action.
+
+You can reverse this scheme, and listen at the AOS side, if this is necessary.
+Most interesting use of such interaction is to communicate with locally
+running daemons / services in real systems, while requests are propagated
+using rIPC cluster - so, in this case, Argante become load balancing
+cluster management software.
+
+Argante, both using local system components and network functionality, can
+modify current network structure (eg. reconfigure managable switching
+devices, routers etc), or intercepting functions of machine that
+crashed. So, you can create cluster of five machines, where Argante
+is receiving requests on one IP, and distributing it within cluster (maybe
+to real-system software), causing equal load of all machines. If one
+machine crashes, fastest box intercepts its network functionality (changing
+IP number). In this solution, you have no "weak point", and don't have
+to modify server software nor to implement separated load balancing.
+Consider this example, quite classical:
+
+                       [ UPLINKS ]
+                         |     |
+                         +--+--+
+                         |     |
+                        / \   / \ primary and secondary LoadBalancer
+                        ~~~   ~~~
+                         |     |
+                         +-+-+-+
+                         | | | |
+                         Servers
+
+In this case, loads are not always equal, and only two load balancers are the
+weak point. "Heartbeat" solutions are better, but quite often they're lacking
+several functionality - ability to do good load balancing, for example ;)
+Unlimited request propagation capabilities, unlimited dispersion, ability to
+split functional parts of one program between several machines, implementing
+redundancy, ability to auto-configure - all lacking. Argante can be used to
+detect new "plugged" device with pre-installed Argante cluster software,
+and then, to easily measure load of specific services, automatically
+configure services on this box and so on; that's not all - it can automatically
+configure active network devices to rearrange vLANs and place box in proper
+location in network structure (if you have for example one line of web
+servers, then, database layer, and then maybe other layers). And all without
+need for very sophisticated, non-portable software tools - hybrid,
+almost-perfect cluster of Solaris, Linux and BSD boxes can be arranged in
+plug-and-play manner with really simple Argante rIPC code. At the beginning,
+you should just know what you want to serve and implement basic morphing
+features :) Such project for Argante will be developed and included in
+futher releases, but I guess reading rIPC description shows how simple
+it is.
+
+NOTE: avoid sending strings through Unix sockets! Send numerical IP or
+perform strong validation of input before passing received data to any
+other programs! We're not allowing direct real-system calls from Argante
+because we want you to think about doing input validation before executing
+program. Also, DO NOT write helpers calling eg system(AOS_supplied_data).
+Think twice before doing anything. YOU'RE INTERACTING WITH REAL SYSTEM!
+BY MAKING A MISTAKE, IT MIGHT BECOME VULNERABLE.
+
+NOTE: you should make sure other users are not able to interact with
+your helper. Best way to do it is to restrict access to fs/unix-sock/external
+in specific project to specific group.
+
+
+-------------------------------------
+ 8. Programming: Clusters, redundancy
+-------------------------------------
+
+Making redundant solutions using rIPC is really simple. You can connect
+your servers, even if they're in different countries, using redundant
+structure - so, your cluster connections might like this way:
+
+    New York
+         | |
+         | +------------------------------ Chicago
+         |                                    |
+         |                                    |
+        Warsaw ---------+       +-------------+
+                        |       |
+                        +--- London
+
+Even so simple structure will be fault-tolerant - crash of single link
+won't cause cluster to stop working - only rIPC communication will be
+routed using other way. But, of course, your cluster might be connected
+much better, eg by adding link between New York and London, rIPC routing can
+be improved.
+
+By launching the same modules in different part of the world, you can
+put authentication database in London, listener in Warsaw and command
+processors all around the globe, and it will work just fine, even if
+most of processes / machines will be overloaded.
+
+Moreover, adding new object to the hierarchy can be done without
+human intervention and without need for sophisticated code. It requires
+pre-installed Argante, knowledge of IP address of only one HUB (listener)
+point in the rIPC network (well, ANY location where specific authorization
+key is valid can be used for initialization), and - obviously - valid
+initial authorization key ;) You don't have to plan whole rIPC network
+when starting work on your distributed application - you can start with
+two arbitrary boxes, and add new ones instantly. Futher configuration can be
+done automatically, by downloading current rIPC network hierarchy configuration
+(so redundant / fault-tolerant links are set up automatically, if programmer
+wishes so, eventually relocating new box to the most desirable location in
+the logical and physical structure). For details on rIPC daemon and setting
+up rIPC circuits, please refer rIPC documentation (in part I of this
+README).
+
+Local cluster morphing can be implemented easily by arranging local
+communication with agtses to load / unload specific programs, or, if
+you're using hybrid systems, to start / stop specific services on local
+machines.
+
+
+--------------------------
+ 9. AHLL: style guidelines
+--------------------------
+
+This section is unfinished as for AOSr1 - please take a look at Examples/AHLL
+directory for guidelines on designing .ahh files and .ahl code.
+
+Except the limitations I have described before, there are some language
+bugs we have no time to solve in this release:
+
+- parameterless functions are not working,
+
+- you have to finish all structural / array initializers with ',',
+
+- /* */ comments when #defining something _might_ be harmful,
+
+- generally, lack of separators _might_ be harmful, so write x := 1 rather
+  than x:=1.
+
+Please take a look on Examples/AHLL - you will find numerous small AHLL
+examples there:
+
+  dir.ahl    - this cute program will dump the listing of SVFS directory
+               contents.
+
+  gfx.ahl    - simple but juicy example of SVGAlib connectivity (on Linux,
+               requires modules/gfx.so to be loaded)
+
+  hello.ahl  - "nn green bottles standing on the wall"...
+
+  ptrs.ahl   - some pointer manipulation examples
+
+  http/      - sources for Mini-HTTP server.
+
+I guess both http/httpd.ahl and, let's say, gfx.ahl, are pretty good
+examples of AHLL style. Programs are perfectly readable and self-commenting.
+
+
+-----------------------------------------------------
+10. Embeded in RS: command-line interaction, servlets
+-----------------------------------------------------
+
+In some cases, it is important to invoke Argante programs via unix
+command-line, from servlets, as a CGI scripts or from SSI. In this case,
+you can use tools/agtexe utility.
+
+This program is able to connect to running, background AOS session,
+load given program, catch any errors (returning apropriate error message
+or return code). It will continue running until program will be terminated
+(if it happened due to exception, it might display message or return
+specific code), eventually arranging I/O session between process and its
+console. Argante VCPU will be automatically terminated if any signal will be
+caught by agtexe.
+
+Usage:
+
+  agtexe program_name f[cwm] pid
+         |              |||  |
+         |              |||  +------- AOS session pid
+         |              |||
+         |              ||+---------- do not display messages on errors
+         |              |+----------- do not wait for process to terminate
+         |              +------------ do not arrange I/O session
+         |
+         +---- you have to use absolute path! all relative paths are
+               relative to AOS cwd, not agtexe CWD!
+
+
+Examples:
+
+  (execute work/test.img, default settings, find Argante)
+  agtexec $PWD/work/test.img f `ps x|grep ':.. argante'|grep -v grep|cut -b-6|head -1`
+
+  (execute /test/test.img, without console, be silent, given pid)
+  agtexec /test/test.img fcm 12345
+
+Exit codes:
+
+  0 - successful execution (process terminated by HALT or 'w' option)
+  1 - agtexe caught signal, process terminated
+  2 - execution failure (bad binary image)
+  3 - unhandled exception during execution
+  4 - couldn't attach to Argante session

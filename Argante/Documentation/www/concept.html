@@ -1,0 +1,396 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-2">
+    <meta name="Author" content="Marlena Smolarczyk <gabi@artgabi.com.pl>">
+    <meta name="Author" content="Artur Maciąg <artur@artgabi.com.pl>">
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    
+    <title>Argante - Concept</title>
+    <link rel="stylesheet" href="main.css">
+  </head>
+  
+  <body topmargin="0" leftmargin="0" marginwidth="0" marginheight="0" 
+	bgcolor="#ffffff" background="_malunki/tlo.png" text="#000000" 
+	link="#486591" vlink="#6f6c81" alink="#d5ae83">
+    <a href="index.html">
+    <img src="_malunki/gora_p.jpg" border="0" alt="A R G A N T E"><br>
+
+    <table cellpadding="0" cellspacing="0" border="0">
+	<tr>
+	  <td width="180">&nbsp;</td>
+	  <td align="center">	    
+	    <a href="status.html">
+	      <img src="_malunki/podmenu/status.png" border="0" alt="status"></a></td>
+	  <td align="left">
+	    <img src="_malunki/podmenu/kropka.png" border="0" alt="."></td>
+	  
+	  <td align="left">
+	    <a href="documentation.html">
+	      <img src="_malunki/podmenu/documentation.png" border="0" alt="documentation"></a></td>
+	   <td align="left">
+	    <img src="_malunki/podmenu/kropka.png" border="0" alt="."></td>
+
+	  <td align="left">
+	    <a href="download.html">
+	       <img src="_malunki/podmenu/download.png" border="0" alt="download"></a></td>
+	  <td align="left">
+	    <img src="_malunki/podmenu/kropka.png" border="0" alt="."></td>
+	  
+	  <td align="left">
+	    <a href="people.html">
+	      <img src="_malunki/podmenu/people.png" border="0" alt="people"></a></td>
+	  <td align="left">
+	    <img src="_malunki/podmenu/kropka.png" border="0" alt="."></td>
+	  
+	  <td align="left">
+	    <a href="contribute.html">
+	      <img src="_malunki/podmenu/contribute.png" border="0" alt="contribute"></a></td>
+	  <td align="left">
+	    <img src="_malunki/podmenu/kropka.png" border="0" alt="."></td>
+	  
+	  <td align="left">
+	    <a href="legal_notice.html">
+	      <img src="_malunki/podmenu/legal.png" border="0" alt="legal notice"></a></td>
+	</tr>
+	<tr>
+	  <td colspan="12">
+	    <img src="_malunki/head/concept.png" border="0" alt="C O N C E P T">
+	  </td>
+	</tr>
+    </table><br>
+    <table cellpadding="0" cellspacing="0" border="0">
+	<tr>
+	  <td width="180">&nbsp;</td>
+	  <td align="left">
+	    <pre>
+This is free-of-charge, open-source LGPL project.
+
+Argante is a fully virtual environment for running applications on Unix
+systems. This makes many people think about Java and its sandbox for example,
+although the technical reasons Argante is based on were totally different.
+
+For one thing, Argante is a complete operating system. It has its own
+implementation of processes, inter-process communication, filesystem,
+access control... All built on the top of basic real OS low-level
+implementation, but with own control mechanisms, own semantics and so on.
+Why all this? I will try to explain:
+
+The standard architecture of operating systems and hardware (e.g processors)
+falls flat when it comes to security and stability of the software.
+To be short: it lacks low lewel support for general access control, error
+handling (primitive techniques existing in, say, the 80386 series are not
+enough), and the architecture of stack or data segment usage is based on
+some mistaken assumptions.
+
+Trying to fix these errors at a higher level is generally risky and
+unsuccessful. The authors of Java have created a miserably slow and, as a
+matter of fact, not always secure / portable solution with very limited
+application range; moreover, they were unable to force software authors to use
+safe, verified architecture models, e.g. OSI, limited trust and interaction
+architecture which presumes that only the two closest data processing layers
+work together and the code itself is divided into functional segments.
+Programs written in C using the model "listener -> fork() -> client handling"
+are still easier to implement and less prone to failure.
+In this way the list of these and other remarks concerning the popular
+hardware and software architecture model came into being. Its essence can
+be best summed up in the motto at the beginning of this document:
+
+"[We] use bad software and bad machines for the wrong things."
+                                            -- R.W. Hamming
+
+Except complaints I had many ideas which in my opinion should be, and,
+with minimal cost could be, taken into account in implementations at both
+these levels: hardware and software.
+
+At a certain point I had a difficult decision to make: I could modify
+existing implementations, trying to patch them with temporary solutions,
+risking that most of these ideas will never be realized, and being aware
+that the project will become a series of compromises, among which the sense
+of its realisation will be lost :) I could as well do another thing:
+sit and rewrite everything from scratch. Forgetting about compatibility,
+conventions, trying to create a solution which will defend itself, or one
+nobody will notice :) In this way the idea of Argante started, having at
+its basis the four principal proposals:
+
+- security and stability
+- functionality
+- efficiency
+- simplicity
+
+Argante is supposed to be a system with no compromises. That is why always
+when in the traditional system we would face choice "security or
+functionality", instead of choosing one variant we concluded the choice
+itself is bad and created its outline from scratch or changed the model in
+order to reconcile our requirements with expectations.
+
+Why, then, is it an "embedded" system? There are many reasons for that. For
+one thing, an embedded implementation does not enforce OS change, makes
+first attempts and projects easy, providing integration with existing
+solutions on native Unix platforms. In this way Argante introduces an
+additional abstraction and protection layer, acting as a completely independent
+hardware architecture, and without enforcing serious changes. Its being
+written in C assures efficiency and portability.
+
+Moreover, an implementation which can use existing system drivers, devices,
+system functions, becomes a much simpler task and permits programmers to
+concentrate on the substance instead of implementation details (bootloader,
+drivers etc.).
+
+Naturally, when speaking of stability and security of an embedded system
+I mean its implementing access control systems independent from the native
+platform, its own multi-process model: all these solutions are safe and
+independent of the real system. That's why Argante will be a safe solution
+on almost any Unix (or maybe even Windows?;) provided that elementary
+security of the native platform will be ensured; in the simplest variant,
+all network services should be removed (hybrid solutions, described with
+rIPC and network, constitue a separate case).
+
+In order to realize the four enumerated proposals, I have created general
+guidelines for the system. They were as follows:
+
+- the core of the system will be a microkernel providing base functionality;
+  all input/output operations will be performed using loadable modules, easy
+  to implement by the user and added/removed while the system is running;
+  the modules can also contain other, necessary functions, for example
+  providing advanced operations on text strings and similar procedures,
+
+- the system will provide _any_ functionality permitting software creation,
+  starting from a database server to a graphics application without any
+  need to change system code, and at the same time ensuring the highest
+  security level,
+
+- the system will have its own, low-level, hardware platform independent
+  virtual machine language; this language will be simple and efficient
+  enough to ensure speed and effectivity, and at the same time it will
+  ensure full separation from the real system and will not allow native
+  code execution,
+
+- system management will be fully separated from processes run in the
+  virtual system; user-space and kernel-space will also be fully separated,
+  without any possibility of interference into kernel-space from the level
+  of user-space,
+
+- every process run in the system will dispose of its own, private address
+  space, separate stack segment which will not be directly addressed
+  (used only by jump/return functions); the same applies to the code segment,
+  which will not be directly addressable. Only the code segment will be
+  executable,
+
+- a process will be allowed to allocate memory blocks, separately mapped
+  to its own adressing space (with the possibility of write protection);
+  the system will control all attempts of going beyond the allocated
+  block (buffer),
+
+- the system will support low-level exception handling and will allow the
+  program to handle them (LLX - low-level exceptions),
+
+- the system will have its own, secure and resource-saving implementation
+  of multitasking and its own, static process model (SMTA) with assigned
+  fixed privilege lists; multi-user applications will also be supported
+  by the possibility of defining a subgroup identifier in a given privilege
+  domain,
+
+- a new philosophy of privilege granting and dropping, without risks inherent
+  in the Unix implementation,
+
+- from its very beginning the system will support secure solutions (e.g.
+  unbounded strings instead of null-terminated ones, etc.),
+
+- the system will provide hierarchical, centralized and universal
+  implementation of Hierarchical Access Control (HAC), permitting
+  defining privileges with arbitrary detail level; additionally, the system
+  will enforce the "switch" architecture, forcing the programmer to define
+  which privileges are necessary in order to perform a given task without
+  permitting having any others,
+
+- the system will strongly support the OSI architecture, including
+  distributed architecture, providing advanced mechanisms of inter-process
+  communication IPC (a specific solution, different from the one existing
+  in Unix) and rIPC (remote IPC session distribution among equivalent
+  processes, communication between tasks on different computers transparent
+  for user-space); rIPC will also support transparent cluster architecture
+
+- the system will have its own implementation of a virtual filesystem,
+  accessible from the level of a real filesystem, and at thse same time
+  permitting establishing arbitrary inner structure and full access control
+  compatible with HAC
+
+- changing any functionality will be possible without stopping the system
+
+Argante favours creating hybrid solutions, for example applications
+of the real systems coordinated / protected by Argante code. This will
+enable one to transparently create reduntant, heterogenic clusters with
+morphing possibilities, self-assigning new objects in existing hierarchy
+and full redundance as well as load balancing without _any_ programming
+costs. It doesn't matter whether the system will work on one machine or a
+hundred, with redundance and load balancing - the rIPC philosophy solves
+distributed systems problems in a way transparent for applications.
+
+What else? Well, Argante could act not only as a cluster development platform,
+but, in fact, it makes complex development really easy and clean. For
+example, to design distributed, fault-tolerant virtual router, you could
+use only several thousands lines of readable and elegant code, which can
+be maintained for years with no risk.
+
+Well, but that's not all. To prove AOS isn't only the "distributed networking
+software", we decided to develop svgalib connectivity module to demonstrate
+how fast and effective - especially when compared eg to Java - Argante can
+be. Enjoy.
+
+I know it sounds like a wish list, but I'm writing these words having
+implemented most of the system's code and, to my surprise, I can
+(no-so-modestly) say that I have suceeded in attaining these aims.
+What have I got?
+
+- security and stability:
+
+  - practically speaking, impossibility of taking control over an application
+    in the system (stack, data segment and buffer control, the approach of
+    passing parameters to syscalls without depending on C conventions, like
+    null-term); because of a quite limited number of RSIS opcodes, privilege
+    control is a trivial matter,
+
+  - even if it were possible, no possibility of getting privileges enabling
+    one to breach the security of the rest of the virtual system
+    (separation of management from the virtual system, from kernel-space),
+
+  - even if it were possible, lack of any possibility of influencing real
+    system (separate implementation of multitasking, not using the
+    implementation of the real system),
+
+  - faciliating programming compatible with the secure OSI architecture,
+    it is simply intuitive in this system,
+
+  - enforcing control of code execution correctness by raising exceptions,
+
+  - full access control to any resources (HAC), the above mentioned new
+    philosophy of privileges, a new approach to linking privileges
+    with the pricess and a new process model, etc...
+
+  - destabilisation of the native filesystem is practically impossible,
+
+  - redundance and request distribution support
+
+- functionality and simplicity:
+
+  - the system is universal by providing commode modules and centralized
+    control as well as an effective virtual processor architecture with
+    limited but efficient command set
+
+  - the possibility of creating distributed systems without having to modify
+    the code; the possibility of request propagation without any need to
+    modify the code (of an application)
+
+  - exceptions make exception handling easier
+
+  - introducing even serious system changes may happen on the fly by
+    module exchange
+
+- efficiency:
+
+   - load balancing, creating clusters, distributing the solution among
+     machines can be done without modifying the source code of its
+     elements
+
+  - by using a low level virtual code, instead of -- as in the case of Java
+    -- a high level code, efficiency reduction is not so striking, nor does
+    it limit the abilities of the code. Loops of the "idle" kind (i.e. a
+    repeated jump) is a few times slower than in a compiled C program running
+    on a given hardware platform, which is a very good result. In case of
+    more complicated operations (e.g. I/O), efficiency reduction is much lower,
+    oscillating around 15-30%,
+
+  - the kind of multitasking implemented is far more stable and much more
+    memory-saving than on the native system; it results in part from
+    the fact that a virtual Argante processor needs less information to
+    maintain a process than Unix does, and also from imperfection of many
+    systems.
+
+We wanted to combine QNX, HURD and all our "loose" ideas to create a
+really secure and effective solution :) Later, Pawel Krawczyk pointed out
+that Inferno embeded system, developed by Lucent, contains several solutions
+quite similar to Argante. Of course, there are also major differences (Argante
+is all-purpose environment for secure applications that doesn't enforce any
+high-level solutions and focus on the low-level security).
+
+We believe we avoided such strange half-solutions - like moving high-level
+functionality to low-level layer with no good reason (and thus decreasing
+freedom of design and making overgrown code); we decided for such step only
+in specific, well-documented and explained cases, where we're sure it will
+offer some real good for the programmer without enforcing static, complex
+solutions where they are not necessary.
+
+Details on Inferno can be found at:
+http://www.vitanuova.com/inferno/papers/bltj.html.
+
+And another thing: you can view a simple but joyful tutorial starting three
+programs by typing "./build test".
+
+What's still unfinished in Argante? I believe some new modules should be
+developed to give Argante the access to appliances where it could be usable.
+While making AOSr1, we focused on the things that are absolutely necessary
+to make it interesting and innovative, but also, we had to delay some
+developments (mainly because we do not have enough people). Here's our
+list of things to be done in AOSr2:
+
+- for making AOS multi-purpose platform for client applications as well,
+  'screen'-based virtual process consoles and full console I/O support
+  will be introduced,
+
+- also, for visualization purposes, Argante will have X Window connectivity
+  mid-end modules to allow graphical output and operations; these modules
+  are not really inventive ;), but could make Argante something more than
+  server / cluster platform,
+
+- easier usage: graphical GUI for X Window system: session / console
+  management,
+
+- and, what's probably the most important, AHLL language translator will
+  be almost completely rewritten to fit our expectations.
+
+We are seriously considering separating the bytecode interpreter from
+I/O / debugging functionality in future releases of Argante. What do we mean?
+Well, our bytecode interpreter, which is actually pretty easy to implement,
+will be ported to several platforms:
+
+- "software solution" it is right now - where time has to be shared between
+  real system, I/O operations and currently executed code,
+
+- cheap microcontrollers (eg. Motorola 68376) on the PCI/ISA cards - in
+  this case, bytecode interpreter is stored in EEPROM, and controller is
+  executing it, calling Argante I/O modules (running in real system) only
+  if there's such need (on syscalls); controller will have it's own
+  memory, and all transfers will be done using DMA. This will really
+  speed-up whole solution, decrease the usage of real system, and made
+  it even more secure - RSIS code won't be executed by main processor.
+  Also, it will become fault-tolerant - even if real system crashes,
+  VCPUs might survive, waiting for real system to resume I/O services :)
+  We're going to design such RSIS-interpreter card in near future, as it
+  isn't really complicated or expensive (M68376 costs $25).
+
+- cheap external "processors" (eg. spare i386 box); in this case, bytecode
+  interpreter will be launched at the boot time, with no OS layer; the problem
+  is to provide fast enough half-duplex link with almost no latency between
+  two boxes with no additional, expensive hardware; dedicated ethernet
+  _might_ be the answer,
+
+- one day, maybe dedicated RSIS hardware solutions - eg. chips implementing
+  RSIS functionality as a native language?:) Well, the last option is
+  S-F for now ;)
+
+What are the consequences? Well, one I/O mid-end might connect several
+solutions - software boxes, dedicated hardware, and so on - providing unified
+input and output for the project, with no risk one box might affect work
+of other boxes. Also, even if mid-end crashes, properly written AOS
+software will survive it and resume it's work after rebooting the mid-end.
+
+Ok - we sure this list isn't closed - and so, your comments, ideas and
+suggestions will be more than welcome :)
+	      </pre>
+	  </td>
+	</tr>
+    </table>
+    
+</html>
