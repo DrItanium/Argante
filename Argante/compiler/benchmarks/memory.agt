@@ -1,0 +1,154 @@
+# Memory throughput benchmark
+#
+# This is a simple benchmarking program that tests the throughput of 
+# of various memory copying opcodes. An amount of memory is copied using 
+# different approaches:
+#
+# + A loop using MOV.
+# + A single CPCNT instruction.
+#
+# Not suprisingly, CPCNT should be wastly faster than using a loop
+# and MOV to do the copying. 
+# 
+# Note: Since the allocated memory is cleared on allocation, it might 
+# give unrealistic numbers for the CPCNT instruction (if it is heavily
+# optimized and cached by the processor). Random data would be more 
+# realistic, but filling 16 MB of memory with LOCAL_GETRANDOM takes to
+# much time.
+
+!SIGNATURE      "Memory throughput benchmark"
+!PRIORITY       10000
+
+.DATA
+
+.define DWORDS  4194304        # 16 MB  
+.define TIMES   20             # Multiply the above amount with this 
+                               # for the CPCNT approach (it finishes
+                               # to fast otherwise). 
+
+:src
+    0      
+:dest
+    0
+    
+:sNL
+    "\n"
+:sMOV 
+    "Megabytes / second using MOV: "
+:sCPCNT
+    "Megabytes / second using CPCNT: "
+
+.CODE
+    twait   2000            # Wait for the prompt so it doesn't screw
+                            # our output later on.
+
+    alloc   4194304,3       # Allocate some memory
+    mov     *:src,u1        # Save the address
+    alloc   4194304,3       # Allocate some memory
+    mov     *:dest,u1       # Save the address
+    
+    mov     u0,:sMOV
+    mov     u1,^sMOV
+    syscall $IO_PUTSTRING
+
+    mov     s0,DWORDS       # Initialize loop counter
+    mov     u2,*:src
+    mov     u3,*:dest
+
+    syscall $LOCAL_GETTIME
+    mov     u4,u0           # Save the seconds
+    mov     u5,u1           # Save the microseconds
+
+:loop
+    mov     *u3,*u2
+    add     u2,1
+    add     u3,1
+    sub     s0,1
+    ifabo   s0,0
+    jmp     :loop
+
+    syscall $LOCAL_GETTIME
+
+    call    :calcTime       # Calculate time difference
+
+    mov     u0,DWORDS       # How many dwords we copied
+    mov     f0,u0           # Convert to float 
+    mul     f0,4.0          # 1 dword = 4 bytes
+    div     f0,1024.0       # 1 kB = 1024 bytes
+    div     f0,1024.0       # 1 MB = 1024 kB
+    div     f0,f1           # Calculate megabytes / second
+
+    syscall $IO_PUTFLOAT
+
+    mov     u0,:sNL
+    mov     u1,^sNL
+    syscall $IO_PUTSTRING
+
+    mov     u0,:sCPCNT
+    mov     u1,^sCPCNT
+    syscall $IO_PUTSTRING
+    
+    mov     s0,DWORDS       # Initialize loop counter
+    mov     s1,TIMES        # Initialize outer loop counter      
+
+    mov     u2,*:src
+    mov     u3,*:dest
+        
+    syscall $LOCAL_GETTIME
+    mov     u4,u0           # Save the seconds
+    mov     u5,u1           # Save the microseconds
+
+:again
+    cpcnt   u2,u3    
+    
+    sub     s1,1
+    ifabo   s1,0
+    jmp     :again
+    
+    syscall $LOCAL_GETTIME
+    
+    call    :calcTime       # Calculate the time difference
+    
+    mov     u0,DWORDS       # How many dwords we copied...
+    mul     u0,TIMES        # ...the real number of them
+    mov     f0,u0           # Convert to float
+    mul     f0,4.0          # 1 dword = 4 bytes
+    div     f0,1024.0       # 1 kB = 1024 bytes
+    div     f0,1024.0       # 1 MB = 1024 kB
+    
+    div     f0,f1           # Calculate megabytes / second
+
+    syscall $IO_PUTFLOAT
+
+    mov     u0,:sNL
+    mov     u1,^sNL
+    syscall $IO_PUTSTRING
+
+    halt
+
+:calcTime
+    # Inputs:  u0 - seconds of first timevalue
+    #          u1 - microseconds of first timevalue
+    #          u4 - seconds of second timevalue
+    #          u5 - microseconds of second timevalue
+    # Outputs: f1 - difference between second timevalue and first in float format 
+    
+    sub     u0,u4           # Calculate seconds elapsed
+    mov     u4,u0           # Save the result
+
+    mov     s0,u1           # Convert microseconds to signed
+    sub     s0,u5           # Calculate microsecond difference
+    ifabo   s0,0            # Do we need to compensate?
+    jmp     :skip
+
+    sub     u4,1            # Subtract one second
+    add     s0,1000000      # Compensate the microseconds
+    mov     u5,s0           # Save the result
+
+:skip
+    mov     f1,u4           # Convert seconds to float
+    mov     f2,u5           # Convert microseconds to float
+    div     f2,1000000.0    # Recalculate microseconds to seconds
+    add     f1,f2           # Add them together
+
+    ret     0
