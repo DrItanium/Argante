@@ -367,6 +367,7 @@ static void fmtswap (struct bformat *FMT)
 	bswap_gen(FMT->domain_uid);
 	bswap_gen(FMT->bytesize);
 	bswap_gen(FMT->memflags);
+	FMT->memflags|=MEM_FLAG_SWAPENDIAN;
 	bswap_gen(FMT->datasize);
 	
 	bswap_gen(FMT->magic2);

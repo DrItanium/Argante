@@ -32,6 +32,11 @@
 #include "debugger.h"
 #include "cmd.h"
 
+/* bswap macros */
+#ifndef NO_SWAP_ENDIAN
+#include <byteswap.h>
+#endif
+
 /* Is defined task.c */
 extern int curr_cpu;
 extern struct vcpu_struct *curr_cpu_p;
@@ -133,7 +138,19 @@ inline int get_mem_value(int c,unsigned int addr) {
               non_fatal(ERROR_PROTFAULT,"Attempt to read protected memory",c);
               return 0;
             }
+	    /* JK - support swap-endian .data seg */
+#ifndef NO_SWAP_ENDIAN
+	    {
+		    int val;
+		    val=(*cpu[c].mem)[x].real_memory[addr-(*cpu[c].mem)[x].map_addr];
+		    if ((*cpu[c].mem)[x].flags & MEM_FLAG_SWAPENDIAN)
+			    return bswap_32(val);
+		    else
+			    return val;
+	    }
+#else
             return (*cpu[c].mem)[x].real_memory[addr-(*cpu[c].mem)[x].map_addr];
+#endif
           }
 
   non_fatal(ERROR_OUTSIDE_MEM,"Attempt to access non-allocated memory",c);
@@ -161,7 +178,21 @@ inline void get_mem_block(int c,char* dest,unsigned int addr, unsigned int cnt) 
               non_fatal(ERROR_PROTFAULT,"Attempt to read protected memory",c);
               return;
             }
+#ifndef NO_SWAP_ENDIAN
             memcpy(dest,&(*cpu[c].mem)[x].real_memory[addr-(*cpu[c].mem)[x].map_addr],cnt*4);
+#else
+	    if ((*cpu[c].mem)[x].flags & MEM_FLAG_SWAPENDIAN)
+	    {
+		    int *d, *s;
+		    d=dest; s=&(*cpu[c].mem)[x].real_memory[addr-(*cpu[c].mem)[x].map_addr];
+		    while(cnt > 0)
+		    {
+			    *d=bswap_32(*s);
+			    cnt--; d++; s++;
+		    }
+	    } else
+	            memcpy(dest,&(*cpu[c].mem)[x].real_memory[addr-(*cpu[c].mem)[x].map_addr],cnt*4);
+#endif
             return;
           }
   non_fatal(ERROR_OUTSIDE_MEM,"Attempt to access non-allocated memory",c);
@@ -189,7 +220,22 @@ inline void set_mem_block(int c,char* src,unsigned int addr, unsigned int cnt) {
               non_fatal(ERROR_PROTFAULT,"Attempt to read protected memory",c);
               return;
             }
+#ifndef NO_SWAP_ENDIAN
             memcpy(&(*cpu[c].mem)[x].real_memory[addr-(*cpu[c].mem)[x].map_addr],src,cnt*4);
+#else
+	    if ((*cpu[c].mem)[x].flags & MEM_FLAG_SWAPENDIAN)
+	    {
+		    int *d, *s;
+		    s=src; d=&(*cpu[c].mem)[x].real_memory[addr-(*cpu[c].mem)[x].map_addr];
+		    while(cnt > 0)
+		    {
+			    *d=bswap_32(*s);
+			    cnt--; d++; s++;
+		    }
+	    } else
+		    memcpy(&(*cpu[c].mem)[x].real_memory[addr-(*cpu[c].mem)[x].map_addr],src,cnt*4);
+#endif
+
             return;
           }
   non_fatal(ERROR_OUTSIDE_MEM,"Attempt to access non-allocated memory",c);
@@ -373,7 +419,19 @@ inline void set_mem_value(int c,unsigned int addr,int value) {
                non_fatal(ERROR_PROTFAULT,"Attempt to write protected memory",c);
                return;
              }
-             (*cpu[c].mem)[x].real_memory[addr-(*cpu[c].mem)[x].map_addr]=value;
+#ifndef NO_SWAP_ENDIAN
+	    {
+		    int *dest;
+		    dest=&(*cpu[c].mem)[x].real_memory[addr-(*cpu[c].mem)[x].map_addr];
+		    if ((*cpu[c].mem)[x].flags & MEM_FLAG_SWAPENDIAN)
+			    *dest=bswap_32(value);
+		    else
+			    *dest=value;
+	    }
+#else
+            (*cpu[c].mem)[x].real_memory[addr-(*cpu[c].mem)[x].map_addr]=value;
+#endif
+
              return;
           }
   non_fatal(ERROR_OUTSIDE_MEM,"Attempt to access non-allocated memory",c);

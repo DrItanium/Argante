@@ -19,6 +19,8 @@
 #define MEM_FLAG_WRITE          0x00000002
 #define MEM_FLAG_STRICT		0x00000010
 #define MEM_FLAG_MAPPED		0x00001000
+/* JK for reverse endian binaries */
+#define MEM_FLAG_SWAPENDIAN	0x00002000
 
 struct memarea {
   unsigned int flags;             // See MEM_FLAG_xxx
