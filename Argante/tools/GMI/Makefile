@@ -4,12 +4,12 @@ ENDS=agtman xagtman
 all: $(ENDS)
 
 xagtman: *.c
-	cd gtk; make
+	@$(MAKE) -C gtk    TOP=$(TOP)
 
 agtman: *.c
-	cd curses; make
+	@$(MAKE) -C curses TOP=$(TOP)
 
 clean:
 	rm -f $(ENDS)
-	cd gtk; make clean
-	cd curses; make clean
+	@$(MAKE) -C gtk    TOP=$(TOP) clean
+	@$(MAKE) -C curses TOP=$(TOP) clean
