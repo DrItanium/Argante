@@ -20,69 +20,104 @@ for it?
 It's going to be very similar to C; except in the declarations. I'm going for
 parser simplicity as well as ease of use. I HAVE NO S/R CONFLICTS! YEEHA!
 
-As for the name, I like it a helluva lot better than maybe 'D' or 'SCCA'
+As for the name, I like it a helluva lot better than maybe 'D-' or 'SCCA'
 (Stupid Compiler with Crappy Acronym).
+==================
+GENERAL
+
+There's no 'func main' like there would be in C.
+For some bizarre reason, I think the Perl convention of entry
+point being top-of-file is more natural.
+
+Yes, all statements end in ;. It's for your own good.
+
+There's no preprocessor, YET. I'm half minded to use M4.
+Why don't YOU write one?
+
 ==================
 OPERATORS
 
-Binary operators: +-/*|& behave like they do in C.
+Binary operators: +-/*|&% behave like they do in C.
 		  == != >= <= > < produce boolean. (i.e. 1 or 0)
 
-Unary operators: -!~ numeric negative, boolean inverse, binary inverse respectively.
+		  There is the possibility on the horizon of << and
+		  <<< operators being included into RSIS. Until then,
+		  please make do with your own nouse.
+		  (That's SHIFT and ROTATE for the uninitiated). 
 
-Don't ask the difference between boolean inverse and binary inverse because I
-doubt anyone really knows the answer.
+Unary operators: -! numeric negative, binary inverse.
+	Boolean inverse has been removed by request, and my confusion
+	over what it was, and how to implement it in RSIS.
 
 ==================
 TYPES
 
 Standard types are:
 	unsigned, signed and float. Selfexplanatory.
-	array <type> size <size>. An array of type, first value being size.
+	
+	array <type> size <size>.
+		An array of <type>.
 		The type is between the array and size so it's clear what
 		array pointer to unsigned size 50
 		and pointer to array unsigned size 50 mean.
+
+		If you have size 50, you have 50 usable spaces.
 		
-	pointer to <type>. Pointer referencing an object of <type> or NULL. 
+	pointer to <type>.
+		Pointer referencing an object of <type> or NULL. 
+		Please don't try any tricky arithmetic with these or
+		you will create bugs.
+		
+	pointer to array <type>. Selfexplanatory.
+		It is not valid to specify size for these; as you're
+		dynamically allocating it you hardly would have a use for
+		size until you alloc it.
+		
 	string. Not really possible to create these directly, because they're
-		pointers to arrays, first entry sizeof as always.
-		If you're desperate, cast a new array:
+		pointers to arrays. If you're desperate, cast a new array:
 		str=cast string new(array unsigned size 10000);
 	
-Types are defined with typedef name = {structure}
+Types are defined with type name = {structure}
 
-sizeof(var) thus yields the first entry (length) of an array or string.
++ ALLOCATION:
+When things are allocated, there's some stuff going on behind the scenes.
+If you're not a hardcore developer type, skip to the alloc keywords section.
+
+In an array, index -1 stores the size of the array.
+In a pointer, index -2 stores the memblk id.
+
++ USING ALLOCATION:
 
 With a pointer, you can give it something to point to with the 'new(type)'
 keyword. OO freaks may like this. For C veterans, just put
 #declare new(x) malloc(sizeof(x))
 into your head somewhere.
 
-I will _NOT_ allow the & operator. It completely buggers optimization.
-So, if you need an address, have it start as an address, i.e pointer.
+To get the allocated size of an array, use sizeof(x).
 
 To get rid of a pointer, use destroy x.
 
-pointer to array <type> is also a valid type. ESPECIALLY with the lack of size.
-After all, if you're dynamically allocating it, you're dynamically allocating
-it, aren't you?
+E.g. to define an array do:
+a=new(array <type> size <size>)
+and to resize it:
+resize(a, array <type> size <newsize>).
 
-Use it with a=new(array <type> size <size>) and resize it with
-resize(a, array <type> size <newsize>)
+Obviously, if you destroy an object you have two pointers to, things will
+break if you try to use the second pointer to access the object.
 
-BE CAREFUL WITH DESTROY AND RESIZE! THEY MAY DESTROY/MOVE THE TARGET OBJECT!
-SO DON'T EXPECT ANY OTHER POINTERS TO THE SAME OBJECT TO STILL BE VALID!
+You needn't fear that resizing something will change the address. I don't know
+how this works, but it's what the README says, and if it doesn't work,
+"we're all up shit creek without a paddle".
 
 ===================
 FUNCTIONS
 
-
-Functions are defined with funcdef [output type] name (inputs)
+Functions are defined with func [output type] name (inputs)
 [errhandler FUNC] [= { code }].
 (Omitted output type is equvalent to void.)
 
 Syscalls aren't used directly. Instead, we use the following sort of construct:
-funcdef PrintString(S: string) {
+func PrintString(string S) {
 	asm (u0, u1) {
 	MOVE u0, *S
 	ADD S, 1
@@ -99,7 +134,14 @@ I figure most functions will handle exceptions the same way all the way
 through. There isn't all that much variety with the state of panic a
 failed malloc or a full disk causes within a function.
 
+This is why I don't include the exception handler as an integral part of
+the function. In most cases, it's likely to be much reused. 
+
 Oh, and, by the way, to throw an exception use raise <n>; like a return.
+
+Please see the Argante README for more details on exceptions: how they can
+be rethrown, the calling convention for them, etc ect.
+
 =====================
 VARIABLES
 
@@ -107,5 +149,17 @@ Variables are defined with var <type> name [= value].
 =====================
 CONDITIONALS/LOOPS
 
-To Be Written...
+Currently, there is:
+
+if (expr) code; [ else code; ]
+do code; while (expr)
+do code; until (expr)
+while (expr) do code;
+until (expr) do code;
+
+Note that where the word code is used, it must either be a single, simple
+statement like s=MegaFunctionCall(2*x+72,32000,16f);
+or a brace-block. Nested if's need the braces.
+
 =====================
+
