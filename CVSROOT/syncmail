@@ -49,6 +49,9 @@ Where options is:
     email-addrs
         At least one email address.
 
+--------------------------------------------------------------------------
+chodorowski: ripped out diff posting
+
 """
 
 import os
@@ -75,48 +78,6 @@ def usage(code, msg=''):
         print msg
     sys.exit(code)
 
-
-
-def calculate_diff(filespec):
-    try:
-        file, oldrev, newrev = string.split(filespec, ',')
-    except ValueError:
-        # No diff to report
-        return '***** Bogus filespec: %s' % filespec
-    if oldrev == 'NONE':
-        try:
-            if os.path.exists(file):
-                fp = open(file)
-            else:
-                update_cmd = 'cvs -fn update -r %s -p %s' % (newrev, file)
-                fp = os.popen(update_cmd)
-            lines = fp.readlines()
-            fp.close()
-            lines.insert(0, '--- NEW FILE ---\n')
-        except IOError, e:
-            lines = ['***** Error reading new file: ',
-                     str(e), '\n***** file: ', file, ' cwd: ', os.getcwd()]
-    elif newrev == 'NONE':
-        lines = ['--- %s DELETED ---\n' % file]
-    else:
-        # This /has/ to happen in the background, otherwise we'll run into CVS
-        # lock contention.  What a crock.
-        diffcmd = '/usr/bin/cvs -f diff -kk -C 2 -r %s -r %s %s' % (
-            oldrev, newrev, file)
-        fp = os.popen(diffcmd)
-        lines = fp.readlines()
-        sts = fp.close()
-        # ignore the error code, it always seems to be 1 :(
-##        if sts:
-##            return 'Error code %d occurred during diff\n' % (sts >> 8)
-    if len(lines) > DIFF_TRUNCATE_IF_LARGER:
-        removedlines = len(lines) - DIFF_HEAD_LINES - DIFF_TAIL_LINES
-        del lines[DIFF_HEAD_LINES:-DIFF_TAIL_LINES]
-        lines.insert(DIFF_HEAD_LINES,
-                     '[...%d lines suppressed...]\n' % removedlines)
-    return string.join(lines, '')
-
-
 
 def blast_mail(mailcmd, filestodiff):
     # cannot wait for child process or that will cause parent to retain cvs
@@ -128,11 +89,6 @@ def blast_mail(mailcmd, filestodiff):
         fp = os.popen(mailcmd, 'w')
         fp.write(sys.stdin.read())
         fp.write('\n')
-        # append the diffs if available
-        for file in filestodiff:
-            fp.write(calculate_diff(file))
-            fp.write('\n')
-        fp.close()
         # doesn't matter what code we return, it isn't waited on
         os._exit(0)
 
