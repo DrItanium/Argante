@@ -1,0 +1,50 @@
+
+AOSr1 currently works on following platforms:
+---------------------------------------------
+
+- Linux:
+
+  Will run on 2.0, 2.2 and 2.4 kernels. With recent glibc version, 
+  libreadline and termcap support will be compiled in the console code.
+  Additionally, on this platform, svgalib connectivity module is
+  available (modules/gfx.so).
+
+- FreeBSD:
+
+  Will run. Low-level network support is not available (packet.c) - it needs
+  porting; unfortunately, bikappa doesn't like libpcap-alikes :/ Unconfirmed
+  rumours are saying libreadline can be used safely on this platform as
+  well, but we're afraid due to ugly Linux-specific clone() hack, which
+  should be re-coded in portable way before AOSr2.
+
+- NetBSD:
+
+  Will run. Low-level network support is not available (packet.c) - see 
+  FreeBSD.
+
+- OpenBSD:
+
+  Will run. Low-level network support is not available (packet.c) - see 
+  FreeBSD. If there are unresolved symbols in library, Argante might terminate
+  after displaying "unresolved symbol" linker error. This bug is related to
+  OpenBSD dynamic linker semantics and will be fixed one day.
+
+- SunOS/Solaris:
+
+  Will run. Requires GNU make, GNU awk, GNU cc and GNU ld in the path
+  before default Solaris versions of these programs (this applies to
+  linker especially - please modify your PATH before calling ./build and
+  make sure "ld --version" returns "GNU ld 2.9.1" or so. Default Solaris
+  linker is odd and is not supported for now. Also, low-level network
+  support is not available yet - see FreeBSD notes.
+
+- IRIX64:
+
+  Will run. Requires GNU make and GNU cc. Low-level network support is not
+  available yet - see FreeBSD notes.
+
+- Other platforms?
+
+  Not supported yet. If you have access to interesting boxes - especially
+  AIX, HP/UX and so on - please tell us! We'll do our best to provide
+  working port.

@@ -1,0 +1,10 @@
+
+ripcd: ripcd.c
+	gcc $(CFLAGS) $(LIBS) -DUSE_SSL -DCFGFILE='"r1"' -lcrypto -lssl -o $@ $^
+	ln -sf ripc-deamon/ripcd ../.
+
+cli: cli.c
+	gcc $(CFLAGS) $(LIBS) -ocli cli.c
+
+clean:
+	rm -f cli ../ripcd sock-* core

@@ -1,0 +1,64 @@
+#!/bin/sh
+
+#
+# Argante Virtual OS
+# ------------------
+#
+# Simple dead code ellimination utility
+#
+# Status: done, but BASH IS NEEDED.
+#
+# Author:     Michal Zalewski <lcamtuf@ids.pl>
+# Maintainer: Michal Zalewski <lcamtuf@ids.pl>
+#
+
+PATH=/usr/xpg4/bin:$PATH
+
+echo "elim: AHLL dead code ellimination utility"
+
+if [ "$2" = "" ]; then
+  echo "Usage: $0 file.agt outfile.agt"
+fi
+
+TMP=.elim-tmp-$$-$RANDOM
+
+grep ':FN_' $1 |awk -F ':' '{print tolower($2)}' | sort | uniq -c >$TMP
+
+LIN=`wc -l <$1`
+CUR=0
+
+STATE="go"
+
+echo "+ $LIN lines to parse..."
+
+echo "# Processed with elim (c) lcamtuf" >$2
+
+while [ "$CUR" -lt "$LIN" ]; do
+  CUR=$[CUR+1]
+  CLIN="`head -$CUR $1|tail -1`"
+  echo -en "\r+ Parsing line $CUR..."
+  CSMAL=WillNeverHappenMyDear
+  GR=`echo $CLIN|grep ^:FN_`
+  test "$GR" = "" || CSMAL="`echo $CLIN|awk -F: '{print tolower($2)}'`"
+  export CSMAL
+  CC=`awk '$2==ENVIRON["CSMAL"]{print $1}' $TMP`
+  if [ ! "$CC" = "" ]; then
+    if [ "$CC" -lt "2" ]; then
+      echo -e "\r+ Removing function $CSMAL...    "
+      echo "# Function $CSMAL removed by elim." >>$2
+      STATE=""
+    else
+      echo -e "\r+ Passing function $CSMAL...   "
+      echo "# Function $CSMAL passed thru elim." >>$2
+      STATE="go"
+    fi
+  fi
+  test "$STATE" = "go" && echo "$CLIN" >>$2
+done
+
+echo "# elim done." >>$2
+
+echo -e "\r+ Done, output file is $2.           "
+
+
+rm -f $TMP

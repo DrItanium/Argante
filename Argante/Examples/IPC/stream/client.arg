@@ -1,0 +1,86 @@
+!SIGNATURE "Test streamow, klient"
+!IPCREG	  100
+!PRIORITY 100
+
+.DATA
+
+:intro
+    "Client >> Sleeping for stream request\n"
+:stream_od
+    "Client >> Stream reqest od #vcpu: "
+:stream_id
+    "Client >> Stream id: "
+:akceptujemy
+    "Client >> Accepting this stream\n"
+:bajtow
+    " bytes in << Client\n"
+:id
+    0
+:buffer
+    0 repeat 3000
+
+.CODE
+
+:loopa    
+    mov u0,:intro
+    mov u1,^intro
+    syscall $IO_PUTSTRING
+    mov u0,0
+    syscall $IPC_STREAM_QUEUE
+    mov u10,u0
+    mov u11,u1
+    mov u12,u3
+    
+    mov u0,:stream_od
+    mov u1,^stream_od
+    syscall $IO_PUTSTRING
+    mov u0,u10
+    syscall $IO_PUTINT
+    mov u0,10
+    syscall $IO_PUTCHAR
+
+    
+    mov u0,:akceptujemy
+    mov u1,^akceptujemy
+    syscall $IO_PUTSTRING
+
+    mov u0,0
+    mov u1,u12
+    syscall $IPC_STREAM_ACK
+    mov u12,u0
+    
+    mov u0,:stream_id
+    mov u1,^stream_id
+    syscall $IO_PUTSTRING
+    mov u0,u12
+    syscall $IO_PUTINT
+    mov u0,10
+    syscall $IO_PUTCHAR
+
+
+    mov u10,:buffer
+#    mov u11,^buffer
+    mov u11,100
+
+:loopa2
+    mov u0,u12
+    mov u1,u10
+    mov u2,u11
+# we're blocking
+    mov u3,0
+    syscall $IPC_STREAM_READ
+    mov u13,u0
+#    sub u11,u0
+    syscall $IO_PUTINT
+    mov u0,:bajtow
+    mov u1,^bajtow
+    syscall $IO_PUTSTRING
+    ifneq u13,0
+    jmp :loopa2
+
+:close
+    mov u0,u12
+    syscall $IPC_STREAM_CLOSE
+
+    halt
+.END

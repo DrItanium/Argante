@@ -1,0 +1,157 @@
+/*
+
+   Argante HLL
+   -----------
+
+   Sample Console Display Interface
+
+   Status: done
+
+   Author:     Michal Zalewski <lcamtuf@ids.pl>
+   Maintainer: Michal Zalewski <lcamtuf@ids.pl>
+
+*/
+
+type File is unsigned;
+type FS_Flags is unsigned;
+
+#define FS_FLAG_USED            1
+#define FS_FLAG_READ            2
+#define FS_FLAG_WRITE           4
+#define FS_FLAG_APPEND          8
+#define FS_FLAG_NONBLOCK        16
+
+
+procedure Open ( fn : Bounded_Chunk, mode : FS_Flags, writable f : File ) {
+  if mode & FS_FLAG_NONBLOCK {
+    raise ERROR_BADMODE;
+  }
+  syscall(SYSCALL_FS_OPEN_FILE, u0 := fn.data, u1 := fn.len, u2 := mode,
+                                f := s0 );
+}
+
+
+procedure Read_Open ( fn : Bounded_Chunk, writable f : File ) {
+  syscall(SYSCALL_FS_OPEN_FILE, u0 := fn.data, u1 := fn.len, 
+                                u2 := FS_FLAG_READ, f := s0 );
+}
+
+
+procedure Sync_Write_Open ( fn : Bounded_Chunk, writable f : File ) {
+  syscall(SYSCALL_FS_OPEN_FILE, u0 := fn.data, u1 := fn.len, 
+                                u2 := FS_FLAG_WRITE, f := s0 );
+}
+
+
+procedure Sync_Append_Open ( fn : Bounded_Chunk, writable f : File ) {
+  syscall(SYSCALL_FS_OPEN_FILE, u0 := fn.data, u1 := fn.len, 
+                                u2 := FS_FLAG_APPEND, f := s0 );
+}
+
+
+procedure Async_Open ( fn : Bounded_Chunk, mode : FS_Flags, 
+                       writable success : unsigned, writable f : File ) {
+  local { m : unsigned; s: signed; }
+  m := mode;
+  m |= FS_FLAG_NONBLOCK;
+  syscall(SYSCALL_FS_OPEN_FILE, u0 := fn.data, u1 := fn.len,
+                                u2 := mode, s := s0 );
+  if s < 0 { 
+    success := 0; 
+    return; 
+  }
+  success := 1;
+  f := convert s;
+}
+
+
+procedure FCreate ( fn : Bounded_Chunk, mode : FS_Flags, writable f : File ) {
+  syscall(SYSCALL_FS_CREATE_FILE, u0 := fn.data, u1 := fn.len,
+                                  u2 := mode, f := s0 );
+}
+
+
+procedure Close ( f : File ) {
+  syscall(SYSCALL_FS_CLOSE_FILE, u0 := f );
+}
+
+
+procedure Write ( f : File, b : Bounded_Chunk ) {
+  syscall(SYSCALL_FS_WRITE_FILE, u0 := f, u1 := b.data, u2 := b.len );
+}
+
+
+procedure Read ( f : File, writable b : Bounded_Chunk ) {
+  syscall(SYSCALL_FS_READ_FILE, u0 := f, u1 := b.data, u2 := b.size, 
+          b.len := s0 );
+}
+
+#define SEEK_SET 0
+#define SEEK_CUR 1
+#define SEEK_END 2
+
+type FilePos is unsigned;
+
+
+procedure Tell ( f: File, writable b : FilePos ) {
+  syscall(SYSCALL_FS_SEEK_FILE, u0 := f, u1 := 0, u2 := SEEK_CUR, b := s0);
+}
+
+
+procedure Seek ( f: File, b : FilePos, whence : unsigned ) {
+  syscall(SYSCALL_FS_SEEK_FILE, u0 := f, u1 := b, u2 := whence);
+}
+
+
+procedure Make_Dir ( fn : Bounded_Chunk ) {
+  syscall(SYSCALL_FS_MAKE_DIR, u0 := fn.data, u1 := fn.len );
+}
+
+
+procedure Rename ( fr : Bounded_Chunk, tx : Bounded_Chunk ) {
+  syscall(SYSCALL_FS_RENAME, u0 := fr.data, u1 := fr.len,
+                               u2 := tx.data, u3 := tx.len );
+}
+
+procedure Unlink ( fn : Bounded_Chunk ) {
+  syscall(SYSCALL_FS_DELETE, u0 := fn.data, u1 := fn.len );
+}
+
+
+procedure Change_Dir ( fn : Bounded_Chunk ) {
+  syscall(SYSCALL_FS_CWD, u0 := fn.data, u1 := fn.len );
+}
+
+
+procedure Get_Dir ( writable fn : Bounded_Chunk ) {
+  syscall(SYSCALL_FS_PWD, u0 := fn.data, u1 := fn.size,
+                          fn.len := s0 );
+}
+
+
+#define FS_STAT_ERROR     0
+#define FS_STAT_FILE      1
+#define FS_STAT_DIRECTORY 2
+
+
+procedure Stat ( fn : Bounded_Chunk, writable mt : Date, writable t: unsigned ) {
+  syscall(SYSCALL_FS_STAT, u0 := fn.data, u1 := fn.len, mt := u0, t := u1 );
+}
+
+// Dir_Open
+
+procedure Dir_Open ( fn : Bounded_Chunk, writable entries : unsigned ) {
+  syscall(SYSCALL_FS_LIST_DIR, u0 := 1, u1 := fn.data, u2 := fn.len,
+          entries := s0 );
+}
+
+
+procedure Dir_Get ( off : unsigned, writable fn : Bounded_Chunk ) {
+  syscall(SYSCALL_FS_LIST_DIR, u0 := 0, u1 := fn.data, u2 := fn.size,
+          u3 := off, fn.len := u2);
+}
+
+
+procedure Dir_Close () {
+  syscall(SYSCALL_FS_END_DIR);
+}

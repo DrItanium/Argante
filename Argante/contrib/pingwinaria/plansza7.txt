@@ -1,0 +1,25 @@
+
+ Wyj±tki niskopoziomowe
+ ----------------------
+
+ * wymuszamy obs³ugiwanie b³êdów
+
+ * unikamy propagacji b³êdu w z³o¿onych projektach
+
+ * w pe³ni funkcjonala obs³uga hierarchii wyj±tków
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-----

@@ -1,0 +1,28 @@
+
+ Zdalna i Lokalna Komunikacja Miêdzyprocesowa
+ --------------------------------------------
+
+ * trzy rodzaje udostêpniania zasobów
+
+ * polityka potwierdzania ka¿dej operacji
+
+ * HAC kontroluje uprawnienia do nawi±zywania okre¶lonych sesji
+
+ * przejrzyste wsparcie komunikacji miêdzy oddzielnymi VSami
+
+ * mo¿liwo¶æ dowolnie szczegó³owego definiowania celu
+
+ * w przypadku gdy cel nie jest opisany jednoznacznie, stosowany jest
+   algorytm find-fastest, co pozwala na efektywny load balancing
+
+ * mo¿liwo¶æ umieszczania wielu to¿samych procesów z takim samym
+   identyfikatorem w celu wprowadzenia redundancji w istniej±cych
+   rozwi±zaniach,
+
+ * wsparcie dowolnie z³o¿onych rozwi±zañ sieci po³±czeñ, wybór najszybszej
+   trasy pakietów, wsparcie OpenSSL i dowolnych innych tuneli.
+
+
+
+
+-----

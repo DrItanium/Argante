@@ -1,0 +1,76 @@
+#
+# Example of advmem
+#
+
+!SIGNATURE	"program testowy lcamtufa"
+
+.DATA
+
+:Enter
+
+	"\n"
+
+:Tekst
+
+	" Hello world\n"
+
+:Umieraj
+
+	"Aghrrr... Umieram.\n\n"
+
+:Te
+
+	"..."
+	
+.CODE
+# strcpy with offsets support example :)
+  alloc 100,3
+  mov u1,0
+  mov u2,:Umieraj
+  mov u3,0
+  mov u4,9
+  syscall $MEM_STRCPY
+  
+  mov u1,1
+  mov u2,:Umieraj
+  mov u3,0
+  mov u4,9
+  syscall $MEM_STRCPY
+  
+  mov u1,9
+  syscall $IO_PUTSTRING
+# strchr example
+  mov u1,0
+  mov u2,0x68
+  mov u3,^Umieraj
+  syscall $MEM_STRCHR
+  
+  mov u2,u0
+  mov u3,u1
+  alloc 100,3
+  mov u1,0
+  syscall $MEM_STRCPY
+  mov u1,9
+  syscall $IO_PUTSTRING
+  
+  mov u0,:Umieraj
+  mov u1,0
+  mov u2,^Umieraj
+  mov u3,:Te
+  mov u4,0
+  mov u5,3
+  syscall $MEM_STRSTR
+  mov u2,u0
+  mov u3,u1
+  alloc 100,3
+  mov u1,0
+  syscall $MEM_STRCPY
+  mov u1,9
+  syscall $IO_PUTSTRING
+  
+  
+  twait 2000000
+
+  halt
+
+.END

@@ -1,0 +1,7 @@
+#
+# Example rules for DVR
+#
+
+# DVR config is in fs/dvr/dvr.conf 
+
+fs/dvr			fs/dvr

@@ -1,0 +1,42 @@
+.TH acc 1 "23 November 2000"
+.IX acc
+.SH NAME
+acc - compilation script for Argante AHLL programs
+.SH SYNOPSIS
+.B acc
+[ 
+.BI \- e 
+]
+.I file
+.SH DESCRIPTION
+Uses the
+.I ahlt
+program to translate the .ahl file given on the command line
+to an .agt file with RSIS code, and then
+.I agtc
+to produce a binary image (.img)
+which can be run by 
+.I argante
+, a secure, virtual operating system executable.
+.PP
+If you use the
+[ 
+.BI \- e 
+]
+option, the
+.I elim
+script is executed, eliminatin useless fragments from the
+compiled code.
+.PP
+It is a part of the 
+.B Argante
+project. More information on 
+.B Argante 
+can be found at http://www.argante.org
+
+.SH "SEE ALSO"
+ahlt(1), elim(1), agtc(1)
+.SH BUGS
+It's a script.
+.SH AUTHOR
+Michal Zalewski <lcamtuf@ids.pl>

@@ -1,0 +1,147 @@
+#!/bin/bash
+
+echo "Documentation builder for Argante 1.1 (see predoc/PreDoc)"
+echo "(c) 2001 Michal Zalewski <lcamtuf@dione.ids.pl>"
+echo
+
+PROFILES=`cat predoc/.profiles`
+
+
+MYDATE="`date +'%A, %d %B %Y, %H:%M'`"
+
+echo "[+] Build date: $MYDATE"
+echo "[+] Build started by: $USER@$HOSTNAME"
+echo "[+] Supported profiles: `echo $PROFILES`"
+echo
+
+
+for i in $PROFILES; do
+
+  CHAPTERNO=0
+  
+  rm -f README.$i.* README.$i
+  echo "[*] Building profile $i..."
+  echo -e "\$predoc1: profile=$i, $USER $MYDATE \$\n" >README.$i
+             
+  echo -e "\n------------------\nTABLE OF CONTENTS:\n------------------\n" >README.$i.cont
+  echo -e '\n\n' >README.$i.main
+  touch README.$i.index
+               
+  for j in `ls predoc/*.tag|sort`; do
+  
+    # First of all, parse tagfile.
+    
+    HEAD=`head -1 $j`
+    
+    if [ ! "$HEAD" = "@ATAG1@" ]; then
+      echo "[-] ERROR: tagfile $j: invalid header."
+      exit 1
+    fi
+    
+    CATLIST=`grep '^I: ' $j|awk -F'I: ' '{print $2}'`
+    
+    if [ "$CATLIST" = "" ]; then
+      test "$REPASS" = "" && \
+      echo "[!] Warning: tagfile $j: orphan (no profile membership)"
+      continue
+    fi
+    
+    unset SHOULDBE
+    unset ANYTHING
+    
+    for q in $CATLIST; do
+      test "$ANYTHING" = "" && ANYTHING=`echo "$PROFILES" | grep "$q"`
+      test "$q" = "$i" && SHOULDBE=1
+    done
+    
+    if [ "$ANYTHING" = "" ]; then
+      test "$REPASS" = "" && \
+      echo "[!] Warning: tagfile $j: orphan (no known profile membership)"
+      continue
+    fi
+    
+    test "$SHOULDBE" = "" &&  continue
+    
+    BASE=predoc/`basename $j .tag`
+    
+    echo "[+] Found matching tagfile: $j (chapter $CHAPTERNO)."
+    
+    TITLE=`grep '^T: ' $j|awk -F'T: ' '{print $2}'`
+    AUTHOR=`grep '^A: ' $j|awk -F'A: ' '{print $2}'`
+    MAINT=`grep '^M: ' $j|awk -F'M: ' '{print $2}'`
+    STATUS=`grep '^S: ' $j|awk -F'S: ' '{print $2}'`
+    VER=`grep '^V: ' $j|awk -F'V: ' '{print $2}'`
+    DAT=`grep '^D: ' $j|awk -F'D: ' '{print $2}'`
+    
+    if [ "$STATUS" = "obsolete" ]; then
+      echo "    Document status = obsolete, skipping."
+      continue
+    fi
+    
+    if [ "$CHAPTERNO" = "0" ]; then    
+      TITLE="(section intro)"
+    else
+      if [ "$TITLE" = "" ]; then
+        echo "    Warning: document has no title!"
+        TITLE="(no title)"
+      fi
+    fi
+    
+    test "$AUTHOR" = "" && AUTHOR="Anonymous Developer"
+    AUTSHORT=`echo "$AUTHOR"|awk -F'<' '{print $1}'`
+    test "$MAINT" = "" && MAINT=$AUTHOR
+    test "$STATUS" = "" && STATUS=unknown
+    test "$VER" = "" && VER='???'
+    test "$DAT" = "" && DAT="stardate unknown"
+    echo "    Title: $TITLE ($VER, $DAT, status: $STATUS)"
+    echo "    Author: $AUTSHORT"
+    
+    
+    if [ "$CHAPTERNO" = "0" ]; then # Intro
+      cat $BASE >README.$i
+    else
+      HEXNUM=`printf "0x%02X" $CHAPTERNO`
+      QQQ=`echo "${AUTSHORT}${TITLE}"|awk '{print length($0)}'`
+      QQQ=$[69-QQQ]
+      echo -n "  $HEXNUM: $TITLE " >>README.$i.cont
+      for z in `seq 1 $QQQ`; do
+        echo -n '.' >>README.$i.cont
+      done
+      echo " $AUTSHORT" >>README.$i.cont
+      echo ".-------------------------- -  -    -"  >>README.$i.main
+      echo -e "| $HEXNUM: $TITLE" >>README.$i.main
+      echo "|       Author:  $AUTHOR" >>README.$i.main
+      echo ":       Version: $VER, status: $STATUS, date: $DAT" >>README.$i.main
+      echo >>README.$i.main
+      cat $BASE >>README.$i.main
+      echo >>README.$i.main
+    fi
+    
+    grep '^K: ' $j|awk -F'K: ' '{print $2}' | grep . >README.$i.tmp
+    XXX=`grep -c . README.$i.tmp`
+
+    for l in `seq 1 $XXX`; do
+      KEYWORD=`head -$l README.$i.tmp|tail -1`
+      test "$KEYWORD" = "" && continue
+      QQQ=`echo "${KEYWORD}${HEXNUM}"|awk '{print length($0)}'`
+      QQQ=$[69-QQQ]
+      echo -n "${KEYWORD} " >>README.$i.index
+      for z in `seq 1 $QQQ`; do
+        echo -n '.' >>README.$i.index
+      done
+      echo " $HEXNUM" >>README.$i.index
+    done
+    
+    CHAPTERNO=$[CHAPTERNO+1]
+  
+  done
+  
+  cat README.$i.cont >>README.$i
+  cat README.$i.main >>README.$i
+  echo -e "\n--------------\nKEYWORD INDEX:\n--------------\n" >>README.$i
+  cat README.$i.index | sort | uniq >>README.$i
+  rm -f README.$i.*
+    
+  REPASS=yesss
+  
+done

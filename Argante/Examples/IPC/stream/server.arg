@@ -1,0 +1,50 @@
+!SIGNATURE "Server"
+!IPCREG	  100
+!PRIORITY 100
+
+.DATA
+
+:gotstream
+    "Server >> Got stream id: "
+:written
+    " bytes out << Server\n"
+
+:buffer
+    3232 repeat 300
+
+.CODE
+
+    mov u0,0
+    mov u1,0
+    mov s0,-1
+    mov s1,-1
+    syscall $IPC_STREAM_REQ
+
+    mov u10,u0
+    mov u12,u3
+    
+    mov u0,:gotstream
+    mov u1,^gotstream
+    syscall $IO_PUTSTRING
+    mov u0,u12
+    syscall $IO_PUTINT
+    mov u0,10
+    syscall $IO_PUTCHAR
+    
+    mov u0,u12
+    mov u1,:buffer
+    mov u2,^buffer
+#we're blocking
+    mov u3,0
+    syscall $IPC_STREAM_WRITE
+    syscall $IO_PUTINT
+    mov u0,:written
+    mov u1,^written
+    syscall $IO_PUTSTRING
+
+:close    
+    mov u0,u12
+    syscall $IPC_STREAM_CLOSE
+    
+    halt
+.END

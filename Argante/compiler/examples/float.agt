@@ -1,0 +1,74 @@
+#
+# Argante OS - sample RSIS/agtc code
+# (C) 2000 Michal Zalewski <lcamtuf@ids.pl>
+#
+# "Hello world!" loop
+#
+
+!SIGNATURE	"float opcode test"
+
+.DATA
+
+:LICZBY
+1.234
+
+:NL
+"\n"
+
+.CODE
+
+  mov u0,:NL
+  mov u1,^NL
+  syscall $IO_PUTSTRING
+
+
+  mov f0,1.2345
+
+  syscall $IO_PUTFLOAT
+
+  mov u0,:NL
+  mov u1,^NL
+  syscall $IO_PUTSTRING
+
+  mov u0, 11
+  mov f0,u0
+
+  syscall $IO_PUTFLOAT
+
+  mov u0,:NL
+  mov u1,^NL
+  syscall $IO_PUTSTRING
+
+  add f0,1.7
+
+  syscall $IO_PUTFLOAT
+  
+  mov u0,:NL
+  mov u1,^NL
+  syscall $IO_PUTSTRING
+
+  xor u0,u0
+  add u0,f0
+  syscall $IO_PUTINT
+
+  mov u0,:NL
+  mov u1,^NL
+  syscall $IO_PUTSTRING
+
+  mov u0,10
+  sub u0,20
+  syscall $IO_PUTINT
+
+  mov u0,:NL
+  mov u1,^NL
+  syscall $IO_PUTSTRING
+
+  add *:LICZBY,1.2345
+  mov f0,*:LICZBY
+  syscall $IO_PUTFLOAT
+
+
+
+  halt
+
+.END

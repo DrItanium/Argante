@@ -1,0 +1,28 @@
+#include "include/stdinc.ahh"
+#include "include/display.ahh"
+
+#CString heja " green bottles standing on the wall"
+
+procedure wypisz ( numerek : unsigned, s : Bounded_Chunk ) {
+  Console_PutInt     ( numerek ); 
+  Console_PutString  ( s );
+  Console_PutChar    ( 10 );
+}
+
+procedure Main () {
+
+  local { 
+    loop : unsigned := 10;
+    str : Bounded_Chunk;
+  }  
+
+  str.data := address heja;
+  str.len  := heja_bytelength;
+
+  while loop {
+    loop -= 1;
+    wypisz ( loop, str );
+    twait 500000;
+  }
+
+}

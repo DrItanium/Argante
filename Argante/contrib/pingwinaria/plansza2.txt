@@ -1,0 +1,25 @@
+
+ Historia...
+ -----------
+
+ * pierwszy szkic projektu zosta³ nakre¶lony w po³owie wrze¶nia 2000 r.
+
+ * specyfikacja oraz wczesny kernel zosta³y stworzone ok. 25 wrze¶nia.
+
+ * wiêkszo¶æ funkcjonalno¶ci I/O zosta³a zaimplementowana w pierwszej
+   po³owie pa¼dziernika,
+
+ * w drugiej po³owie pa¼dziernika powstaje kompilator hll pod Argante,
+
+ * pozosta³y czas: dopracowanie implementacji i stworzenie systemu 
+   komunikacji miêdzyprocesowej.
+
+ Premiera Argante nast±pi³a 1 grudnia 2000r.
+
+ Developerzy: z33d@eth-security.net, marcel@linux.com.pl, adam@english.w3.pl,
+ honey@linuxnews.pl, artur@linux.com.pl, bikappa@itapac.net, ronald@grafix.nl,
+ bulba@intelcom.pl, lcamtuf@tpi.pl.
+
+ Obecna strona projektu: http://agt.buka.org
+
+-----

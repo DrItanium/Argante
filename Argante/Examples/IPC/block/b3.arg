@@ -1,0 +1,32 @@
+!SIGNATURE "Test blokow"
+!IPCREG		101
+!PRIORITY	100
+
+.DATA
+
+:id
+    0 repeat 2000
+
+.CODE
+    
+    mov u0,0
+    mov s0,-1
+    mov s1,-1
+    mov s2,-1
+    mov u1,0
+    mov u2,:id
+    mov u3,0
+    mov u4,1500
+    syscall $IPC_BLOCK_READ
+    
+    mov u0,u4
+    syscall $IO_PUTINT
+    mov u0,10
+    syscall $IO_PUTCHAR
+
+    mov u0,:id
+    mov u1,^id
+    syscall $IO_PUTSTRING
+
+    halt
+.END

@@ -1,0 +1,34 @@
+/*
+
+   Argante OS release 1: Mini-HTTP server
+   --------------------------------------
+
+   (c) 2000 Michal Zalewski <lcamtuf@tpi.pl>
+
+   Customizable settings, responses and so on...
+
+*/
+
+#define  PORT 1234
+#define  MAXBUF 4096
+#define  MAXREQ 500
+
+#define  TIMEOUT 30
+
+#CString DocumentRoot "/fs/http/"
+#CString INDEX "/index.html"
+
+#CString SSTRING "Server: Argante HTTP Server 1.0\n\n"
+#CString NDOC    "Content-type: text/html\n"
+#CString NTXT    "Content-type: text/plain\n"
+#CString BDATA   "Content-type: application/octet-stream\n"
+
+#CString NDOC_EXT ".html"
+
+#CString OK "HTTP/1.0 200 OK\n"
+#CString MISSING "HTTP/1.0 404 Not found\n"
+#CString ERROR "HTTP/1.0 403 Error\n"
+
+#CString MISSING_LONG "Requested file cannot be found.\n"
+#Cstring ERROR_LONG   "Your request cannot be completed.\n"
+

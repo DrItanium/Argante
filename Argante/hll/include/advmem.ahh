@@ -1,0 +1,219 @@
+/*
+
+   Argante HLL
+   -----------
+
+   Advanced memory routines
+
+   Status: almost done
+   
+   Author:     Maurycy Prodeus <z33d@eth-security.net>
+   Maintainer: Maurycy Prodeus <z33d@eth-security.net>
+
+*/
+
+
+procedure Char_Position ( b : Bounded_Chunk, c : Character, writable p : Position, writable s : signed ) {
+  local { jeden : Position; dwa : Position; }
+  syscall ( SYSCALL_MEM_STRCHR, u0 := b.data, u1 := 0,  u2 := c,
+                                u3 := b.len, jeden := u0, dwa := u1, s := u2);
+  p := jeden;
+  p -= b.data;
+  p *= 4;
+  p += dwa;
+}
+
+#define ENDIAN_LITTLE 0
+#define ENDIAN_BIG    1
+#define ENDIAN_NATIVE 2
+
+procedure Change_Endian ( b : Bounded_Chunk, f : unsigned, t : unsigned ) {
+  syscall ( SYSCALL_MEM_ENDIAN, u0 := b.data, u1 := 0,  u2 := f, u3 := t );
+}
+
+
+procedure Get_Char ( b : Bounded_Chunk, p : Position, writable c : Character ) {
+  syscall ( SYSCALL_MEM_GETCHAR, u0 := b.data, u1 := p, c := u0 );
+}
+
+
+procedure Char_Position_Reverse ( b : Bounded_Chunk, c : Character, writable p : Position, writable s : signed ) {
+  local { jeden : Position; dwa : Position; }
+  syscall ( SYSCALL_MEM_STRRCHR, u0 := b.data, u1 := 0,  u2 := c,
+                                u3 := b.len, jeden := u0, dwa := u1, s := u2);
+  p := jeden;
+  p -= b.data;
+  p *= 4;
+  p += dwa;
+}
+
+
+procedure String_Append ( writable d : Bounded_Chunk, s : Bounded_Chunk ) {
+  local { off : unsigned; }
+  syscall ( SYSCALL_MEM_STRCPY, u0 := d.data, u1 := d.len, u2 := s.data,
+                                u3 := 0, u4 := s.len );
+  off := d.len;
+  off += s.len;
+  d.len := off;
+}
+
+
+procedure Copy_String ( writable d : Bounded_Chunk, s : Bounded_Chunk, p : Position ) {
+  local {f : unsigned; }
+  f := s.len;
+  f -= p;
+  syscall ( SYSCALL_MEM_STRCPY, u0 := d.data, u1 := 0, u2 := s.data,
+                                u3 := p, u4 := f );
+  d.len := s.len;
+}
+
+
+procedure String_Position ( a : Bounded_Chunk, b : Bounded_Chunk, writable p : Position, writable s : signed ) {
+  local { adr : unsigned; ofs : unsigned; }
+  syscall ( SYSCALL_MEM_STRSTR, u0 := a.data, u1 := 0, u2 := a.len, u3 := b.data,
+           u4 := 0, u5 := b.len, adr := u0, ofs := u1, s := u2);
+  p := adr;
+  p -= a.data;
+  p *= 4;
+  p += ofs;
+}
+
+
+procedure String_Position_Reverse ( a : Bounded_Chunk, b : Bounded_Chunk, writable p : Position, writable s : signed ) {
+  local { adr : unsigned; ofs : unsigned; }
+  syscall ( SYSCALL_MEM_STRSTR, u0 := a.data, u1 := 0, u2 := a.len, u3 := b.data,
+           u4 := 0, u5 := b.len, adr := u0, ofs := u1, s := u2);
+  p := adr;
+  p -= a.data;
+  p *= 4;
+  p += ofs;
+}
+
+
+procedure String_Toupper ( writable a : Bounded_Chunk, p : Position ){
+  syscall ( SYSCALL_MEM_TOUPPER, u0 := a.data, u1 := p, u2 := a.len);
+} 
+
+
+procedure String_Tolower ( writable a : Bounded_Chunk, p : Position ){
+  syscall ( SYSCALL_MEM_TOLOWER, u0 := a.data, u1 := p, u2 := a.len );
+}
+
+
+procedure String_Compare ( a : Bounded_Chunk, b : Bounded_Chunk, writable s : signed ){
+  if a.len = b.len {
+    syscall ( SYSCALL_MEM_STRCMP, u0 := a.data, u1 := 0, u2 := b.data, u3 := 0,
+	    u4 := a.len, s := u0);
+    return;
+  }
+  if a.len > b.len {
+    s := 1;
+    return;
+  }
+  s := -1;
+}
+
+procedure String_N_Compare ( a : Bounded_Chunk, b : Bounded_Chunk, size : unsigned, writable s : signed ){
+  local { l : unsigned; l2 : unsigned; }
+  l := a.len;
+  l2 := b.len;
+  if a.len > size {
+    l := size;
+  }
+  if b.len > size {
+    l2 := size;
+  }
+  if l = l2 {
+    syscall ( SYSCALL_MEM_STRCMP, u0 := a.data, u1 := 0, u2 := b.data, u3 := 0,
+	    u4 := l, s := u0);
+    return;
+  }
+  if l > l2 {
+    s := 1;
+    return;
+  }
+  s := -1;
+}
+
+procedure String_Case_Compare ( a: Bounded_Chunk, b : Bounded_Chunk, writable s : signed ) {
+  if a.len = b.len {
+    syscall ( SYSCALL_MEM_STRCASECMP, u0 := a.data, u1 := 0, u2 := b.data, u3 := 0,
+	    u4 := a.len, s := u0);
+    return;
+  }
+  if a.len > b.len {
+    s := 1;
+    return;
+  }
+  s := -1;
+}
+
+procedure String_N_Case_Compare ( a : Bounded_Chunk, b : Bounded_Chunk, size : unsigned, writable s : signed ){
+  local { l : unsigned; l2 : unsigned; }
+  l := a.len;
+  l2 := b.len;
+  if a.len > size {
+    l := size;
+  }
+  if b.len > size {
+    l2 := size;
+  }
+  if l = l2 {
+    syscall ( SYSCALL_MEM_STRCASECMP, u0 := a.data, u1 := 0, u2 := b.data, u3 := 0,
+	    u4 := l, s := u0);
+    return;
+  }
+  if l > l2 {
+    s := 1;
+    return;
+  }
+  s := -1;
+}
+
+
+procedure String_Set ( a : Bounded_Chunk, p : Position, c : Character, s : unsigned ) {
+  syscall ( SYSCALL_MEM_MEMSET, u0 := a.data, u1 := p, u2 := c, u3 :=s );
+}
+
+
+procedure String_Zero ( a : Bounded_Chunk, p : Position, s : unsigned ){
+  syscall ( SYSCALL_MEM_BZERO, u0 := a.data, u1 := p, u2 := s);
+}
+
+
+procedure String_Conv_Int ( a : Bounded_Chunk, p : Position, s : unsigned, writable r : signed ){
+  syscall ( SYSCALL_MEM_STRTOINT, u0 := a.data, u1 := p, u2 := s , r := u0);
+} 
+
+
+procedure String_Conv_Hex ( a : Bounded_Chunk, p : Position, s : unsigned, writable r : unsigned ){
+  syscall ( SYSCALL_MEM_STRTOHEX, u0 := a.data, u1 := p, u2 := s, r := s0);
+}  
+
+
+procedure String_Conv_Float ( a : Bounded_Chunk, p : Position, s : unsigned, writable r : float ){
+  syscall ( SYSCALL_MEM_STRTOFLOAT, u0 := a.data, u1 := p, u2 := s, r := f0);
+}
+
+
+procedure String_Conv_HexInt( a : Bounded_Chunk, p : Position, s : unsigned, writable r : unsigned){
+  syscall ( SYSCALL_MEM_STRHEXINT, u0 := a.data, u1 := p, u2 := s, r := s0 );
+}
+
+
+procedure Hex_Conv_String ( writable a : Bounded_Chunk, v : unsigned, writable r : unsigned ){
+  syscall ( SYSCALL_MEM_HEXTOSTR, u0 := a.data, u1 := 0, u2 := a.len, s0 := v,
+          r := s0);
+}
+
+
+procedure Int_Conv_String ( writable a : Bounded_Chunk, v : signed, writable r : unsigned ){
+  syscall ( SYSCALL_MEM_INTTOSTR, u0 := a.data, u1 := 0, u2 := a.len, u3 := v,
+          r := s0);
+}
+
+
+procedure Float_Conv_String ( writable a : Bounded_Chunk, v : float, writable r : unsigned ){
+  syscall ( SYSCALL_MEM_FLOATTOSTR, u0 := a.data, u1 := 0, u2 := a.len, f0 := v,
+          r := s0);
+}

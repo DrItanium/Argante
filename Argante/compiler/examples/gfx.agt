@@ -1,0 +1,47 @@
+#
+# Argante OS - sample code
+# (C) 2000 Lukasz Jachowicz <honey@linux.net.pl>
+#
+# gfx test
+#
+
+!SIGNATURE	"gfx library test"
+!DOMAINS	12340
+!INITDOMAIN	1
+!PRIORITY 	100
+
+.DATA
+
+:allocated
+	0
+
+.CODE
+  mov u0,3
+ syscall $GFX_SETMODE
+ syscall $GFX_SETCLUT8
+
+  alloc 65536,3		# returns block address in u1, id in 0
+  mov *:allocated,u1    # okay, this line is stupid ;)
+
+  mov u0,*:allocated 
+  mov u1,3200	# size of virtual screen
+  syscall $GFX_MEMCOPY
+
+mov s0,255
+mov s1,0
+:loop_1
+  mov u0,0   # background
+  mov u1,100 # R
+  mov u2,s1  # G
+  mov u3,s0  # B
+  add s1,1
+  syscall $GFX_SETPALETTESNGL
+ twait 2000
+
+loop :loop_1
+
+ mov u0,0
+ syscall $gfx_setmode
+
+ halt
+.END

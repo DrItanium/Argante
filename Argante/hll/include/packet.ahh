@@ -1,0 +1,47 @@
+/*
+
+   Argante HLL
+   -----------
+
+   Packet-Level Networking Interface
+
+   Status: done
+
+   Author:     Michal Zalewski <lcamtuf@ids.pl>
+   Maintainer: Michal Zalewski <lcamtuf@ids.pl>
+
+*/
+
+
+type RAW_Sock is unsigned;
+
+
+procedure Open_Sniffer ( b : Bounded_Chunk, writable i : RAW_Sock ) {
+  syscall ( SYSCALL_LOW_NET_INITDEV, u0 := b.data, u1 := b.len, 
+            i := s0 );
+}
+
+
+// BROKEN - no failure handling.
+
+procedure Send_RAW ( i : RAW_Sock, b : Bounded_Chunk, writable cc : unsigned ) {
+  syscall ( SYSCALL_LOW_NET_SEND, u0 := i, u1 := b.data, u2 := b.len,
+            cc := s1 );
+}
+
+
+procedure Read_RAW ( i : RAW_Sock, b : Bounded_Chunk, writable cc : unsigned ) {
+  syscall ( SYSCALL_LOW_NET_RECV, u0 := i, u1 := b.data, u2 := b.len, cc := s1, 
+            b.len := s0 );
+}
+
+
+
+procedure Open_Transmitter ( writable i : RAW_Sock ) {
+  syscall ( SYSCALL_LOW_NET_RAW, i := s0 );
+}
+
+
+procedure Close_Raw ( i : RAW_Sock ) {
+  syscall ( SYSCALL_LOW_NET_CLOSE, u0 := i );
+}

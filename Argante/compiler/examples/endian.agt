@@ -1,0 +1,45 @@
+#
+# Argante OS - sample RSIS/agtc code
+# (C) 2000 Michal Zalewski <lcamtuf@ids.pl>
+#
+# Endian detection
+#
+
+!SIGNATURE	"endian detection"
+
+.DATA
+
+:Tekst1
+
+	"This machine is little-endian.\n"
+
+:Tekst2
+
+	"This machine is big-endian.\n"
+
+:EndianDetect
+
+  1
+
+.CODE
+
+  movb0 u0,*:EndianDetect
+
+  ifneq u0,1
+    jmp :Duzy
+
+  mov u0,:Tekst1
+  mov u1,^Tekst1
+  syscall $IO_PUTSTRING
+  halt
+
+:Duzy
+
+  mov u0,:Tekst2
+  mov u1,^Tekst2
+  syscall $IO_PUTSTRING
+
+
+  halt
+
+.END

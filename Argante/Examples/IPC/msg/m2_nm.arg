@@ -1,0 +1,62 @@
+!SIGNATURE "MSG SEND nonblocking multicast"
+!IPCREG		100
+!PRIORITY	100
+
+.DATA
+:req
+    "Wyslalem requesta \n"
+:str
+    "Mesga dostal (vcpu vs ipc_reg)\n"
+
+:id
+    0
+
+.CODE
+
+# nonblocking multicast
+    mov u0,3
+    mov s0,-1
+    mov s1,-1
+    mov u1,0
+    mov u2,31337
+    mov u3,12345
+    syscall $IPC_MSG_SEND
+    mov *:id,u0
+
+    mov u0,:req
+    mov u1,^req
+    syscall $IO_PUTSTRING
+    mov u0,*:id
+    syscall $IO_PUTINT
+    mov u0,10
+    syscall $IO_PUTCHAR
+
+:loopa
+    mov u0,*:id
+    syscall $IPC_MSG_STAT
+    ifbel s0,2
+    jmp :loopa
+
+    mov u10,u0
+    mov u11,u1
+
+    mov u0,:str
+    mov u1,^str
+    syscall $IO_PUTSTRING
+    mov u0,u10
+    syscall $IO_PUTINT
+    mov u0,32
+    syscall $IO_PUTCHAR
+    mov u0,u11
+    syscall $IO_PUTINT
+    mov u0,32
+    syscall $IO_PUTCHAR
+    mov u0,u2
+    syscall $IO_PUTINT
+    mov u0,10
+    syscall $IO_PUTCHAR
+        
+    twait 10000000
+
+    halt
+.END

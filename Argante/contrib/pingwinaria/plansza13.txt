@@ -1,0 +1,27 @@
+
+ Interakcja z Rzeczywistym Systemem
+ ----------------------------------
+
+ Argante jako us³uga systemowa:
+
+ * wykonywanie z linii poleceñ
+
+ * servlets, CGI, SSI
+
+ * komunikacja przez modu³ network
+
+ * wsparcie konsoli
+
+ * mo¿liwo¶ci mapowania SVFS
+
+ Argante zarz±dza systemem:
+
+ * SVFS
+
+ * demony (unix sockets)
+
+
+
+
+
+-----

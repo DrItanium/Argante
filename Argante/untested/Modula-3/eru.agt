@@ -1,0 +1,83 @@
+# AOS M3Runtime 
+# by eru
+
+# Activation Record for M3 Procedures
+# 	0	VAR	(callee saves, nasty 2b first, but faster access)
+#	1	DL	(caller saves, AR of caller)
+#	2	ACT	(caller saves, actuals)
+#	3	SL	(caller saves, static environment)
+#	4	RES	(caller saves, space for result)
+#	5	EXC	(caller saves, space for exception)
+# So, one AR has 6 pointers. 
+
+.DATA
+#emulates stack for M3
+:M3Stack
+	0
+:M3STop
+	0
+:M3SMax
+#6x16
+	384
+:Wel
+	"\nWelcome\n"
+:pad
+	"_"
+.CODE
+
+#u15 - actual AR
+#u14 - actual VAR
+
+#First allocate space for M3Stack
+	mov u0,*:M3SMax
+	alloc u0,3
+	mov *:M3Stack,u1
+	mov u15,u1
+#BEGIN INIT
+	add *:M3STop,6
+#space for vars
+	alloc 2,3
+#save in AR
+	mov *u15,u1
+	mov u14,u1
+#x=var[0],y=var[1];
+#x:=0;
+	mov u5,u14 
+	add u5,0
+	mov *u5,1
+#y:=0
+	mov u5,u14
+	add u5,0
+	mov *u5,2
+#END INIT
+#BEGIN RUN
+	mov u5,u14
+	add u5,0
+	mov *u5,3
+	mov u5,u14
+	add u5,1
+	mov *u5,4
+	
+	mov u5,u14
+	add u5,0
+	mov u6,u14
+	add u6,0
+	mov u7,u14
+	add u7,1
+	mov u8,*u6
+	add u8,*u7
+	mov *u5,u8
+	
+	mov u5,u14
+	add u5,0
+	mov u0,*u5
+	syscall $IO_PUTINT
+			
+	
+	mov u0,:Wel
+	mov u1,^Wel
+	syscall $IO_PUTSTRING
+
+	halt
+
+.END

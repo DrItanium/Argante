@@ -1,0 +1,547 @@
+
+// exceptions...
+#define ERROR_IPC_NOMEM                 0x401
+#define ERROR_IPC_BAD_FLAGS             0x402
+#define ERROR_IPC_BAD_TARGET            0x403
+#define ERROR_IPC_NO_TARGET             0x404
+#define ERROR_IPC_NOT_REGISTERED        0x405
+#define ERROR_IPC_NO_RESOURCES          0x406
+#define ERROR_IPC_NO_REQUEST            0x407
+#define ERROR_IPC_REQUEST_NACKED        0x408
+#define ERROR_IPC_STREAM_ID_INVALID     0x409
+#define ERROR_IPC_STREAM_CLOSED         0x40a
+#define ERROR_IPC_BLOCK_ID_INVALID      0x40b
+#define ERROR_IPC_STREAM_DEADLOCK       0x40c
+#define ERROR_IPC_DEAD                  0x40d
+
+// syscalls...
+#define SYSCALL_IPC_REGISTER          0x1400
+#define SYSCALL_IPC_MSG_SEND          0x1401
+#define SYSCALL_IPC_MSG_RECV          0x1402
+#define SYSCALL_IPC_MSG_STAT          0x1403
+#define SYSCALL_IPC_STREAM_REQ        0x1405
+#define SYSCALL_IPC_STREAM_QUEUE      0x1406
+#define SYSCALL_IPC_STREAM_NACK       0x1407
+#define SYSCALL_IPC_STREAM_ACK        0x1408
+#define SYSCALL_IPC_STREAM_WRITE      0x1409
+#define SYSCALL_IPC_STREAM_READ       0x140a
+#define SYSCALL_IPC_STREAM_CLOSE      0x140b
+#define SYSCALL_IPC_STREAM_INFO       0x140c
+#define SYSCALL_IPC_STREAM_STAT       0x140d
+#define SYSCALL_IPC_BLOCK_CREATE        0x140e
+#define SYSCALL_IPC_BLOCK_DESTROY       0x140f
+#define SYSCALL_IPC_BLOCK_READ          0x1410
+#define SYSCALL_IPC_BLOCK_WRITE         0x1411
+#define SYSCALL_IPC_BLOCK_QUEUE         0x1412
+#define SYSCALL_IPC_BLOCK_ACK           0x1413
+#define SYSCALL_IPC_BLOCK_NACK          0x1414
+#define SYSCALL_IPC_BLOCK_STAT          0x1415
+#define SYSCALL_IPC_BLOCK_IS_READY      0x1416
+
+
+#define IPC_EOK		1
+#define IPC_ETRYAGAIN	0
+#define IPC_ERROR	-1
+
+#define IPC_FLAG_NONBLOCK	1
+#define IPC_FLAG_MULTICAST	2
+
+#define IPC_BLOCK_READ		0
+#define IPC_BLOCK_WRITE		1
+
+#define IPC_RSTATUS_ERROR	-1
+#define IPC_RSTATUS_WAITING	0
+#define IPC_RSTATUS_ACCEPTED	1
+#define IPC_RSTATUS_COMPLETED	2
+
+// stream: ready for read, ready for write, peer is dead... ORed flags...
+#define STREAM_FLAG_HAS_DATA	1
+#define STREAM_FLAG_HAS_SPACE	2
+#define STREAM_FLAG_HALF_CLOSED	4
+
+#define VS_ANY		-1
+#define VCPU_ANY	-1
+#define IPC_REG_ANY	0
+#define IPC_BLOCK_ANY	-1
+
+type IpcAddress is structure {
+    vs		: unsigned;
+    vcpu	: unsigned;
+    ipc_reg	: unsigned;
+}
+
+procedure IpcRegister ( r : unsigned ) {
+    syscall(SYSCALL_IPC_REGISTER, u0 := r);
+}
+
+procedure IpcUnregister ( ) {
+    syscall(SYSCALL_IPC_REGISTER, u0 := 0);
+}
+
+procedure IpcMsgSend ( to_vcpu : signed, to_vs : signed, to_ipcreg : unsigned, 
+		       data1 : unsigned, data2 : unsigned, flags : unsigned, 
+		       writable first : IpcAddress, writable msg_id : unsigned ) {
+    local { m1 : unsigned; m2: unsigned; m3: unsigned; }
+    syscall(SYSCALL_IPC_MSG_SEND, u0 := flags, s0 := to_vcpu, s1 := to_vs,
+	    u1 := to_ipcreg, u2 := data1, u3 := data2, m1 := u0, m2 := u1,
+	    m3 := u2 );
+    if flags & IPC_FLAG_NONBLOCK {
+	msg_id := m1;
+	return;
+    }
+    first.vcpu := m1;
+    first.vs := m2;
+    first.ipc_reg := m3;
+}
+
+procedure IpcMsgSend_Nonblock ( to_vcpu : signed, to_vs : signed, to_ipcreg : unsigned,
+				data1 : unsigned, data2 :unsigned, multicast : Boolean, 
+				writable msg_id : unsigned ) {
+    local { m : unsigned; id : unsigned; hmm : IpcAddress }
+    m := 0;
+    m |= IPC_FLAG_NONBLOCK;
+    if multicast {
+	m |= IPC_FLAG_MULTICAST;
+    }
+    syscall(SYSCALL_IPC_MSG_SEND, u0 := m, s0 := to_vcpu, s1 := to_vs, u1 := to_ipcreg,
+	    u2 := data1, u3 := data2, msg_id := u0 );
+}
+
+procedure IpcMsgSend_Blocking ( to_vcpu : signed, to_vs : signed, to_ipcreg : unsigned,
+				data1 : unsigned, data2 :unsigned, multicast : Boolean, 
+				writable first : IpcAddress ) {
+    local { m : unsigned; }
+    m := 0;
+    if multicast {
+	m |= IPC_FLAG_MULTICAST;
+    }
+    syscall(SYSCALL_IPC_MSG_SEND, u0 := m, s0 := to_vcpu, s1 := to_vs, u1 := to_ipcreg, 
+	    u2 := data1, u3 := data2, first.vcpu := u0, first.vs := u1, first.ipc_reg := u2 );
+}
+
+procedure IpcMsgRecv ( flags : unsigned, writable sender : IpcAddress,
+		       writable data1 : unsigned, writable data2 : unsigned,
+		       writable retcode : signed ) {
+    local { 
+	m0 : unsigned; 
+	m1 : unsigned; 
+	m2 : unsigned; 
+	m3 : unsigned;
+	m4 : unsigned;
+	h0 : signed;
+    }
+    syscall(SYSCALL_IPC_MSG_RECV, u0 := flags, m0 := u0, m1 := u1, m2 := u2,
+	    m3 := u3, m4 := u4, h0 := s0);
+    if flags & IPC_FLAG_NONBLOCK {
+	retcode := h0;
+	if h0 = IPC_ETRYAGAIN {
+	    return;
+	}
+    }
+    sender.vcpu := m0;
+    sender.vs := m1;
+    sender.ipc_reg := m2;
+    data1 := m3;
+    data2 := m4;
+}
+
+procedure IpcMsgRecv_Nonblock ( writable sender : IpcAddress,
+		       writable data1 : unsigned, writable data2 : unsigned,
+		       writable retcode : signed ) {
+    IpcMsgRecv ( IPC_FLAG_NONBLOCK, sender, data1, data2, retcode );
+}
+
+procedure IpcMsgRecv_Blocking ( writable sender : IpcAddress,
+		       writable data1 : unsigned, writable data2 : unsigned ) {
+    local { m : signed; }
+    IpcMsgRecv ( 0, sender, data1, data2, m );
+}
+
+procedure IpcMsgReqStatus ( msg_id : unsigned, writable first : IpcAddress,
+			    writable status : signed, writable errcode : unsigned ) {
+    local { m1 : unsigned; m2 : unsigned; m3 : unsigned; }
+    syscall(SYSCALL_IPC_MSG_STAT, u0 := msg_id, status := s0, m1 := u0, m2 := u1, 
+	    m3 := u2 );
+    if status = IPC_RSTATUS_ERROR {
+	errcode := m1;
+	return;
+    }
+    first.vcpu := m1;
+    first.vs := m2;
+    first.ipc_reg := m3;
+}
+
+
+
+procedure IpcStreamRequest ( to_vcpu : signed, to_vs : signed, to_ipcreg : unsigned,
+			     flags : unsigned, writable peer : IpcAddress,
+			     writable stream : unsigned, writable req_id : unsigned ) {
+    local { m1 : unsigned; m2 : unsigned; m3 : unsigned; m4 : unsigned; }
+    syscall(SYSCALL_IPC_STREAM_REQ, u0 := flags, s0 := to_vcpu, s1 := to_vs,
+	    u1 := to_ipcreg, m1 := u0, m2 := u1, m3 := u2, m4 := u3);
+    if flags & IPC_FLAG_NONBLOCK {
+	req_id := m1;
+	return;
+    }
+    peer.vcpu := m1;
+    peer.vs := m2;
+    peer.ipc_reg := m3;
+    stream := m4;
+}
+
+procedure IpcStreamRequest_Nonblock ( to_vcpu : signed, to_vs : signed, to_ipcreg : unsigned,
+			             writable req_id : unsigned ) {
+    syscall(SYSCALL_IPC_STREAM_REQ, u0 := IPC_FLAG_NONBLOCK, s0 := to_vcpu, s1 := to_vs,
+	    u1 := to_ipcreg, req_id := u0 );
+}
+
+procedure IpcStreamRequest_Blocking ( to_vcpu : signed, to_vs : signed, to_ipcreg : unsigned,
+			             writable peer : IpcAddress, writable stream : unsigned ) {
+    syscall(SYSCALL_IPC_STREAM_REQ, u0 := 0, s0 := to_vcpu, s1 := to_vs, u1 := to_ipcreg,
+	    peer.vcpu := u0, peer.vs := u1, peer.ipc_reg := u2, stream := u3);				
+}
+
+procedure IpcStreamRequestStatus ( req_id : unsigned, writable status : signed,
+				   writable errcode : unsigned, writable peer : IpcAddress ) {
+    local { m1 : unsigned; m2 : unsigned; m3 : unsigned; m4 : unsigned; }
+    syscall(SYSCALL_IPC_STREAM_STAT, u0 := req_id, status := s0, m1 := u0, m2 := u1,
+	    m3 := u2, m4 := u3);
+    if status = IPC_RSTATUS_COMPLETED {
+	peer.vcpu := m1;
+	peer.vs := m2;
+	peer.ipc_reg := m3;
+	return;
+    }
+    if status = IPC_RSTATUS_ERROR {
+	errcode := m1;
+	return;
+    }
+}
+
+procedure IpcStreamCheck ( blocking : Boolean, writable requestor : IpcAddress,
+			   writable req_id : unsigned, writable retcode : signed ) {
+    local { f : unsigned; si : signed; m1 : unsigned; m2 : unsigned; m3: unsigned; }
+    f := IPC_FLAG_NONBLOCK;
+    if blocking {
+	f := 0;
+    }
+    syscall(SYSCALL_IPC_STREAM_QUEUE, u0 := f, m1 := u0, m2 := u1, m3 := u2, si := s0,
+	    f := u3);
+    if blocking {
+	requestor.vcpu := m1;
+	requestor.vs := m2;
+	requestor.ipc_reg := m3;
+	req_id := f;
+	return;
+    }
+    retcode := si;
+    if si = IPC_EOK {
+	requestor.vcpu := m1;
+	requestor.vs := m2;
+	requestor.ipc_reg := m3;
+	req_id := f;
+	return;
+    }
+}			   
+
+procedure IpcStreamAwait ( writable requestor : IpcAddress, writable req_id : unsigned ) {
+    syscall(SYSCALL_IPC_STREAM_QUEUE, u0 := 0, requestor.vcpu := u0, requestor.vs := u1,
+	    requestor.ipc_reg := u2, req_id := u3);
+}
+
+procedure IpcStreamNowait ( writable requestor : IpcAddress, writable req_id : unsigned,
+			    writable status : signed ) {
+    local { m1 : unsigned; m2 : unsigned; m3 : unsigned; m4 : unsigned; }
+    syscall(SYSCALL_IPC_STREAM_QUEUE, u0 := IPC_FLAG_NONBLOCK, m1 := u0, m2 := u1,
+	    m3 := u2, m4 := u3, status := s0);
+    if status = IPC_EOK {
+	requestor.vcpu := m1;
+	requestor.vs := m2;
+	requestor.ipc_reg := m3;
+	req_id := m4;
+    }	    
+}
+
+procedure IpcStreamNACK ( req_id : unsigned ) {
+    syscall(SYSCALL_IPC_STREAM_NACK, u0 :=req_id );
+}
+
+procedure IpcStreamACK ( req_id : unsigned, flags : unsigned, writable stream_id : unsigned ) {
+    syscall(SYSCALL_IPC_STREAM_ACK, u0 := flags, u1 := req_id, stream_id := u0);
+}
+
+procedure IpcStreamACK_Nonblock( req_id : unsigned, writable stream_id : unsigned ) {
+    syscall(SYSCALL_IPC_STREAM_ACK, u0 := IPC_FLAG_NONBLOCK, u1 := req_id, stream_id := u0);
+}
+
+procedure IpcStreamACK_Blocking ( req_id : unsigned, writable stream_id : unsigned ) {
+    syscall(SYSCALL_IPC_STREAM_ACK, u0 := 0, u1 := req_id, stream_id := u0);
+}
+
+procedure IpcStreamWrite ( stream_id : unsigned, buf : Bounded_Chunk, len : unsigned, flags : unsigned,
+    			   writable out : unsigned, writable retcode : signed ) {
+    local { m1 : unsigned; s : signed; }
+    syscall(SYSCALL_IPC_STREAM_WRITE, u0 := stream_id, u1 := buf.data, u2 := len, u3 := flags,
+	    m1 := u0, s := s0);
+    if flags = 0 {
+	out := m1;
+	return;
+    }
+    retcode := s;
+    if s = IPC_EOK {
+	out := m1;
+    }
+}
+
+procedure IpcStreamWrite_Nonblock ( stream_id : unsigned, buf : Bounded_Chunk, len : unsigned,
+				    writable out : unsigned, writable retcode : signed ) {
+    local { m1 : unsigned; }
+    syscall(SYSCALL_IPC_STREAM_WRITE, u0 := stream_id, u1 := buf.data, u2 := len, u3 := IPC_FLAG_NONBLOCK,
+	    m1 := u0, retcode := s0);
+    if retcode = IPC_EOK {
+	out := m1;
+    }
+}
+
+procedure IpcStreamWrite_Blocking ( stream_id : unsigned, buf : Bounded_Chunk, len : unsigned,
+				    writable out : unsigned ) {
+    syscall(SYSCALL_IPC_STREAM_WRITE, u0 := stream_id, u1 := buf.data, u2 := len, u3 := 0,
+	    out := u0);
+}
+
+
+
+procedure IpcStreamRead  ( stream_id : unsigned, buf : Bounded_Chunk, len : unsigned, flags : unsigned,
+    			   writable in : unsigned, writable retcode : signed ) {
+    local { m1 : unsigned; s : signed; }
+    syscall(SYSCALL_IPC_STREAM_READ, u0 := stream_id, u1 := buf.data, u2 := len, u3 := flags,
+	    m1 := u0, s := s0);
+    if flags = 0 {
+	in := m1;
+	return;
+    }
+    retcode := s;
+    if s = IPC_EOK {
+	in := m1;
+    }
+}
+
+procedure IpcStreamRead_Nonblock ( stream_id : unsigned, buf : Bounded_Chunk, len : unsigned,
+				    writable in : unsigned, writable retcode : signed ) {
+    local { m1 : unsigned; }
+    syscall(SYSCALL_IPC_STREAM_READ, u0 := stream_id, u1 := buf.data, u2 := len, u3 := IPC_FLAG_NONBLOCK,
+	    m1 := u0, retcode := s0);
+    if retcode = IPC_EOK {
+	in := m1;
+    }
+}
+
+procedure IpcStreamRead_Blocking ( stream_id : unsigned, buf : Bounded_Chunk, len : unsigned,
+				    writable in : unsigned ) {
+    syscall(SYSCALL_IPC_STREAM_READ, u0 := stream_id, u1 := buf.data, u2 := len, u3 := 0,
+	    in := u0);
+}
+
+procedure IpcStreamStatus ( stream_id : unsigned, writable status : unsigned ) {
+    syscall(SYSCALL_IPC_STREAM_INFO, u0 := stream_id, status := u0 );
+}
+
+procedure IpcStreamClose ( stream_id : unsigned ) {
+    syscall(SYSCALL_IPC_STREAM_CLOSE, u0 := stream_id);
+}
+
+
+procedure IpcBlockCreate ( size : unsigned, writable id : unsigned, writable addr : unsigned ) {
+    syscall(SYSCALL_IPC_BLOCK_CREATE, u0 := size, id := u0, addr := u1);
+}
+
+procedure IpcBlockDestroy ( id : unsigned ) {
+    syscall(SYSCALL_IPC_BLOCK_DESTROY, u0 := id);
+}
+
+procedure IpcBlockRead ( to_vcpu : signed, to_vs : signed, to_ipcreg : unsigned, to_block : signed,
+			 flags: unsigned, too : unsigned, offset : unsigned, len : unsigned, 
+			 writable peer : IpcAddress, writable id : unsigned,
+			 writable in : unsigned, writable req_id : unsigned ) {
+    local { m1 : unsigned; m2 : unsigned; m3 : unsigned; m4 : unsigned; m5 : unsigned; }
+    syscall(SYSCALL_IPC_BLOCK_READ, u0 := flags, s0 := to_vcpu, s1 := to_vs, s2 := to_block,
+	    u1 := to_ipcreg, u2 := too, u3 := offset, u4 := len,
+	    m1 := u0, m2 := u1, m3 := u2, m4 := u3, m5 := u4);
+    if flags & IPC_FLAG_NONBLOCK {
+	req_id := m1;
+	return;
+    }
+    peer.vcpu := m1;
+    peer.vs := m2;
+    peer.ipc_reg := m3;
+    id := m4;
+    in := m5;
+}
+
+procedure IpcBlockRead_Nonblock ( to_vcpu : signed, to_vs : signed, to_ipcreg : unsigned, to_block : signed,
+			 too : unsigned, offset : unsigned, len : unsigned, 
+			 writable req_id : unsigned ) {
+    syscall(SYSCALL_IPC_BLOCK_READ, u0 := IPC_FLAG_NONBLOCK, s0 := to_vcpu, s1 := to_vs, s2 := to_block,
+	    u1 := to_ipcreg, u2 := too, u3 := offset, u4 := len,
+	    req_id := u0);
+}
+
+procedure IpcBlockRead_Blocking ( to_vcpu : signed, to_vs : signed, to_ipcreg : unsigned, to_block : signed,
+			 too : unsigned, offset : unsigned, len : unsigned, 
+			 writable peer : IpcAddress, writable id : unsigned,
+			 writable in : unsigned ) {
+    syscall(SYSCALL_IPC_BLOCK_READ, u0 := 0, s0 := to_vcpu, s1 := to_vs, s2 := to_block,
+	    u1 := to_ipcreg, u2 := too, u3 := offset, u4 := len,
+	    peer.vcpu := u0, peer.vs := u1, peer.ipc_reg := u2, id := u3,
+	    in := u4);
+}
+
+procedure IpcBlockWrite ( to_vcpu : signed, to_vs : signed, to_ipcreg : unsigned, to_block : signed,
+			 flags: unsigned, from : unsigned, offset : unsigned, len : unsigned, 
+			 writable peer : IpcAddress, writable id : unsigned,
+			 writable out : unsigned, writable req_id : unsigned ) {
+    local { m1 : unsigned; m2 : unsigned; m3 : unsigned; m4 : unsigned; m5 : unsigned; }
+    syscall(SYSCALL_IPC_BLOCK_WRITE, u0 := flags, s0 := to_vcpu, s1 := to_vs, s2 := to_block,
+	    u1 := to_ipcreg, u2 := from, u3 := offset, u4 := len,
+	    m1 := u0, m2 := u1, m3 := u2, m4 := u3, m5 := u4);
+    if flags & IPC_FLAG_NONBLOCK {
+	req_id := m1;
+	return;
+    }
+    peer.vcpu := m1;
+    peer.vs := m2;
+    peer.ipc_reg := m3;
+    id := m4;
+    out := m5;
+}
+
+procedure IpcBlockWrite_Nonblock ( to_vcpu : signed, to_vs : signed, to_ipcreg : unsigned, to_block : signed,
+			 from : unsigned, offset : unsigned, len : unsigned, 
+			 writable req_id : unsigned ) {
+    syscall(SYSCALL_IPC_BLOCK_WRITE, u0 := IPC_FLAG_NONBLOCK, s0 := to_vcpu, s1 := to_vs, s2 := to_block,
+	    u1 := to_ipcreg, u2 := from, u3 := offset, u4 := len,
+	    req_id := u0);
+}
+
+procedure IpcBlockWrite_Blocking ( to_vcpu : signed, to_vs : signed, to_ipcreg : unsigned, to_block : signed,
+			 from : unsigned, offset : unsigned, len : unsigned, 
+			 writable peer : IpcAddress, writable id : unsigned,
+			 writable out : unsigned ) {
+    syscall(SYSCALL_IPC_BLOCK_WRITE, u0 := 0, s0 := to_vcpu, s1 := to_vs, s2 := to_block,
+	    u1 := to_ipcreg, u2 := from, u3 := offset, u4 := len,
+	    peer.vcpu := u0, peer.vs := u1, peer.ipc_reg := u2, id := u3,
+	    out := u4);
+}
+
+
+procedure IpcBlockChck ( flags : unsigned, writable requestor : IpcAddress, writable req_id : unsigned,
+			 writable block_id : unsigned, writable offset : unsigned,
+			 writable len : unsigned, writable direction : signed, writable retcode : signed ) {
+    local {
+	m1 : unsigned;
+	m2 : unsigned;
+	m3 : unsigned;
+	m4 : unsigned;
+	m5 : unsigned;
+	m6 : unsigned;
+	m7 : unsigned;
+	d : signed;
+	r : signed;
+    }
+    syscall(SYSCALL_IPC_BLOCK_QUEUE, u0 := flags, d := s1, r := s0, m1 := u0,
+	    m2 := u1, m3 := u2, m4 := u3, m5 := u4, m6 := u5, m7 := u6);
+    if flags & IPC_FLAG_NONBLOCK {
+	retcode := r;
+	if r = IPC_ETRYAGAIN {
+	    return;
+	}
+    }
+    requestor.vcpu := m1;
+    requestor.vs := m2;
+    requestor.ipc_reg := m3;
+    req_id := m4;
+    block_id := m5;
+    offset := m6;
+    len := m7;
+    direction := d;
+}
+
+procedure IpcBlockAwait ( writable requestor : IpcAddress, writable direction : signed,
+			  writable req_id : unsigned, writable block_id : unsigned,
+			  writable offset : unsigned, writable len : unsigned ) {
+    syscall(SYSCALL_IPC_BLOCK_QUEUE, u0 := 0, direction := s1, requestor.vcpu := u0,
+	    requestor.vs := u1, requestor.ipc_reg := u2, req_id := u3, block_id := u4,
+	    offset := u5, len := u6);
+}
+
+procedure IpcBlockNowait ( writable requestor : IpcAddress, writable req_id : unsigned,
+			 writable block_id : unsigned, writable offset : unsigned,
+			 writable len : unsigned, writable direction : signed, writable retcode : signed ) {
+
+    local {
+	m1 : unsigned;
+	m2 : unsigned;
+	m3 : unsigned;
+	m4 : unsigned;
+	m5 : unsigned;
+	m6 : unsigned;
+	m7 : unsigned;
+	d : signed;
+    }
+    syscall(SYSCALL_IPC_BLOCK_QUEUE, u0 := IPC_FLAG_NONBLOCK, d := s1, retcode := s0, m1 := u0,
+	    m2 := u1, m3 := u2, m4 := u3, m5 := u4, m6 := u5, m7 := u6);
+    if retcode = IPC_ETRYAGAIN {
+	    return;
+    }
+    requestor.vcpu := m1;
+    requestor.vs := m2;
+    requestor.ipc_reg := m3;
+    req_id := m4;
+    block_id := m5;
+    offset := m6;
+    len := m7;
+    direction := d;
+}
+
+procedure IpcBlockNACK ( req_id : unsigned ) {
+    syscall(SYSCALL_IPC_BLOCK_NACK, u0 := req_id );
+}
+
+procedure IpcBlockACK ( req_id : unsigned, block_id : unsigned, flags : unsigned ) {
+    syscall(SYSCALL_IPC_BLOCK_ACK, u0 := flags, u1 := req_id, u2 := block_id);
+}
+
+procedure IpcBlockACK_Nonblock ( req_id : unsigned, block_id : unsigned ) {
+    syscall(SYSCALL_IPC_BLOCK_ACK, u0 := IPC_FLAG_NONBLOCK, u1 := req_id , u2 := block_id);
+}
+
+procedure IpcBlockACK_Blocking ( req_id : unsigned, block_id : unsigned ) {
+    syscall(SYSCALL_IPC_BLOCK_ACK, u0 := 0, u1 := req_id , u2 := block_id);
+}
+
+procedure IpcBlockRequestStatus ( req_id : unsigned, writable status : signed,
+				  writable peer : IpcAddress, writable block_id : unsigned,
+				  writable len : unsigned, writable errcode : unsigned ) {
+    local { m0 : unsigned; m1 : unsigned; m2 : unsigned; m3 : unsigned; m4 : unsigned; }
+    syscall(SYSCALL_IPC_BLOCK_STAT, u0 := req_id, status := s0, m0 := u0, m1 := u1, m2 := u2, m3 := u3, m4 := u4);
+    if status = IPC_RSTATUS_WAITING {
+	return;
+    }
+    if status = IPC_RSTATUS_ERROR {
+	errcode := m0;
+	return;
+    }
+    peer.vcpu := m0;
+    peer.vs := m1;
+    peer.ipc_reg := m2;
+    block_id := m3;
+    if status = IPC_RSTATUS_COMPLETED {
+	len := m4;    
+    }
+}
+
+procedure IpcBlockIsBusy ( block_id : unsigned, writable is_busy : Boolean ) {
+    syscall(SYSCALL_IPC_BLOCK_IS_READY, u0 := block_id, is_busy := u0);
+}
+
+

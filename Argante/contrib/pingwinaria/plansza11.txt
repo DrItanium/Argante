@@ -1,0 +1,35 @@
+
+ Jêzyk wysokopoziomowy
+ ---------------------
+
+ * podzbiór C + Ada
+
+        if tmp < TIMEOUT {
+          b.data := address tmpbuf; b.size := MAXBUF; b.len := 0;
+          guard {
+            Async_Recv ( sock[lo], b, r);
+            if r = NET_RET_OK {
+              Process_Request( sock[lo], b );
+              Shutdown ( sock[lo], NET_SHUTRDWR );
+              time[lo] := 0;
+            }
+          }
+        }
+
+ * obecnie sam translator jest wci±¿ rozbudowywany i poprawiany
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-----

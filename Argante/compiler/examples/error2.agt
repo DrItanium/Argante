@@ -1,0 +1,84 @@
+#
+# Argante OS - sample RSIS/agtc code
+# (C) 2000 Michal Zalewski <lcamtuf@ids.pl>
+#
+# Demonstrate how exception handling works.
+#
+
+.DATA
+
+:Tekst1
+	"I am in the top-level exception handler!\n"
+
+:Tekst2
+	"I am in the subprocedure exception handler\n"
+
+:Code1
+	"\nNow I am in main code - it will set up handler and call buggy subprocedure\n"
+
+:Code2
+	"Now I'm in the subprocedure with 2 errors\n"
+
+:Code3
+	"First of all, I will set up local exception handler, then do something bad.\n"
+
+:Code4
+	"Back to subprocedure - now, I'm removing local exception handler and retrying.\n"
+
+
+
+.CODE
+
+  ONFAIL :Handler1
+
+  mov u0,:Code1
+  mov u1,^Code1
+  syscall $IO_PUTSTRING
+
+  call :WhereOver
+
+  halt
+
+:WhereOver
+
+  ONFAIL :Handler2
+
+  mov u0,:Code2
+  mov u1,^Code2
+  syscall $IO_PUTSTRING
+
+  mov u0,:Code3
+  mov u1,^Code3
+  syscall $IO_PUTSTRING
+
+  mov u0,*11111111
+
+  mov u0,:Code4
+  mov u1,^Code4
+  syscall $IO_PUTSTRING
+
+  nofail
+
+  mov u0,*11111111
+
+  ret 1
+
+:Handler1
+
+#  mov u0,1234
+#  mov *u0,1234
+
+  mov u0,:Tekst1
+  mov u1,^Tekst1
+  syscall $IO_PUTSTRING
+
+  ret 1
+
+:Handler2
+
+  mov u0,:Tekst2
+  mov u1,^Tekst2
+  syscall $IO_PUTSTRING
+  ret 1
+
+.END

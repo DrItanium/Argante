@@ -1,0 +1,299 @@
+# packet queue
+# seems like done
+
+# packet_bucket structure:
+# (0) prev
+# (1) next
+# (2) t_sec
+# (3) t_usec
+# (4) len
+# (5) d_addr
+# (6) netlen
+# (7) data
+# sizeof packet_bucket = 375 + 7 = 382 dwordy
+
+.define PCKT_SIZEOF 382
+
+.DATA
+:packet_dummy
+    0
+.CODE
+
+########################################################################
+# packet_init in () out () changes (u0123)
+
+:packet_init
+    mov u3,HOW_MANY_PACKETS_WE_NEED
+    mov u0,PCKT_SIZEOF
+    mul u0,u3
+    alloc u0,3			# allow read & write
+    mov *:packet_free,u1
+:packet_init_loopa    
+    mov u2,u1
+    add u2,1
+    add u1,PCKT_SIZEOF
+    mov *u2,u1
+    sub u3,1
+    ifneq u3,0
+    jmp :packet_init_loopa    
+    mov *u2,0
+    ret 1
+
+
+#########################################################################
+# packet_new in () out (u0) changes ()
+
+.DATA
+:packet_temp
+    0
+:packet_temp2
+    0
+:packet_temp3
+    0
+:packet_new_1
+    " -- in packet new _ before "
+:packet_new_2
+    " -- in packet new _ after "
+.CODE
+:packet_new
+# debug
+#    mov s15,:packet_new_1
+#    mov s14,^packet_new_1
+#    mov s13,*:packet_free
+#    call :debug_int
+# e o d
+    mov u0,*:packet_free
+    ifeq u0,0
+    ret 1
+    mov *:packet_temp,u1
+    mov *u0,0
+    mov u1,u0
+    add u1,1
+    mov *:packet_free,*u1
+    mov *u1,0
+    mov u1,*:packet_temp
+# debug
+#    mov s15,:packet_new_2
+#    mov s14,^packet_new_2
+#    mov s13,*:packet_free
+#    call :debug_int
+# e o d
+    ret 1
+
+#########################################################################
+# packet_done in (u0) out () changes ()
+.DATA
+:packet_done_1
+    " -- in packet done _ before "
+:packet_done_2
+    " -- in packet done _ after "
+.CODE
+
+:packet_done
+# debug
+#    mov s15,:packet_done_1
+#    mov s14,^packet_done_1
+#    mov s13,*:packet_free
+#    call :debug_int
+# e o d
+    mov *:packet_temp,u1
+    mov *u0,0
+    mov u1,u0
+    add u1,1
+    mov *u1,*:packet_free
+    mov u1,*:packet_temp
+    mov *:packet_free,u0
+# debug
+#    mov s15,:packet_done_2
+#    mov s14,^packet_done_2
+#    mov s13,*:packet_free
+#    call :debug_int
+# e o d
+    ret 1
+
+#########################################################################
+# packet_in_unlink in (u0) out () changes ()
+
+:packet_in_unlink
+    mov *:packet_temp,u1
+    mov *:packet_temp2,u2
+    mov u1,u0
+    add u1,1
+    ifeq *u0,0
+    jmp :packet_in_unlink1
+    mov u2,*u0
+    add u2,1 
+    mov *u2,*u1
+    jmp :packet_in_unlink2
+:packet_in_unlink1
+    mov *:in_packet_first,*u1
+:packet_in_unlink2
+    ifeq *u1,0
+    jmp :packet_in_unlink3
+    mov u2,*u1
+    mov *u2,*u0
+    jmp :packet_in_unlink4
+:packet_in_unlink3
+    mov *:in_packet_last,*u0
+:packet_in_unlink4
+    mov *u0,0
+    mov *u1,0
+    mov u1,*:packet_temp
+    mov u2,*:packet_temp2
+    ret 1
+
+#########################################################################
+# packet_in_link in (u0) out () changes ()
+
+:packet_in_link
+    ifeq *:in_packet_first,0
+    jmp :packet_in_link_simple
+    mov *:packet_temp,u1
+    mov u1,*:in_packet_last
+    mov *u0,u1
+    add u1,1
+    mov *u1,u0
+    mov *:in_packet_last,u0
+    mov u1,*:packet_temp
+    ret 1
+:packet_in_link_simple
+    mov *:in_packet_first,u0
+    mov *:in_packet_last,u0
+    ret 1        
+
+#########################################################################
+# packet_out_unlink in (u0) out () changes ()
+
+:packet_out_unlink
+    mov *:packet_temp,u1
+    mov *:packet_temp2,u2
+    mov u1,u0
+    add u1,1
+    ifeq *u0,0
+    jmp :packet_out_unlink1
+    mov u2,*u0
+    add u2,1
+    mov *u2,*u1
+    jmp :packet_out_unlink2
+:packet_out_unlink1
+    mov *:out_packet_first,*u1
+:packet_out_unlink2
+    ifeq *u1,0
+    jmp :packet_out_unlink3
+    mov u2,*u1
+    mov *u2,*u0
+    jmp :packet_out_unlink4
+:packet_out_unlink3
+    mov *:out_packet_last,*u0
+:packet_out_unlink4
+    mov *u0,0
+    mov *u1,0
+    mov u1,*:packet_temp
+    mov u2,*:packet_temp2
+    ret 1
+
+#########################################################################
+# packet_out_link in (u0) out () changes ()
+
+:packet_out_link
+    ifeq *:out_packet_first,0
+    jmp :packet_out_link_simple
+    mov *:packet_temp,u1
+    mov u1,*:out_packet_last
+    mov *u0,u1
+    add u1,1
+    mov *u1,u0
+    mov *:out_packet_last,u0
+    mov u1,*:packet_temp
+    ret 1
+:packet_out_link_simple
+    mov *:out_packet_first,u0
+    mov *:out_packet_last,u0
+    ret 1        
+
+###########################################################################
+# find_packet_to in (u0,u1) out (u0) change ()
+
+.DATA
+:find_packet_to_temp
+    0
+:find_packet_to_temp2
+    0
+:fpt_1
+    0
+:fpt_2
+    0
+.CODE
+:find_packet_to
+    mov *:find_packet_to_temp,u2
+    mov *:find_packet_to_temp2,u3
+    mov u2,*:in_packet_first
+    ifeq u2,0
+    jmp :find_packet_to_done
+:find_packet_to_loopa
+    mov u3,u2
+    add u3,5
+    mov u3,*u3
+    and u3,u1
+    ifeq u3,u0
+    jmp :find_packet_to_done
+    add u2,1
+    mov u2,*u2
+    ifneq u2,0
+    jmp :find_packet_to_loopa
+:find_packet_to_done
+    mov u0,u2
+    mov u2,*:find_packet_to_temp
+    mov u3,*:find_packet_to_temp2
+    ret 1
+
+
+############################################################################
+# out/in_packet_timeouter in () out () change (a lot)
+.DATA
+:packet_timeouter_debug
+    "-- done with packet\n"
+.CODE
+:in_packet_timeouter
+    mov u0,*:in_packet_first
+    ifeq u0,0
+    ret 1
+:in_packet_timeouter_loopa
+    mov u10,u0
+    add u10,1
+    mov u10,*u10
+    call :count_age
+    ifbel u1,PACKET_TOO_OLD
+    jmp :in_packet_timeouter_nextone
+    call :packet_in_unlink
+    call :packet_done
+# debug
+#    mov s15,:packet_timeouter_debug
+#    mov s14,^packet_timeouter_debug
+#    call :debug
+# eod
+:in_packet_timeouter_nextone
+    mov u0,u10
+    ifneq u0,0
+    jmp :in_packet_timeouter_loopa
+    ret 1
+
+:out_packet_timeouter
+    mov u0,*:out_packet_first
+    ifeq u0,0
+    ret 1
+:out_packet_timeouter_loopa
+    mov u10,u0
+    add u10,1
+    mov u10,*u10
+    call :count_age
+    ifbel u1,PACKET_TOO_OLD
+    jmp :out_packet_timeouter_nextone
+    call :packet_out_unlink
+    call :packet_done
+:out_packet_timeouter_nextone
+    mov u0,u10
+    ifneq u0,0
+    jmp :out_packet_timeouter_loopa
+    ret 1
+

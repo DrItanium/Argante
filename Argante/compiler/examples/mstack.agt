@@ -1,0 +1,30 @@
+.DATA
+
+:Stack
+  0 repeat 100
+
+:Been
+  0
+
+.CODE
+
+  MOV u0, 0
+  SETSTACK :Stack, %Stack
+  MOV u15, 0
+  CALL :Reentrant
+  HALT
+
+:Reentrant
+  PUSHS u15
+  ADD u15, 1
+  ADD *:Been, 1
+  IFBEL *:Been, 10
+    CALL :Reentrant  
+  MOV u0, u15
+  SYSCALL $IO_PutInt
+  MOV u0, 10
+  SYSCALL $IO_PutChar
+  POPS u15
+  RET 1
+
+.END

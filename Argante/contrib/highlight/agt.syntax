@@ -1,0 +1,84 @@
+#
+# Argante RSIS Syntax File for Midnight Commander
+# 
+# put this file in /usr/lib/mc/syntax
+# edit your ~/.cedit/Syntax by adding:
+#
+# file ..\*\\.(agt)$ RSIS\sProgram
+# include agt.syntax
+#
+
+context default
+	keyword whole .DATA brightcyan/
+	keyword whole .CODE brightcyan/
+	keyword whole .END brightcyan/
+    keyword whole nop white/13
+    keyword whole jmp white/13
+    keyword whole ifeq white/13
+    keyword whole ifneq white/13
+    keyword whole ifabo white/13
+    keyword whole ifbell white/13
+    keyword whole call white/13
+    keyword whole ret white/13
+    keyword whole halt white/13
+    keyword whole syscall brightgreen/16
+    keyword whole add white/13
+    keyword whole sub white/13
+    keyword whole mul white/13
+    keyword whole div white/13
+    keyword whole mov white/13
+    keyword whole movb0 white/13
+    keyword whole movb1 white/13
+    keyword whole movb2 white/13
+    keyword whole movb3 white/13
+    keyword whole movw0 white/13
+    keyword whole movw1 white/13
+    keyword whole movwm white/13
+    keyword whole mod white/13
+    keyword whole xor white/13
+    keyword whole rev white/13
+    keyword whole and white/13
+    keyword whole or white/13
+    keyword whole cwait white/13
+    keyword whole twait white/13
+    keyword whole alloc white/13
+    keyword whole realloc white/13
+    keyword whole dealloc white/13
+    keyword whole cmpcnt white/13
+    keyword whole cpcnt white/13
+    keyword whole onfail white/13
+    keyword whole nofail white/13
+    keyword whole loop white/13
+    keyword whole raise white/13
+
+	keyword whole u\{0123456789\} yellow/24
+	keyword whole u1\{012345\} yellow/24
+	keyword whole s\{0123456789\} yellow/24
+	keyword whole s1\{012345\} yellow/24
+	keyword whole f\{0123456789\} yellow/24
+	keyword whole f1\{012345\} yellow/24
+
+#	keyword : brightcyan/14
+#	keyword \* white/13
+#	keyword $ white/13
+
+context linestart # \n brightred/18
+    keyword \\\n yellow/24
+    keyword /\**\*/ brown/22
+    keyword "+" red/19
+    keyword <+> red/19
+context " " green/6
+    spellcheck
+    keyword \\" brightgreen/16
+    keyword \\\n brightgreen/16
+    keyword %% brightgreen/16
+    keyword %\[#0\s-\+,\]\[0123456789\]\[.\]\[0123456789\]\[L\]\{eEfgGoxX\} brightgreen/16
+    keyword %\[0\s-\+,\]\[0123456789\]\[.\]\[0123456789\]\[hl\]\{diu\} brightgreen/16
+    keyword %\[hl\]n brightgreen/16
+    keyword %\[.\]\[0123456789\]s brightgreen/16
+    keyword %[*] brightgreen/16
+    keyword %c brightgreen/16
+    keyword \\\{0123\}\{01234567\}\{01234567\} brightgreen/16
+    keyword \\\\ brightgreen/16
+    keyword \\' brightgreen/16
+    keyword \\\{abtnvfr\} brightgreen/16

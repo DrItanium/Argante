@@ -1,0 +1,11 @@
+#
+# Hierarchical Access Control rules for Argante OS
+# (C) 2000 Michal Zalewski <lcamtuf@tpi.pl>
+#
+# See README for details
+#
+# This access.hac file should be modified to allow your applications
+# perform their tasks properly. Default policy: DENY.
+#
+
+0:0	none			display/output			allow

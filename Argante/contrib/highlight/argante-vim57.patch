@@ -1,0 +1,26 @@
+*** syntax/synload.vim.old	Thu Dec  7 18:52:17 2000
+--- syntax/synload.vim	Thu Dec  7 18:52:43 2000
+*************** SynAu abaqus
+*** 92,97 ****
+--- 92,98 ----
+  SynAu abc
+  SynAu abel
+  SynAu ada
++ SynAu agt
+  SynAu ahdl
+  SynAu amiga
+  SynAu aml
+*** filetype.vim.old	Thu Dec  7 18:47:35 2000
+--- filetype.vim	Thu Dec  7 18:48:43 2000
+*************** au BufNewFile,BufRead *.am			set ft=elf
+*** 44,49 ****
+--- 44,52 ----
+  " Arc Macro Language
+  au BufNewFile,BufRead *.aml			set ft=aml
+  
++ " Argante RSIS assembler
++ au BufNewFile,BufRead *.agt			set ft=agt
++ 
+  " ASN.1
+  au BufNewFile,BufRead *.asn,*.asn1		set ft=asn
+  

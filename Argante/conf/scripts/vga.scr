@@ -1,0 +1,25 @@
+~
+~ Linux SVGAlib connectivity demonstration
+~
+~ Script (C) 2000 Michal Zalewski <lcamtuf@tpi.pl>
+~
+~ This demo has been written to demonstrate SVGAlib connectivity implemented
+~ in Argante. It is nothing, absolutely nothing special - this module has
+~ been provided for amusement ;) One day, you might develop AOS Quake :>
+~
+~ This demo will enter graphics mode for 5 seconds.
+~
+~ Loading modules...
+>modules/gfx.so
+>modules/math.so
+>modules/advmem.so
+~
+~ Hit RETURN twice when you're ready to proceed.
+:read x
+:cd hll;./acc examples/gfx.ahl
+$hll/examples/gfx.img
+w0 5
+-0
+~ 
+~ Hit RETURN to finish and go to the console...
+:read x

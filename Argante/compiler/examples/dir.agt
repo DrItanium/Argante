@@ -1,0 +1,62 @@
+#
+# Argante OS - sample RSIS/agtc code
+# (C) 2000 Michal Zalewski <lcamtuf@ids.pl>
+#
+# List files in directory.
+#
+
+!DOMAINS	1
+!INITDOMAIN	1
+!SIGNATURE	"list_dir example"
+!PRIORITY 	100
+
+.DATA
+
+:Opis
+
+	"Now I'm displaying contents of /fs/ftp directory:\n"
+
+:Katalog
+
+	"/fs/ftp/"
+
+:Bufor
+
+	0 repeat 200
+
+:Cnt
+        0
+
+.CODE
+
+  mov u0,:Opis
+  mov u1,^Opis
+  syscall $IO_PUTSTRING
+
+  mov u0,1 # New session!
+  mov u1,:Katalog
+  mov u2,^Katalog
+  syscall $FS_LIST_DIR
+
+:Listujemy
+
+  mov u0,0 # Continue session
+  mov u1,:Bufor
+  mov u2,^Bufor
+  mov u3,*:Cnt
+  add *:Cnt,1
+  syscall $FS_LIST_DIR
+
+  mov u0,:Bufor
+  mov u1,u2
+  syscall $IO_PUTSTRING
+
+  mov u0,10
+  syscall $IO_PUTCHAR
+  
+  ifneq s0,0
+    jmp :Listujemy
+
+  halt
+  
+.END

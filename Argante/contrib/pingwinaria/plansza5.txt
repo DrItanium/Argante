@@ -1,0 +1,29 @@
+
+ Implementacja wieloprocesowo¶ci
+ -------------------------------
+
+ * statyczne procesy,
+
+ * zwalczanie konwencji demon nas³uchuj±cy + procesy obs³uguj±ce klienta,
+
+ * wymuszanie prawid³owej struktury funkcjonalnej programu,
+
+ * uruchamianie, debuggowanie itp tylko z "konsoli zarz±dzaj±cej",
+
+ * Argante wykorzystuje kod efektywniejszy ni¿ w natywnym systemie
+   przy obs³udze wielu procesów.
+
+  TCP/IP                              baza danych     dane userów
+    |                                           |     |           "reality"
+  --|-------------------------------------------|-----|--------------------
+  (net) (ipc)---(ipc)-(ipc)-(ipc) (ipc)-(ipc)  (fs)  (fs)      kernel space
+  --|-----|-------|-----|-----|-----|-----|-----|-----|--------------------
+    |     |       |     |     |     |     |     |     |          user space
+   <A>----+      <B>   <B>   <B>----+    <C>----+----<D>
+
+
+
+
+
+
+-----

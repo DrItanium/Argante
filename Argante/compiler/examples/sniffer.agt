@@ -1,0 +1,42 @@
+#
+# Argante OS - sample low-level networking code
+# (C) 2000 Michal Zalewski <lcamtuf@ids.pl>
+#
+#
+
+!INITDOMAIN 21
+!SIGNATURE "Simple packet sniffing application"
+.DATA
+
+:Iface
+  "eth0"
+:Pakiet
+  1 repeat 10000
+:Sock
+  0
+:Text
+  " bytes read from network"
+:Dev
+  "eth0"
+
+.CODE
+  mov u0,:Dev
+  mov u1,^Dev
+  syscall $LOW_NET_INITDEV
+  mov *:Sock,s0
+:Loopik
+  mov u0,*:Sock
+  mov u1,:Pakiet
+  mov u2,^Pakiet
+  syscall $LOW_NET_RECV
+  ifeq s1,0
+    JMP :Loopik
+  mov u0,s0
+  syscall $IO_PUTINT
+  mov u0,:Text
+  mov u1,^Text
+  syscall $IO_PUTSTRING
+  mov u0,10
+  syscall $IO_PUTCHAR
+  JMP :Loopik
+.END

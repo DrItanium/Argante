@@ -1,0 +1,123 @@
+diff -r ./Argante//build ../argante/Argante//build
+69a70,77
+> ISHPUX=`echo $SYS|grep 'HP-UX'`
+> 
+> if [ ! "$ISHPUX" = "" ]; then
+>   export ADDFLAGS
+>   make -f sysdep/Makefile.hpux "$@"
+>   exit $?
+> fi
+> 
+diff -r ./Argante//kernel/module.c ../argante/Argante//kernel/module.c
+26a27,30
+> 
+> #ifdef __hpux
+> #include <dl.h>
+> #else
+27a32
+> #endif
+60a66
+> #ifdef __hpux
+61a68,69
+> /* hpux version - codematic */
+> 
+64a73,165
+>   shl_t x;
+>   int y, ret = 0;
+>   
+>   got=0;
+>   for (n=0;n<MAX_MODULES;n++) if (!mod[n].handler) { got=1; break; }
+> 
+>   if (!got) {
+>     printk("No free slots, sorry.\n");
+>     return;
+>   }
+> 
+>   usleep(100000);
+> 
+>   bzero(&mod[n],sizeof(struct sysentry));
+>   x = shl_load(path, 0, 0L);
+> 
+>   if (!x) {
+>     printk("Cannot open library %s.\n",path);
+>     printk("Error: %s\n",strerror(errno));
+>     return;
+>   } else
+>     printk("=> Loading module %s...\n",path);
+> 
+>    ret = shl_findsym(&x, "syscall_handler", TYPE_UNDEFINED,  &(mod[n].handler));
+>    printk("%d %d\n", ret, errno);
+> 
+>   if (!mod[n].handler) {
+>     printk("-> ERROR: no syscall_handler() routine, aborting load.\n");
+>     shl_unload(x);
+>     return;
+>   }
+> 
+>    ret = shl_findsym(&x, "syscall_unload", TYPE_PROCEDURE,  &(mod[n].destructor));
+> 
+>    ret = shl_findsym(&x, "syscall_task_cleanup", TYPE_PROCEDURE,  &(mod[n].taskreap));
+> 
+>    ret = shl_findsym(&x, "syscall_load", TYPE_PROCEDURE,  &loader);
+> 
+>   if (loader) {
+> //    printk("+> Calling syscall_load() constructor...\n");
+>     loader(mod[n].serve);
+>   } else {
+>     printk("-> ERROR: no syscall_load() routine, aborting load.\n");
+>     shl_unload(x);
+>     mod[n].handler=0;
+>     return;
+>   }
+> 
+> 
+>   plum=strrchr(path,'/');
+>   if (!plum) plum=path;
+> 
+>   strncpy(mod[n].name,plum+1,MAX_NAME-1);
+>   mod[n].call_count=0;
+>   mod[n].__hent=x;
+> 
+>   got=0;
+>   printk("+> This module will be serving: ");
+>   for (y=0;(y<MAX_SERVE) && (mod[n].serve[y]>0);y++) {
+>     got=1;
+>     printk("%d ",mod[n].serve[y]);
+>   }
+>   if (!got) printk("<empty list>");
+>   printk("\n");
+> //  printk("+> Module loaded successfully.\n");
+> }
+> 
+> 
+> void unload_module(int handle) {
+>   if (handle<0 || handle>MAX_MODULES) {
+>     printk("Bad parameter.\n");
+>     return;
+>   }
+>   if (mod[handle].handler)  {
+>     printk("=> Unloading module #%d (%s)...\n",handle,mod[handle].name);
+>     if (mod[handle].destructor) {
+>       printk("+> Calling destructor routine...\n");
+>       mod[handle].destructor();
+>     } else printk("=> Module has no destructor routine.\n");
+>     shl_unload(mod[handle].__hent);
+>     mod[handle].handler=0;
+>     printk("+> Module slot freed.\n");
+>   } else {
+>     printk("Attempt to unload module from free slot.\n");
+>   }
+> }
+> 
+> 
+> #else
+> 
+> void load_module(char* path) {
+>   int got,n;
+>   char* plum;
+153a255,256
+> 
+> #endif
+Only in ../argante/Argante//sysdep: Makefile.hpux
+Common subdirectories: ./Argante//tools/py-undone and ../argante/Argante//tools/py-undone
+Common subdirectories: ./Argante//tools/ripc-daemon and ../argante/Argante//tools/ripc-daemon

@@ -1,0 +1,148 @@
+
+  What is Argante? Well, it is a virtual operating system. What does it mean?
+  It is a complete, fully-featured execution environment, with its own
+  languages, tools, own I/O communication subsystems, own filesystem and
+  network layer. One of its components - virtual machine - is a 
+  software-level CPU executing Argante native bytecode. You might be
+  thinking about Java - which is a virtual machine, indeed - but please,
+  forget about it at the moment :) We are going to explain why Argante has
+  nothing, really nothing to do with Java, its limitations, problems and
+  complexity. Argante is NOT a virtual machine. Argante is a virtual
+  system. There are some reason why we haven't implemented it as standalone
+  solution, letting it run on the top of another operating system of your
+  choice - Linux, *BSD, IRIX, Solaris, HP-UX, AIX. First of all, it is
+  INTEGRATION. We do not expect you to port all your software to Argante.
+  But if you can provide additional security / request distribution
+  with unlimited scalability in heterogenous networks and ability to
+  perform automated set up and load balancing... if you can add it to 
+  existing systems with no additional code, in simple and clean manner,
+  don't you think it is worth it?
+  
+  On the other hand, there is nothing, really nothing against implementing
+  Argante OS as a bootable solution with all necessary drivers, taking no
+  advantage of underlying operating system. Or, even, implementing Argante
+  VM subsystem in hardware, to make it even more efficient.
+
+  So, you are probably asking yourself, what is so special about this
+  project? Well, it's really difficult to describe it in just a few
+  words. Argante is based on few really basic principles:
+  
+  * security and stability
+  * functionality
+  * efficiency
+  * simplicity
+  
+  We believe they are tightly connected to each other. Code stability
+  and security - two terms of, in fact, pretty similar meaning -
+  predictable, expected code behavior - are related to simplicity. It
+  is possible to understand and prove reliability of simple code and
+  not complex mechanisms binded together in clear way. Simplicity, when
+  combined with functionality, usually implies efficiency. And so on -
+  but we bet you understand what we are saying =)
+  
+  Now, it is a perfect ocassion to describe how we decided to reach
+  these goals:
+  
+  1) First of all, our virtual machine, running architecture-independent
+     code, is really *simple*. It is a RISC-alike assembler, with
+     reduced instruction set, which is really easy to audit, control,
+     predict, understand... Unlike Java, it's really universal, clean,
+     deadly fast and accurate.
+     
+  2) We decided not to focus on specific applications, making Argante
+     universal - you can use it for high-speed graphics, text applications,
+     sophisticated network solutions (virtual routers, clusters) - and,
+     of course, there's nothing against using it as servlets / applets
+     platform. All the time, code is clean, easy to maintain and
+     comprehend. We gave you the possibility to interact with real
+     system easily.
+     
+  3) We are using low-level mandatory exception handling to enforce 
+     programmer not to ignore any errors, avoiding downside-up error
+     propagation problems in complex projects.
+     
+  4) Global, hierarchical access control mechanism provides unified
+     interpretation of all I/O operations *AND* I/O objects and allows
+     programmer to assign arbitrary permissions at any point of access
+     control hierarchy tree. This system is easy to visualise, control
+     and use - and, at the same time, you can control all methods of
+     accessing specific object in one point, with no risk of overlooks.
+
+  5) Virtual filesystem
+* virtual filesystem can be used to obtain complete, platform-independent,
+  unified control of any resources while integrating it with external fs
+  objects easily (unlimited real_fs-into-svfs mapping possibilities),
+
+* virtual code cannot be altered - overwritten or inserted - in any way;
+  it means Argante code cannot be exploited using overflows or similar
+  bugs,
+
+* virtual code cannot access any native processor code/cpu functions 
+  directly; this means Argante is not sensitive to most of the underlying
+  layer security problems or architecture bugs, adding strong access control
+  and parameter verification layer, allowing programmer to choose only the
+  required functionality.
+
+* static process model enforces programmers to build appropritate functional
+  blocks (OSI architecture model) instead of "all-in-one" process/thead-per-
+  -client solutions,
+
+* privledges control and strict interprocess communication rules will force
+  programmers to design communication interfaces carefully; in unix 
+  environments, any misfits or differences between expected and real
+  interface for external tools and services are really harmful,
+
+* Argante code can interact with native solutions with no problems; this
+  means Argante can be used to manage cluster traffic and to redirect it
+  to specific real system services, etc,
+
+* privledges control in conjunction with static code will allow programmer
+  to use only required privledges and to switch between them
+  any I/O operations; UIDs within execution domains will allow programmer
+  to implement multiuser systems in unified and secure way,
+
+* Argante is portable over platforms and does not expect you to run it on
+  dedicated boxes; it can co-exist with already implemented solutions on the
+  top of most of the popular unices.
+
+* Argante is modular; it consists of microkernel and numerous hot-pluggable
+  modules providing various capabilities; every time new functionality
+  should be introduced, simple module written in any language can be
+  loaded instantly,
+
+* All Argante subsystems are designed in secure way, avoiding races, etc,
+
+* Argante kernel uses its own implementation of processes, which is more
+  effective and resource-saving,
+
+* Argante provides high-level language translator with numerous Ada-alike
+  conventions, making programs more readable and more accurate,
+
+* Argante provides transparent remote process communication layer, allowing
+  design of complex, redundant rIPC architectures (stars, rings, hybrid webs);
+  these architectures can be set automatically and modified on request
+  by virtual process itself; there's no difference in interprocess
+  communication between two processes on the same host or on the different
+  continents and no need for any code modifications; this makes cluster
+  management really easy; rIPC provides unicast/multicast messages,
+  stream and block (memory sharing) connections with strong request
+  authorization,
+
+* Argante management and process workspace are completely separated; this
+  means virtual process cannot gain administrator privledges, because
+  there are no administrator privledges in VOS,
+
+* Console / virtual terminal support for processes is provided; on
+  external request, virtual process can attach to choosen tty or I/O device;
+  this allows programmers to use Argante in authorization process, or to
+  communicate with external users via telnet, ssh, to be started from inetd,
+  etc - all in really easy way.
+
+* And - at the end - all of these features are joined together in one,
+  complete LGPL open-source solution, which can be treated either as a
+  completely independent destination OS in development process, or as a
+  safe, effective, stable and simple sandbox for the critical parts of
+  your development!
+
+* more to come :)
+

@@ -1,0 +1,25 @@
+
+ Za³o¿enia by³y ca³kiem proste...
+ --------------------------------
+
+ Stworzenie ¶rodowiska wykonywania, które mo¿na scharakteryzowaæ
+ nastêpuj±cymi okre¶leniami:
+
+ * bezpieczne
+ 
+ * wydajne
+
+ * stabilne
+
+ * funkcjonalne
+
+ * proste
+
+ * GNU :)
+
+ System? Wirtualna maszyna? Argante jest czym¶ po¶rednim, gdy¿ trywialnie
+ prosta VM zosta³a obudowana warstw± bêd±c± wirtualnym, zupe³nie innym od
+ np. unixów, systemem operacyjnym. ARGANTE TO NIE JAVA!
+
+
+-----

@@ -1,0 +1,60 @@
+# zmienne globalne ... i delfiny
+!SIGNATURE "Distributed Virtual Router 0.1b"
+!DOMAINS 1 2 3
+!PRIORITY 40000
+
+.define DOMAIN_FILE 1
+.define DOMAIN_IPC 2
+.define DOMAIN_LOW 3
+.define DOMAIN_NONE 0
+
+.define FS_FLAG_READ 2
+.define CONFIG_ERROR_EXCEPTION 1
+.define IPC_FLAG_NONBLOCK 1
+.define DVR_IPCREG	101
+.define IPC_EOK		1
+.define IPC_STAT_ERROR	-1
+.define IPC_STAT_WAITING 0
+.define IPC_STAT_COMPLETED 2
+
+.define HOW_MANY_PACKETS_WE_NEED	512
+.define HOW_MANY_ROUTE_WE_NEED 255
+
+.define PACKET_TOO_OLD 3000000	# 3 sec. 
+.define ROUTE_TOO_OLD 60000000	# 60 sec.
+
+.define ROUTE_FLAG_UNUSED 0
+.define ROUTE_FLAG_REQ 1
+.define ROUTE_FLAG_STREAM 2
+
+.DATA
+:my_ip
+    0
+:my_netaddr
+    0
+:my_netmask
+    0
+:interface_name
+    0 repeat 3
+:config_filename
+    "/fs/dvr/dvr.conf"
+:endianess_current
+    0
+:in_packet_first
+    0
+:in_packet_last
+    0
+:out_packet_first
+    0
+:out_packet_last
+    0
+:packet_free
+    0
+:debug_t1
+    0
+:debug_t2
+    0
+
+
+
+

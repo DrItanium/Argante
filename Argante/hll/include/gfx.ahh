@@ -1,0 +1,89 @@
+/*
+
+   Argante HLL
+   -----------
+
+   Graphic Console Support
+
+   Status: almost done
+
+   Author:     Lukasz Jachowicz <honey@linuxnews.pl>
+   Maintainer: Lukasz Jachowicz <honey@linuxnews.pl>
+
+*/
+
+
+#define Gtextmode    0
+#define G320x200x16  1
+#define G640x200x16  2
+#define G640x350x16  3
+#define G640x480x16  4
+#define G320x200x256 5
+#define G320x240x256 6
+#define G320x400x256 7
+#define G360x480x256 8
+#define G640x480x2   9
+
+#define G640x480x256  10
+#define G800x600x256  11
+#define G1024x768x256 12
+
+#define G1280x1024x256 13
+
+#define G320x200x32K 14
+#define G320x200x64K 15
+#define G320x200x16M 16
+#define G640x480x32K 17
+#define G640x480x64K 18
+#define G640x480x16M 19
+#define G800x600x32K 20
+#define G800x600x64K 21
+#define G800x600x16M 22
+#define G1024x768x32K 23
+#define G1024x768x64K 24
+#define G1024x768x16M 25
+#define G1280x1024x32K 26
+#define G1280x1024x64K 27
+#define G1280x1024x16M 28
+
+#define G800x600x16 29
+#define G1024x768x16 30
+#define G1280x1024x16 31
+
+type GraphMode is unsigned;
+
+procedure gfx_vc ( param : unsigned ) {
+  syscall ( SYSCALL_GFX_VC, u0 := param );
+}
+
+procedure gfx_setmode ( param : GraphMode ) {
+  syscall ( SYSCALL_GFX_SETMODE, u0 := param );
+}
+
+procedure gfx_checkmode ( param : GraphMode, writable have : unsigned ) {
+  syscall ( SYSCALL_GFX_CHECKMODE, u0 := param, have := u0 );
+}
+
+procedure gfx_clearscreen ( dummy : unsigned ) {
+  syscall ( SYSCALL_GFX_CLEARSCREEN, u0 := dummy );
+}
+
+procedure gfx_memcopy ( x : Bounded_Chunk ) {
+  syscall ( SYSCALL_GFX_MEMCOPY, u0 := x.data, u1 := x.size );
+}
+
+procedure gfx_setpalettesngl ( col : unsigned, R : unsigned, G : unsigned, B : unsigned ) {
+  syscall ( SYSCALL_GFX_SETPALETTESNGL, u0 := col, u1 := R, u2 := G, u3 := B );
+}
+
+procedure gfx_setclut8 ( dummy : unsigned ) {
+  syscall ( SYSCALL_GFX_SETCLUT8, u0 := dummy );
+}
+
+procedure gfx_setpalette ( mem_address : unsigned, col : unsigned, n_col : unsigned ) {
+  syscall ( syscall_gfx_setpalette, u0 := mem_address, u1 := col, u2 := n_col );
+}
+
+procedure gfx_getchar ( writable c : Character ) {
+  syscall ( SYSCALL_GFX_GETCHAR, c := u0 );
+}

@@ -1,0 +1,10 @@
+#
+# Filesystem conversion table for Argante fs module
+# (C) 2000 Michal Zalewski
+#
+# See README for details
+#
+
+fs/ftp/test1		fs/inny_katalog
+fs/ftp			fs/tests
+fs/http                 fs/mini-http

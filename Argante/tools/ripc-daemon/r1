@@ -1,0 +1,1 @@
+inet ssl 127.0.0.1:2000 /tmp/listen ./key1

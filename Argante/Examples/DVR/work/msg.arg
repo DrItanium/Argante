@@ -1,0 +1,256 @@
+# DONE
+
+.DATA
+:msg_temp
+    0
+:msg_temp2
+    0
+:msg_temp3
+    0
+:msg_temp4
+    0
+:msg_temp5
+    0
+:msg_temp6
+    0
+
+:send_route_request_warning
+    "[Warning] Couldn't send route request.\n"
+:recive_msg_route_request_warning
+    "[Warning] Couldn't send route response.\n"
+:recive_msg_route_response_warning
+    "[Warning] Route entry mismatch.\n"
+:send_stream_request_warning
+    "[Warning] Couldn't establish stream connection.\n"
+
+.CODE
+
+###########################################################################
+# advertize 
+:advertize
+    mov u0,IPC_FLAG_NONBLOCK
+    mov s0,-1
+    mov s1,-1
+    mov u1,DVR_IPCREG
+    mov u2,*:my_netaddr
+    mov u3,*:my_netmask
+    onfail :ignore
+    syscall $IPC_MSG_SEND
+    nofail
+    ret 1
+
+###########################################################################
+# send_route_request in (u14) out () change ()
+
+.DATA
+:srr_1
+    "-- Sent route request\n"
+:srr_2
+    "-- Sending route request\n"
+.CODE
+
+:send_route_request
+# debug
+#    mov s15,:srr_2
+#    mov s14,^srr_2
+#    call :debug
+# e o d
+    mov *:msg_temp,u0
+    mov *:msg_temp2,u1
+    mov *:msg_temp3,u2
+    mov *:msg_temp4,u3
+    mov *:msg_temp5,s0
+    mov *:msg_temp6,s1
+    mov u0,DOMAIN_IPC
+    syscall $ACCESS_SETDOMAIN
+    mov u0,IPC_FLAG_NONBLOCK
+    mov s0,-1
+    mov s1,-1
+    mov u1,DVR_IPCREG
+    mov u2,u14
+    mov u3,0
+    onfail :onfail_send_route_request
+    syscall $IPC_MSG_SEND		# and we don't care about
+    nofail				# status... timouter's work again
+# debug
+#    mov s15,:srr_1
+#    mov s14,^srr_1
+#    call :debug
+# e o d
+    mov u0,DOMAIN_LOW
+    syscall $ACCESS_SETDOMAIN
+    mov u0,*:msg_temp
+    mov u1,*:msg_temp2
+    mov u2,*:msg_temp3
+    mov u3,*:msg_temp4
+    mov s0,*:msg_temp5
+    mov s1,*:msg_temp6
+    ret 1
+
+:onfail_send_route_request
+    mov u0,:send_route_request_warning
+    mov u1,^send_route_request_warning
+    syscall $IO_PUTSTRING
+    ret 1		# well, we ignore this error, timeouter
+			# will do it's job later...
+
+
+###########################################################################
+# recive_msg in () out () change (a lot)
+
+.DATA
+:rr_1
+    "--- Got route response\n"
+:rr_2
+    "--- Got route request\n"
+:rr_3
+    "--- Sent route response\n"
+:rr_4
+    "--- Got msg\n"
+:rr_5
+    "--- Hmm new route\n"
+:rr_6
+    "--- New route identification\n"
+
+.CODE
+:recive_msg
+    mov u0,IPC_FLAG_NONBLOCK
+    syscall $IPC_MSG_RECV		# die on any error
+    ifneq s0,IPC_EOK
+    ret 1
+# debug stuff
+#    mov s15,:rr_4
+#    mov s14,^rr_4
+#    call :debug
+# e o d
+    ifeq u4,0
+    jmp :recive_msg_route_request
+    mov u14,u3				# got route response
+    mov u15,u4
+    mov u10,u0
+    mov u11,u1
+# debug stuff
+#    mov s15,:rr_1
+#    mov s14,^rr_1
+#    call :debug
+# e o d
+    call :route_find
+    ifneq u0,0
+    jmp :recive_msg
+    mov u0,u10				# no such route entry
+    mov u1,u11
+    call :route_find_target
+    ifeq u0,0
+    jmp :recv_msg_new_route
+    mov u1,u0				# but we've got stream to this vs
+    add u1,4
+    ifeq *u1,0
+    jmp :recv_msg_stream_target		# no target route yet..
+    ifneq *u1,u10
+    jmp :recv_msg_route_mismatch	# hmm.. something is wrong here...
+    add u1,1
+    ifeq *u1,u11
+    jmp :recive_msg	
+:recv_msg_route_mismatch
+    mov u0,:recive_msg_route_response_warning
+    mov u1,^recive_msg_route_response_warning
+    syscall $IO_PUTSTRING
+    jmp :recive_msg
+:recv_msg_stream_target			
+#debug stuff
+#    mov s15,:rr_6
+#    mov s14,^rr_6
+#    call :debug
+# e o d
+    mov *u1,u14				# netaddr -> 
+    add u1,1
+    mov *u1,u15				# netmask ->
+    add u1,1
+    mov *u1,u10				# fill up info about peer
+    add u1,1
+    mov *u1,u11
+    call :touch_structure
+    jmp :recive_msg
+:recv_msg_new_route
+#debug stuff
+#    mov s15,:rr_5
+#    mov s14,^rr_5
+#    call :debug
+# e o d
+    call :route_new
+    call :route_link
+    call :touch_structure
+    mov u1,u0
+    add u1,4
+    mov *u1,u14				# netaddr -> 
+    add u1,1
+    mov *u1,u15				# netmask ->
+    add u1,1
+    mov *u1,u10				# vcpu ->
+    add u1,1
+    mov *u1,u11				# vs ->
+    add u1,1
+    mov *u1,ROUTE_FLAG_REQ		# 1 -> flags
+    add u1,1
+    
+    mov u13,u0
+    mov u12,u1
+
+    mov u0,IPC_FLAG_NONBLOCK
+    mov s0,u10
+    mov s1,u11
+    mov u1,DVR_IPCREG
+    onfail :onfail_send_stream_request
+    syscall $IPC_STREAM_REQ
+    nofail
+    mov u1,u12
+    ifeq u14,0
+    jmp :drop_route
+    mov *u1,u0				# req_id ->
+    jmp :recive_msg
+:drop_route
+    mov u0,u13
+    call :route_unlink
+    call :route_done
+    jmp :recive_msg
+
+:recive_msg_route_request		
+#debug stuff
+#    mov s15,:rr_2
+#    mov s14,^rr_2
+#    call :debug
+# e o d
+    mov u4,*:my_netmask
+    and u4,u3
+    ifneq u4,*:my_netaddr
+    jmp :recive_msg
+    mov s0,u0				# notify sender that we know route
+    mov s1,u1
+    mov u1,u2
+    mov u2,*:my_netaddr
+    mov u3,*:my_netmask
+    mov u0,IPC_FLAG_NONBLOCK
+    onfail :onfail_recive_msg_route_request
+    syscall $IPC_MSG_SEND
+    nofail
+#debug stuff
+#    mov s15,:rr_3
+#    mov s14,^rr_3
+#    call :debug
+#end debug stuff
+    jmp :recive_msg
+
+
+
+:onfail_recive_msg_route_request
+    mov u0,:recive_msg_route_request_warning
+    mov u1,^recive_msg_route_request_warning
+    syscall $IO_PUTSTRING
+    ret 1
+    
+:onfail_send_stream_request
+    mov u0,:send_stream_request_warning
+    mov u1,^send_stream_request_warning
+    syscall $IO_PUTSTRING
+    mov u14,0
+    ret 1

@@ -1,0 +1,67 @@
+/*
+
+   Argante HLL
+   -----------
+
+   Local Functions Interface
+
+   Status: done
+
+   Author:     Michal Zalewski <lcamtuf@ids.pl>
+   Maintainer: Michal Zalewski <lcamtuf@ids.pl>
+
+*/
+
+
+procedure Get_Current_Date ( writable x : Date ) {
+  syscall(SYSCALL_LOCAL_GETTIME, x := u0);
+}
+
+procedure Date_To_String ( x : Date, writable b : Bounded_Chunk ) {
+  syscall(SYSCALL_LOCAL_TIMETOSTR, u0 := x, u1 := b.data, 
+          u2 := b.size, b.len := s0 );
+}
+
+
+procedure Get_Host_Name ( writable b : Bounded_Chunk ) {
+  syscall(SYSCALL_LOCAL_GETHOSTNAME, u0 := b.data, 
+          u1 := b.size, b.len := s0 );
+}
+
+
+procedure Get_Random ( writable x : unsigned ) {
+  syscall(SYSCALL_LOCAL_GETRANDOM, x := u0 );
+}
+
+
+type VS_Stat is structure {
+  active_cpus : unsigned;
+  total_idle  : unsigned;
+  total_work  : unsigned;
+  syscalls    : unsigned;
+  badsys      : unsigned;
+  fatals      : unsigned;
+}
+
+
+type RS_Stat is structure {
+  uptime      : unsigned;
+  load	      : unsigned;
+  total_kb    : unsigned;
+  free_kb     : unsigned;
+  swap_kb     : unsigned;
+  sfree_kb    : unsigned;
+  procs       : unsigned;
+}
+
+procedure Get_Real_Stats ( writable x : RS_Stat ) {
+  syscall(SYSCALL_LOCAL_RS_STAT, 
+          x.uptime := u0, x.load := u1, x.total_kb := u2, x.free_kb := u3,
+          x.swap_kb := u4, x.sfree_kb := u5, x.procs := u6);
+}
+
+procedure Get_AOS_Stats ( writable x : VS_Stat ) {
+  syscall(SYSCALL_LOCAL_VS_STAT,
+          x.active_cpus := u0, x.total_idle := u1, x.total_work := u2,
+          x.syscalls := u3, x.badsys := u4, x.fatals := u5);
+}

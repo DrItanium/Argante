@@ -1,0 +1,14 @@
+|
+| I need this modules to run DVR
+|
+
+>modules/display.so
+>modules/access.so
+>modules/fs.so
+>modules/locallib.so
+>modules/advmem.so
+>modules/packet.so
+>modules/ipc.so
+~
+~
+*10

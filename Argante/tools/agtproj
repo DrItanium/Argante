@@ -1,0 +1,80 @@
+#!/bin/sh
+
+#
+#  Argante virtual OS
+#  ------------------
+#
+#  Default project environment
+#
+#  Status: done
+#
+#  Author:     Michal Zalewski <lcamtuf@ids.pl>
+#  Maintainer: Michal Zalewski <lcamtuf@ids.pl>
+#
+
+LIBS=/usr/lib/argante
+DOCS=/usr/doc/Argante
+BIN=/usr/bin
+
+echo "Argante OS - bulild default project environment"
+
+if [ "$1" = "" ]; then
+  echo "Usage: $0 project_directory"
+  exit 1
+fi
+
+if [ ! -d $LIBS ]; then
+  echo "[-] ERROR: Argante is not installed in $LIBS ('./build install')."
+  exit 1
+fi
+
+umask 077
+
+echo "[+] Setting up filesystem..."
+
+mkdir $1 &>/dev/null
+cd $1
+
+
+mkdir fs
+mkdir fs/unix-sock
+mkdir fs/unix-sock/external
+
+echo "[+] Setting up modules..."
+
+mkdir modules
+cp /usr/lib/argante/*.so modules/
+ln -s /usr/bin/argante
+
+echo "[+] Setting up default configuration..."
+
+mkdir conf
+cp -r /usr/lib/argante/conf/template/* conf
+mv conf/CHECKLIST .
+
+echo "[+] Setting up basic tools..."
+
+mkdir tools
+cd tools
+ln -s /usr/bin/agtses
+ln -s /usr/bin/agtback
+ln -s /usr/bin/agtproj
+cd ..
+
+echo "[+] Setting up workplace..."
+
+mkdir final
+
+mkdir work
+cd work
+ln -s /usr/bin/acc
+ln -s /usr/bin/agtc
+ln -s /usr/bin/ahlt
+ln -s /usr/bin/elim
+ln -s /usr/lib/argante/hll-include include
+cd ..
+
+echo "[+] Setting up documentation..."
+ln -s /usr/doc/Argante sysdocs
+
+echo "[+] Done - see $1/CHECKLIST for details."

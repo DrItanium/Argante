@@ -1,0 +1,27 @@
+
+#include "include/stdinc.ahh"
+#include "include/display.ahh"
+
+x : pointer to unsigned;
+
+procedure Dupa ( writable y : unsigned ) {
+  Console_PutInt ( y );
+  Console_PutChar ( 10 );
+}
+
+procedure Main ( ) {
+  local { n : addressable unsigned; }
+  n := 1;
+  bind x to n;
+  Dupa ( x ); // Should be 1...
+  n := 2;
+  Dupa ( x ); // Should be 2...
+  x := 3;
+  Dupa ( n ); // Should be 3...
+  Unbind x;
+  Create x;
+  x := 5;
+  n := 4;
+  Dupa ( n ); // Should be 4...
+  Dupa ( x ); // Should be 5...
+}

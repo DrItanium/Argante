@@ -1,0 +1,667 @@
+# almost done 
+
+# route entry
+# (0) prev
+# (1) next 
+# (2) t_sec
+# (3) t_usec
+# (4) netaddr
+# (5) netmask
+# (6) vcpu
+# (7) vs
+# (8) flags		0 / 1 / 2
+# (9) req_id
+# (10) stream
+# (11) in_packet
+# (12) in_ptr
+# (13) in_len
+# (14) out_packet
+# (15) out_ptr
+# (16) out_len
+
+.define ROUTE_SIZEOF 17
+
+.DATA
+:route_entries
+    0
+:route_free
+    0
+:route_temp
+    0
+:route_temp2
+    0
+.CODE
+
+#########################################################################
+# route_init in () out () change (a lot)
+
+:route_init
+    mov u3,HOW_MANY_ROUTE_WE_NEED
+    mov u0,ROUTE_SIZEOF
+    mul u0,u3
+    alloc u0,3
+    mov *:route_free,u1
+:route_init_loopa    
+    mov u2,u1
+    add u2,1
+    add u1,ROUTE_SIZEOF
+    mov *u2,u1
+    sub u3,1
+    ifneq u3,0
+    jmp :route_init_loopa    
+    mov *u2,0
+    ret 1
+
+
+#########################################################################
+# route_new in () out (u0) change ()
+
+.DATA
+:rn_1
+    "-- in route new _ before: "
+:rn_2
+    "-- in route new _ after: "
+.CODE
+:route_new
+# debug
+#    mov s15,:rn_1
+#    mov s14,^rn_1
+#    mov s13,*:route_free
+#    call :debug_int
+# e o d
+    mov u0,*:route_free
+    ifeq u0,0
+    ret 1
+    mov *:route_temp,u1
+    mov u1,u0
+    add u1,1
+    mov *:route_free,*u1
+    mov *u1,0
+    mov u1,*:route_temp
+# debug
+#    mov s15,:rn_2
+#    mov s14,^rn_2
+#    mov s13,*:route_free
+#    call :debug_int
+# e o d
+    ret 1
+
+#########################################################################
+# route_done in (u0) out () change ()
+.DATA
+:rdone_1
+    "-- in route done _ before : "
+:rdone_2
+    "-- in route done _ before : "
+.CODE
+:route_done
+# debug
+#    mov s15,:rdone_1
+#    mov s14,^rdone_1
+#    mov s13,*:route_free
+#    call :debug_int
+# e o d
+    mov *:route_temp,u1
+    mov *u0,0
+    mov u1,u0
+    add u1,1
+    mov *u1,*:route_free
+    mov *:route_free,u0
+    mov u1,*:route_temp
+# debug
+#    mov s15,:rdone_2
+#    mov s14,^rdone_2
+#    mov s13,*:route_free
+#    call :debug_int
+# e o d
+    ret 1
+
+#########################################################################
+# route_unlink in (u0) out () change ()
+
+.DATA
+:runlink_1
+    "-- in route unlink _ before: "
+:runlink_2
+    "-- in route unlink _ after: "
+
+.CODE
+
+:route_unlink    
+# debug
+#    mov s15,:runlink_1
+#    mov s14,^runlink_1
+#    mov s13,*:route_entries
+#    call :debug_int
+# e o d
+    mov *:route_temp,u1
+    mov *:route_temp2,u2
+    mov u1,u0
+    add u1,1
+    ifeq *u0,0
+    jmp :route_unlink1
+    mov u2,*u0
+    add u2,1
+    mov *u2,*u1
+    jmp :route_unlink2
+:route_unlink1
+    mov *:route_entries,*u1
+:route_unlink2        
+    ifeq *u1,0
+    jmp :route_unlink3
+    mov u2,*u1
+    mov *u2,*u0
+:route_unlink3
+    mov *u1,0
+    mov *u0,0
+    mov u1,*:route_temp
+    mov u2,*:route_temp2
+# debug
+#    mov s15,:runlink_2
+#    mov s14,^runlink_2
+#    mov s13,*:route_entries
+#    call :debug_int
+# e o d
+    ret 1
+
+#########################################################################
+# route_link in (u0) out () change ()
+
+.DATA
+:rlink_1
+    "-- in route link _ before: "
+:rlink_2
+    "-- in route link _ after: "
+
+.CODE
+:route_link
+# debug
+#    mov s15,:rlink_1
+#    mov s14,^rlink_1
+#    mov s13,*:route_entries
+#    call :debug_int
+# e o d
+    mov *:route_temp,u0
+    mov *:route_temp2,u1
+    mov u1,*:route_entries
+    mov *:route_entries,u0
+    mov *u1,u0
+    mov *u0,0
+    add u0,1
+    mov *u0,u1
+    mov u0,*:route_temp
+    mov u1,*:route_temp2
+# debug
+#    mov s15,:rlink_2
+#    mov s14,^rlink_2
+#    mov s13,*:route_entries
+#    call :debug_int
+# e o d
+    ret 1    
+
+#########################################################################
+# route_find in (u14) out (u0) change ()
+
+:route_find
+    mov u0,*:route_entries
+    ifeq u0,0
+    ret 1
+    mov *:route_temp,u1
+    mov *:route_temp2,u2
+:route_find_loopa
+    mov u1,u0
+    add u1,5
+    mov u2,*u1
+    ifeq u2,0
+    jmp :route_find_reloop
+    and u2,u14
+    sub u1,1
+    ifeq u2,*u1
+    jmp :route_find_outa
+:route_find_reloop
+    add u0,1
+    mov u0,*u0
+    ifneq u0,0
+    jmp :route_find_loopa
+:route_find_outa
+    mov u1,*:route_temp
+    mov u2,*:route_temp2
+    ret 1
+
+###########################################################################
+# route_find_target in (u0 u1) out (u0) change ()
+
+:route_find_target
+    mov *:route_temp,u2
+    mov *:route_temp2,u3
+    mov u2,u0
+    mov u0,*:route_entries
+    ifneq u0,0
+    jmp :route_find_target_loopa
+    mov u2,*:route_temp
+    ret 1
+:route_find_target_loopa
+    mov u3,u0
+    add u3,6
+    ifneq *u3,u2
+    jmp :route_find_target_jmp
+    add u3,1
+    ifneq *u3,u1
+    jmp :route_find_target_jmp
+    mov u2,*:route_temp
+    mov u3,*:route_temp2
+    ret 1
+:route_find_target_jmp
+    add u0,1
+    mov u0,*u0
+    ifneq u0,0
+    jmp :route_find_target_loopa
+    mov u2,*:route_temp
+    mov u3,*:route_temp2
+    ret 1
+
+#########################################################################
+# route_destory in (u0) out () change (u0)
+.DATA
+:route_destroy_temp
+    0
+:route_destroy_temp2
+    0
+:rd_1
+    "-- in route_destroy\n"
+:rd_2
+    "-- out of route_destroy\n"
+:rd_3
+    "-- killing packet 1 "
+:rd_4
+    "-- killing packet 2 "
+
+
+.CODE
+:route_destroy
+    mov *:route_destroy_temp,u1
+    mov *:route_destroy_temp2,u2
+
+#debug stuff
+#    mov s15,:rd_1
+#    mov s14,^rd_1
+#    call :debug
+#end of debug stuff
+
+    mov u1,u0
+    mov u2,u0
+    add u1,8			# flags
+    ifneq *u1,ROUTE_FLAG_STREAM	# jest stream
+    jmp :route_destroy_free
+    add u1,2
+    mov u0,*u1
+    onfail :onfail_route_destroy
+    syscall $IPC_STREAM_CLOSE
+    nofail
+    add u1,1
+#debug stuff
+#    mov s15,:rd_3
+#    mov s14,^rd_3
+#    mov s13,*u1
+#    call :debug_int
+#end of debug stuff
+    ifeq *u1,0
+    jmp :route_destroy_no_in
+    mov u0,*u1
+    call :packet_done
+    mov *u1,0
+:route_destroy_no_in
+    add u1,3
+#debug stuff
+#    mov s15,:rd_4
+#    mov s14,^rd_4
+#    mov s13,*u1
+#    call :debug_int
+#end of debug stuff
+    ifeq *u1,0
+    jmp :route_destroy_free
+    mov u0,*u1
+    call :packet_done
+    mov *u1,0
+:route_destroy_free
+    mov u0,u2
+    call :route_unlink
+    call :route_done
+#debug stuff
+#    mov s15,:rd_2
+#    mov s14,^rd_2
+#    call :debug
+#end of debug stuff
+    mov u1,*:route_destroy_temp
+    mov u2,*:route_destroy_temp2
+    ret 1
+
+:onfail_route_destroy
+    ret 1
+
+
+##########################################################################
+# route_handler in () out () change (a lot)
+.DATA
+:route_handler_temp
+    0
+.CODE
+:route_handler
+    mov u0,*:route_entries
+    ifeq u0,0
+    ret 1
+:route_handler_loopa
+    mov u15,0
+    mov u14,u0
+    mov u2,u0
+    add u2,1
+    mov *:route_handler_temp,*u2
+    call :count_age
+    ifabo u1,ROUTE_TOO_OLD
+    jmp :route_handler_destroy
+    mov u0,u14				# not too old ;)
+    mov u1,u14
+    add u1,8
+    ifeq *u1,ROUTE_FLAG_STREAM
+    jmp :route_handler_stream_check
+    ifneq *u1,ROUTE_FLAG_REQ
+    jmp :route_handler_nextone		# stream not ready
+    call :route_check_req_status	# check stream request status
+    ifneq u1,1
+    jmp :route_handler_nextone
+:route_handler_stream_check
+    call :write_while_can		# write while you can
+    ifeq u0,0
+    jmp :route_handler_nextone
+    call :read_while_can		# read while you can
+    ifeq u0,0
+    jmp :route_handler_nextone
+    ifneq u15,1
+    jmp :route_handler_nextone
+    call :touch_structure		# timestamp structure if needed
+    jmp :route_handler_nextone
+:route_handler_destroy
+    call :route_destroy
+:route_handler_nextone
+    mov u0,*:route_handler_temp
+    ifneq u0,0
+    jmp :route_handler_loopa
+    ret 1
+
+
+#########################################################################
+# route_check_req_status in (u0) out (u1) change (a lot but who cares?)
+.DATA
+:route_check_req_status_warning
+    "[Warning] We've just lost stream request...\n"
+:route_check_debug
+    "--- Our stream request has been accepted\n"
+.CODE
+:route_check_req_status
+    mov u11,u0
+    add u0,9
+    mov u0,*u0
+    onfail :onfail_route_check_req_status
+    syscall $IPC_STREAM_STAT
+    nofail
+    ifeq s0,IPC_STAT_WAITING
+    jmp :route_check_req_status_notready
+    ifeq s0,IPC_STAT_ERROR
+    jmp :route_check_req_status_error
+    mov u1,u11
+    add u1,8
+    mov *u1,ROUTE_FLAG_STREAM	# flags 2
+    add u1,1
+    mov *u1,0			# clear req_id
+    add u1,1
+    mov *u1,u3			# stream_id ->
+    add u1,1
+    mov *u1,0			# clear in_packet
+    add u1,3
+    mov *u1,0			# clear out_packet
+# debug 
+#    mov s15,:route_check_debug
+#    mov s14,^route_check_debug
+#    call :debug
+# e o d 
+    mov u0,u11
+    mov u1,1
+    ret 1
+:route_check_req_status_error
+    mov u0,u11
+    call :route_destroy
+:route_check_req_status_notready
+    mov u1,0
+    ret 1    
+
+:onfail_route_check_req_status
+    mov u1,:route_check_req_status_warning
+    mov u2,^route_check_req_status_warning
+    syscall $IO_PUTSTRING
+    mov s0,IPC_STAT_ERROR
+    ret 1
+
+###########################################################################
+# route_read_while_can	in (u0,u15) out(u0,u15) change (a lot)
+# route_write_while_can	in (u0,u15) out(u0,u15) change (a lot)
+
+.DATA
+:iobuffer
+    0 repeat 375
+:rwc_temp
+    0
+:rwc_1
+    "--- Reading new packet.\n"
+:rwc_2
+    "--- Read whole packet.\n"
+:wwc_1
+    "--- Writing new packet.\n"
+
+.CODE
+
+:read_while_can
+    mov u14,u0
+:read_while_can_loopa
+    add u0,10
+    mov u0,*u0
+    onfail :ignore
+    syscall $IPC_STREAM_INFO
+    nofail
+    ifeq s0,-1
+    jmp :read_while_can_destroy
+    mov u1,u0
+    and u0,0x1
+    ifeq u0,0
+    jmp :read_while_can_nodata
+#debug stuff
+#    mov s15,:rwc_1
+#    mov s14,^rwc_1
+#    call :debug
+#end of debug stuff
+    mov u1,u14
+    add u1,14
+    ifneq *u1,0
+    jmp :read_while_can_fillup
+    call :packet_new
+    ifeq u0,0
+    jmp :read_while_can_done
+    mov *u1,u0				# out_packet = new packet
+    add u1,1
+    mov *u1,0				# ptr = 0
+    add u1,1
+    mov *u1,4				# len = 4  (we gotta read len)
+    sub u1,2
+:read_while_can_fillup
+    mov u10,u14
+    add u10,16				
+    mov u8,u10				# u8 = len
+    sub u10,1
+    mov u9,u10				# u9 = ptr
+    sub u10,1				# u10 = packet
+
+    sub u1,4
+    mov u0,*u1		
+    add u1,6
+    mov u2,*u1
+    mov u1,:iobuffer
+    mov u3,IPC_FLAG_NONBLOCK
+    onfail :ignore			# must have some data
+    syscall $IPC_STREAM_READ		# so we can safely overwrite s0
+    nofail				# on error
+    ifeq s0,-1
+    jmp :read_while_can_destroy
+    mov u11,u0
+    ifeq u0,0
+    jmp :read_while_can_done
+    mov u15,1
+
+# debug 
+#.DATA
+#:before_strcpy
+#    "--- before strcpy\n"
+#.CODE
+#    mov s15,:before_strcpy
+#    mov s14,^before_strcpy
+#    call :debug
+# e o d 
+    
+    mov u0,*u10
+    add u0,6
+    mov u1,*u9
+    mov u2,:iobuffer
+    mov u3,0
+    mov u4,u11
+    syscall $MEM_STRCPY		# copy copy, die on any error
+    
+    sub *u8,u11
+    add *u9,u11
+    ifneq *u8,0
+    jmp :read_while_can_done
+    ifneq *u9,4
+    jmp :read_while_can_wholepacket
+    mov u0,*u10
+    add u0,6
+    mov u0,*u0
+    call :bswab_le		# getting packet len in netorder
+    ifabo u0,1500
+    jmp :read_while_can_destroy	# too long stream.. over 1500 B!
+    mov *u8,u0			# set new length
+    mov u0,u14
+    jmp :read_while_can_loopa	# and retry
+:read_while_can_wholepacket
+#debug stuff
+#    mov s15,:rwc_2
+#    mov s14,^rwc_2
+#    call :debug
+#end of debug stuff
+    mov u0,*u10
+    mov *u10,0
+    call :packet_out_link
+    mov u0,u14
+    jmp :read_while_can_loopa		# relink packet and repeat
+:read_while_can_nodata
+    and u1,0x4
+    ifeq u1,0
+    jmp :read_while_can_done
+:read_while_can_destroy
+    mov u0,u14
+    call :route_destroy
+    mov u0,0
+    mov u15,0
+    ret 1
+:read_while_can_done
+    mov u0,u14
+    ret 1
+
+
+
+
+:write_while_can
+    mov u14,u0
+:write_while_can_loopa
+    mov u0,u14
+    add u0,10
+    mov u0,*u0
+    onfail :ignore
+    syscall $IPC_STREAM_INFO
+    nofail
+    ifeq s0,-1
+    jmp :write_while_can_dead
+    mov u1,u0
+    and u1,0x4
+    ifeq u1,0x4
+    jmp :write_while_can_dead
+    mov u1,u0
+    and u1,0x2
+    ifneq u1,0x2
+    jmp :write_while_can_done
+    mov u0,u14
+    add u0,10
+    mov u11,*u0
+    add u0,1
+    mov u10,u0
+    add u0,1
+    mov u9,u0
+    add u0,1
+    mov u8,u0
+    ifneq *u10,0
+    jmp :write_while_can_send
+    # find a new bucket to send
+    mov u0,u14
+    add u0,5
+    mov u1,*u0
+    sub u0,1
+    mov u0,*u0
+    ifeq u1,0
+    jmp :write_while_can_done
+    call :find_packet_to
+    ifeq u0,0
+    jmp :write_while_can_done
+    call :packet_in_unlink
+#debug stuff
+#    mov s15,:wwc_1
+#    mov s14,^wwc_1
+#    call :debug
+#end of debug stuff
+    mov *u10,u0
+    add u0,4
+    mov *u8,*u0
+    mov *u9,0
+    
+:write_while_can_send
+    mov u0,:iobuffer
+    mov u1,0
+    mov u2,*u10
+    add u2,6
+    mov u3,*u9
+    mov u4,*u8
+    syscall $MEM_STRCPY			# copy copy
+    
+    mov u0,u11
+    mov u1,:iobuffer
+    mov u2,*u8
+    mov u3,IPC_FLAG_NONBLOCK
+    onfail :ignore			# must have space .. s0 is unused
+    syscall $IPC_STREAM_WRITE
+    nofail
+    ifeq s0,-1
+    jmp :write_while_can_dead
+    mov u15,1
+    add *u9,u0
+    sub *u8,u0
+    ifneq *u8,0
+    jmp :write_while_can_done		# not whole packet..
+    mov u0,*u10
+    mov *u10,0
+    call :packet_done
+    jmp :write_while_can_loopa
+
+:write_while_can_dead
+    mov u0,u14
+    call :route_destroy
+    mov u0,0
+    mov u15,0
+    ret 1
+:write_while_can_done
+    mov u0,u14
+    ret 1

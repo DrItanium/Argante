@@ -1,0 +1,41 @@
+
+.DATA
+
+:One
+
+  "ABCD"
+
+:Two
+
+  "abcd"
+
+:Three
+
+  0
+
+.CODE
+
+  MOV s0, -3
+  LDB *:Three,*:Two
+  # 'Three' should contain 'B' right now... check it (0x42).
+
+  MOV u0,*:Three
+  SYSCALL $IO_PutHex
+  MOV u0,10
+  SYSCALL $IO_PutChar
+
+  # Replace 'D' with 'B'
+  MOV s0,3
+  STOB *:One, *:Three
+
+  # Display 'ABCB'!
+
+  MOV u0,:One
+  MOV u1,^One
+  SYSCALL $IO_PutString
+  MOV u0,10
+  SYSCALL $IO_PutChar
+
+  HALT
+
+.END

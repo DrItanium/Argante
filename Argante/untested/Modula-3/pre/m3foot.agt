@@ -1,0 +1,14 @@
+
+.DATA
+
+:_Line
+	"------------------------------------------------------\n"
+.CODE
+	mov u0,:_Line
+	mov u1,^_Line
+	syscall $IO_PUTSTRING
+
+	halt
+
+.END
+

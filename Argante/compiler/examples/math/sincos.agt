@@ -1,0 +1,21 @@
+.CODE
+  mov f0,10.0
+  mov u0,0
+  syscall $MATH_SIN
+  mov f0,10.0
+  mov u0,1
+  syscall $MATH_SIN
+  mov f0,-10.0
+  mov u0,0
+  syscall $MATH_COS
+  mov f0,-10.0
+  mov u0,1
+  syscall $MATH_COS
+  mov f0,-10.0
+  mov u0,0
+  syscall $MATH_TAN
+  mov f0,-10.0
+  mov u0,1
+  syscall $MATH_TAN
+  halt
+.END

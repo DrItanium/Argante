@@ -1,0 +1,258 @@
+/*
+
+   Argante OS release 1: Mini-HTTP server
+   --------------------------------------
+
+   (c) 2000 Michal Zalewski <lcamtuf@tpi.pl>
+
+*/
+
+#compiler !INITDOMAIN 20
+
+#include "include/stdinc.ahh"
+#include "include/access.ahh"
+#include "include/fs.ahh"
+#include "include/display.ahh"
+#include "include/local.ahh"
+#include "include/advmem.ahh"
+#include "include/network.ahh"
+
+#include "custom.ahh"
+
+type inbuf is bytechunk 0 .. MAXBUF ;
+
+tmpbuf : inbuf;
+reqbuf : inbuf;
+reqnew : Bounded_Chunk;
+
+
+// Send back 403 error message. Ignore any errors during this operation.
+
+procedure Write_Error ( s : Socket ) {
+  local { tmp2 : Bounded_Chunk; }
+  guard {
+    Attach_Bounded ( tmp2, address ERROR, ERROR_bytelength );
+    Sync_Send ( s, tmp2 );
+    Attach_Bounded ( tmp2, address SSTRING, SSTRING_bytelength );
+    Sync_Send ( s, tmp2 );
+    Attach_Bounded ( tmp2, address ERROR_LONG, ERROR_LONG_bytelength );
+    Sync_Send ( s, tmp2 );
+  }
+  exception { case default; return; }
+}
+
+
+// Send back 404 error message.
+
+procedure Write_Nofile ( s : Socket ) {
+  local { tmp2 : Bounded_Chunk; }
+  Attach_Bounded ( tmp2, address MISSING, MISSING_bytelength );
+  Sync_Send ( s, tmp2 );
+  Attach_Bounded ( tmp2, address SSTRING, SSTRING_bytelength );
+  Sync_Send ( s, tmp2 );
+  Attach_Bounded ( tmp2, address MISSING_LONG, MISSING_LONG_bytelength );
+  Sync_Send ( s, tmp2 );
+}
+
+type smallbuf is bytechunk 0 .. 3;
+
+// Determine content-type by checking first byte of the file, then
+// write text/plain, text/html or application/octet-stream header.
+
+procedure Put_ContentType ( s : Socket, f : File ) {
+  local { c: Character; tmp2 : Bounded_Chunk; x : smallbuf; }
+  Attach_Bounded ( tmp2, address x, 1 );
+  Read ( f, tmp2 );
+  Seek ( f, 0, SEEK_SET );
+  Get_Char ( tmp2, 0, c );
+  if c = 60 {
+    Attach_Bounded ( tmp2, address NDOC, NDOC_bytelength );
+    Sync_Send ( s, tmp2 );
+    return;
+  }
+  if c > 31 {
+    if c < 127 {
+      Attach_Bounded ( tmp2, address NTXT, NTXT_bytelength );
+      Sync_Send ( s, tmp2 );
+      return;
+    }
+  }
+  Attach_Bounded ( tmp2, address BDATA, BDATA_bytelength );
+  Sync_Send ( s, tmp2 );
+}
+
+
+// Process the request - extract URI, stat the file, send it to the
+// client. This procedure doesn't support good concurrency of requests,
+// should be fixed.
+
+procedure Process_Request ( s : Socket, writable req : Bounded_Chunk ) {
+
+  local { 
+    pos     : Position; 
+    d       : Date; 
+    tmp2    : Bounded_Chunk; 
+    f       : File;
+    success : signed;
+  }
+
+  Attach_Bounded ( reqnew, address reqbuf, MAXBUF );
+
+  Char_Position ( req , 32, pos, success );
+
+  if not success {
+    Write_Error ( s );
+    return;
+  }
+
+  pos += 1;
+
+  Copy_String ( reqnew, req, pos );
+
+  Char_Position ( reqnew , 32, pos, success ); // space
+  if success { reqnew.len := pos; }
+  Char_Position ( reqnew , 35, pos, success ); // #
+  if success { reqnew.len := pos; }
+  Char_Position ( reqnew , 10, pos, success ); // \n
+  if success { reqnew.len := pos; }
+  Char_Position ( reqnew , 13, pos, success ); // \r
+  if success { reqnew.len := pos; }
+
+  // Now, we have URI extracted...
+
+  req.len := 0; req.size := 0;
+
+  Attach_Bounded ( tmp2, address DocumentRoot, DocumentRoot_bytelength );
+  String_Append ( req, tmp2 );
+  String_Append ( req, reqnew );
+
+  // Now, we have qualified path...
+
+:Stat_Again
+
+  Stat ( req, d, pos );
+  
+  if pos = FS_STAT_ERROR {
+    Write_Nofile ( s );
+    return;
+  }
+
+  if pos = FS_STAT_DIRECTORY {
+    Attach_Bounded ( tmp2, address INDEX, INDEX_bytelength );
+    String_Append ( req, tmp2 );
+    goto Stat_Again;
+  }
+
+  Read_Open ( req, f );
+
+  Attach_Bounded ( tmp2, address OK, OK_bytelength );
+  Sync_Send ( s, tmp2 );
+
+  Put_ContentType ( s, f );
+
+  Attach_Bounded ( tmp2, address SSTRING, SSTRING_bytelength );
+  Sync_Send ( s, tmp2 );
+
+  Attach_Bounded ( tmp2, address reqbuf, MAXBUF );
+
+  guard { Send_File ( f, s, 0, SIZE_ANY ); }
+  Async_Recv ( s, tmp2, pos );
+  Close ( f );
+
+  exception {
+    case default; Close ( f ); return;
+  }
+
+}
+
+
+
+currently_handled : unsigned;
+
+type req_matrix  is array 1 .. MAXREQ of Socket;
+type time_matrix is array 1 .. MAXREQ of Date;
+
+  sock : req_matrix;
+  time : time_matrix;
+
+listen_sock : Socket;
+tmp_sock    : Socket;
+
+
+// This is main entry point and accept() loop for the server.
+
+procedure Main () {
+
+  local { 
+    nowis    : Date;
+    tmp      : Date;
+    lo       : unsigned;
+    r        : unsigned;
+    b        : Bounded_Chunk;
+  }
+
+  Listen_Inet ( 0, PORT, 50, NET_SOCK_STREAM, Listen_Sock );
+
+  while 1 {
+
+    Wait_Net_Event( 1 );
+
+    ASync_Accept ( listen_sock, tmp_sock, lo );
+    Get_Current_Date ( nowis );
+
+    if lo = NET_CLIENT {
+
+      lo := 1;
+
+      while lo <= MAXREQ {
+        if not time[lo] {
+          break;
+        }
+        lo += 1;
+      }
+
+      if lo >= MAXREQ { Shutdown ( tmp_sock, NET_SHUTRDWR ); }
+      if lo < MAXREQ { time[lo] := nowis; sock[lo] := tmp_sock; }
+
+    }
+
+    lo := 1;
+
+
+    while lo <= MAXREQ {
+      if time[lo] {
+        tmp := nowis;
+        tmp -= time[lo];
+        if tmp >= TIMEOUT {
+          time[lo] := 0;
+          Shutdown ( sock[lo], NET_SHUTRDWR );
+        }
+        if tmp < TIMEOUT {
+          b.data := address tmpbuf; b.size := MAXBUF; b.len := 0;
+          guard { 
+            Async_Recv ( sock[lo], b, r);
+            if r = NET_RET_OK {
+              Process_Request( sock[lo], b );
+              Shutdown ( sock[lo], NET_SHUTRDWR );
+              time[lo] := 0;
+            }
+          }
+        }
+      }
+      lo += 1;
+    }
+  }
+
+  exception {
+   case default;
+     if lo <= MAXREQ {
+       time[lo] := 0;
+       r := 1234;
+       Write_Error ( sock[lo] );
+       Shutdown ( sock[lo], NET_SHUTRDWR );
+     }
+     ignore;
+  }
+
+}
+

@@ -1,0 +1,77 @@
+------------
+Please note:
+------------
+
+This code has been developed by myself in really short amount of time,
+during several sleepless nights. I wanted to implement GOOD language as
+fast as possible, before first release of Argante. Unfortunately, it's
+impossible ;) So here's mere subset of the AHLL language, which will be
+improved (read: ahlt will be buried, and then completely rewritten ;)
+in next releases:
+
+- THIS IS NOT AN INTEGRAL PART OF ARGANTE OS! It's provided only as sample
+  HLL development environment, and can be replaced with any (preferably
+  better) translator or compiler; if you're interested in implementing
+  subset of any other language, or have your own language concept, please
+  feel free to contribute :)
+
+- code is really obfuscated and could be a perfect demonstration how
+  translator SHOULD NOT be written; do not even look at it,
+
+- for the same reason, this code is not stable; it should produce valid
+  executables in most cases, but it also could behave in upredictable
+  ways; code preprocessing isn't perfect, for example, and you have to
+  use specific notation in some situations (see documentation),
+
+- implemented language isn't extactly what I'd like to achieve, and so,
+  it will be probably rewritten in 2nd release of Argante,
+
+- there are bugs! especially, this code is full of buffer overflows. I
+  had no time (really) for range checking here. So, while Argante system
+  is written really carefully, this piece of code is written just to
+  work properly in standard input / environment conditions.
+
+- this translator generates highly ineffective code ;)
+
+
+HERE ARE SOME DISADVANTAGES OF THIS IMPLEMENTATION:
+---------------------------------------------------
+
+- recurrent procedure calls are deadly - YOU SHOULD NOT DO THAT FOR NOW;
+  current version of AHLL is broken (and should be redesigned), so if you
+  enter procedure A once, and then, without leaving it, call A again,
+  and finally, this second call will be finished, you'll notice A
+  parameters / locals were modified by this second call; that's because
+  AHLL does NOT support dynamically allocated call parameters / local
+  functions stack. If you really need to do that, use parameterless (or
+  called in constant way) procedures, and implement simple dynamic
+  allocation. In any other case, you should not use A's local parameters /
+  variables after calling A within A ;>
+
+- When accessing structures and arrays, only following conventions are
+  available: table[simple_variable], str_table[simple_variable].field,
+  structure.field. So you cannot nest: table[table[table[n]].field], and
+  you cannot directly access arrays inside structures (eg. str.field[nn]).
+  If you need such access, you should use pointer assignments, eg:
+
+  pointer_to_array_copy := str.field;
+  ...and now you can access pointer_to_array_copy[nn];
+
+- There's no complex arithmetics! Only one operator per expression. Also,
+  there's no assign-when-calling-function-when-comparing-to... but I'm
+  in doubt if such C conventions are good at all ;>
+
+- FLOATING POINT ARITHMETICS IS BROKEN - USE ASSEMBLER INSTEAD :)
+
+- Generally, avoid pointers in local {} block. Define them globally. Sorry.
+
+- There are no "helper" statements, like for - you have while and loop
+  instead, which are equivallent.
+
+- Attach_Bounded tricks are really ugly.
+
+I know it sucks, but I have no time to work on it right now. Please help
+us creating better HLL environment!
+
+
+-- lcamtuf

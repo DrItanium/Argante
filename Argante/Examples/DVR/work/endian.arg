@@ -1,0 +1,104 @@
+# DONE 
+
+
+############################################################################
+# endianess in () out u0 (0 = le, 1 = be) changes ()
+.DATA
+:endianess_test
+    "1234"
+:endianess_warning
+    "WARNING: Your system is neither big-endian nor little-endian.\n"
+
+.CODE
+:endianess
+    mov u0,*:endianess_test
+    ifeq u0,0x31323334
+    jmp :endianess_be
+    ifeq u0,0x34333231
+    jmp :endianess_le
+    mov u0,:endianess_warning
+    mov u1,^endianess_warning
+    syscall $IO_PUTSTRING
+    halt
+:endianess_le
+    mov u0,0
+    mov *:endianess_current,u0
+    ret 1
+:endianess_be
+    mov u0,1
+    mov *:endianess_current,u0
+    ret 1
+
+
+#######################################################################
+# bswab	  in (u0) out (u0) changes (nothing)
+# bswab_w in (u0) out (u0) changes (nothing)
+
+:bswab
+    ifeq *:endianess_current,0
+    jmp :bswab_le
+    ret 1
+
+:bswab_w
+    ifeq *:endianess_current,0
+    jmp :bswab_le_w
+    ret 1
+
+:bswab_b
+    ifeq *:endianess_current,0
+    jmp :bswab_le_b
+    ret 1
+
+.DATA
+:bswab_le_t
+    0
+:bswab_le_o
+    0
+.CODE
+:bswab_le
+    mov *:bswab_le_t,u0
+    div u0,0x1000000
+#    movb3 u0,*:bswab_le_t
+    mov *:bswab_le_o,u0
+    mov u0,*:bswab_le_t
+    div u0,0x100
+    and u0,0xff00
+#    movb2 u0,*:bswab_le_t
+#    mul u0,0x100
+    add *:bswab_le_o,u0
+    mov u0,*:bswab_le_t
+    mul u0,0x100
+    and u0,0xff0000
+#    movb1 u0,*:bswab_le_t
+#    mul u0,0x10000
+    add *:bswab_le_o,u0
+    mov u0,*:bswab_le_t
+    mul u0,0x1000000
+#    movb0 u0,*:bswab_le_t
+#    mul u0,0x1000000
+    add u0,*:bswab_le_o
+    ret 1
+
+:bswab_le_w
+    mov *:bswab_le_t,u0
+    and u0,0xff
+    mul u0,0x100
+    mov *:bswab_le_o,u0
+    mov u0,*:bswab_le_t
+    div u0,0x100
+    and u0,0xff
+#    movb1 *:bswab_le_o,u0
+#    and u0,0xff
+#    mul u0,0x100
+    add u0,*:bswab_le_o
+    ret 1
+
+:bswab_le_b
+    mov *:bswab_le_t,u0
+    div u0,0x10
+    mov *:bswab_le_o,u0
+    mov u0,*:bswab_le_t
+    and u0,0xf
+    mul u0,0x10
+    add u0,*:bswab_le_o
+    ret 1

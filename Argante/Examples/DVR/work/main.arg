@@ -1,0 +1,56 @@
+
+.CODE
+:main
+    call :historical_reason
+    call :endianess
+    mov u0,DOMAIN_FILE
+    syscall $ACCESS_SETDOMAIN
+    call :read_config
+    call :packet_init
+    call :route_init
+    mov u0,DOMAIN_LOW
+    syscall $ACCESS_SETDOMAIN
+    call :init_ether_le
+    mov u0,DOMAIN_IPC
+    syscall $ACCESS_SETDOMAIN
+    call :ipc_init
+    call :advertize
+:main_loop
+    # read packets, send route requests if needed and put them in queue
+    mov u0,DOMAIN_LOW
+    syscall $ACCESS_SETDOMAIN
+    call :in_network_handler	
+	# recive stream requests ... you know for the kids...
+    mov u0,DOMAIN_IPC
+    syscall $ACCESS_SETDOMAIN
+    call :ipc_stream_requests_handler
+	# recive route requests and route responses, create route entries
+    call :recive_msg
+	# timeout route entries, create streams, send/recive packets
+	# enqueue them for sending
+    call :route_handler
+	# send packets from :out_packet_first queue
+    mov u0,DOMAIN_LOW
+    syscall $ACCESS_SETDOMAIN
+    call :send_packets
+	# timeout packets
+    mov u0,DOMAIN_IPC
+    syscall $ACCESS_SETDOMAIN
+    call :in_packet_timeouter
+	# timeout packets
+    call :out_packet_timeouter
+    jmp :main_loop
+    halt
+
+
+.DATA
+:hello_world
+    "Starting DVR ver. 0.1b\n[Historical] Hello world!\n"
+.CODE
+:historical_reason
+    mov u0,:hello_world
+    mov u1,^hello_world
+    syscall $IO_PUTSTRING
+    ret 1
+
+    

@@ -1,0 +1,18 @@
+.CODE
+  mov u0,0
+  mov f0,1.0
+  syscall $MATH_ASIN
+  mov u0,1
+  mov f0,1.0
+  syscall $MATH_ASIN
+  mov u0,1
+  mov f0,0.99
+  syscall $MATH_ASIN
+  mov u0,0
+  mov f0,-1.0
+  syscall $MATH_ACOS
+  mov u0,1
+  mov f0,-1.0
+  syscall $MATH_ACOS
+  halt
+.END

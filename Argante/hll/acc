@@ -1,0 +1,67 @@
+#!/bin/sh
+
+#
+# Argante Virtual OS
+# ------------------
+#
+# Compilation script (.ahl -> .bin).
+#
+# Status: done
+#
+# Author:     Michal Zalewski <lcamtuf@ids.pl>
+# Maintainer: Michal Zalewski <lcamtuf@ids.pl>
+#
+
+PATH=$PATH:../compiler:../hll
+
+if [ "$1" = "" ]; then
+  echo "Error - filename required."
+  echo "Usage: $0 [ -e ] filename"
+  exit 1
+fi
+
+unset ELIM
+
+if [ "$1" = "-e" ]; then
+  shift 1
+  ELIM=yesyesyes
+else
+  echo "Avoiding dead code ellimination (use -e to enable it)."
+fi
+
+FN="`echo $1|awk -F '.ahl' '{print $1}'`"
+
+if [ ! -f $FN.ahl ]; then
+  echo "$0: cannot find $FN.ahl, exiting."
+  exit 2
+fi
+
+ahlt $FN.ahl
+
+if [ ! "$?" = "0" ]; then
+  rm -f $FN.agt
+  echo "Translation failed."
+  exit 3
+fi
+
+if [ ! "$ELIM" = "" ]; then
+  mv -f $FN.agt $FN-ne.agt
+  elim $FN-ne.agt $FN.agt
+  rm -f $FN-ne.agt
+fi
+
+agtc $FN.agt
+
+if [ ! "$?" = "0" ]; then
+  rm -f $FN.agt $FN.img
+  echo "Compilation failed."
+  exit 4
+fi
+
+rm -f $FN.agt .ahlt-*
+
+echo "Status: $1 compiled and translated successfully."
+echo "Output file: $FN.img"
+
+exit 0
+

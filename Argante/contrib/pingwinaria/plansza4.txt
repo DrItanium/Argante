@@ -1,0 +1,25 @@
+
+ Argumenty za...
+ ---------------
+
+ * mikrokernel, wszelkie funkcje I/O modularne
+ * pe³na uniwersalno¶æ
+ * mo¿liwie niskopoziomowa i szybka implementacja VM
+ * przeno¶no¶æ kodu VM miêdzy platformami
+ * zdecydowane odciêcie od natywnego systemu
+ * oddzielenie zarz±dzania systemem od wykonywania procesów
+ * prywatna przestrzeñ adresowa, inna filozofia stosu, statyczny kod
+   (stos, dane i kod to trzy inne przestrzenie adresowe)
+ * niskopoziomowe wyj±tki
+ * statyczny model procesów
+ * nowa filozofia uprawnieñ (zwrotnica)
+ * globalna, hierarchiczna kontrola dostêpu (obiekty, operacje)
+ * wsparcie OSI
+ * transparentna zdalna komunikacja miêdzyprocesowa
+ * wirtualny filesystem z mo¿liwo¶ci± mapowania zasobów
+ * eliminowanie wynalazków typu null-terminated strings
+ * filozofia Argante zapewnia, i¿ tylko niewielka grupa b³edów w samej Argante
+   mo¿e zagroziæ RS
+
+
+-----

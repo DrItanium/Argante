@@ -1,0 +1,392 @@
+# TODO
+# in_network_handler bigendian
+
+# domain 3 = low network
+.DATA
+:interface_in
+    0
+:interface_out
+    0
+:interface_mac
+    "123456"
+:init_ether_error
+    "[ERROR] Couldn't initialize low network subsystem.\n"
+.CODE
+
+:init_ether_be
+    jmp :init_ether
+:init_ether_le
+    mov u0,*:my_ip
+    call :bswab_le
+    mov *:my_ip,u0
+    mov u0,*:my_netaddr
+    call :bswab_le
+    mov *:my_netaddr,u0
+    mov u0,*:my_netmask
+    call :bswab_le
+    mov *:my_netmask,u0
+:init_ether
+    onfail :init_ether_onfail
+    mov u0,:interface_name
+    mov u1,^interface_name
+    syscall $LOW_NET_INITDEV
+    mov *:interface_in,s0
+    syscall $LOW_NET_RAW
+    mov *:interface_out,s0
+    mov u0,:interface_name
+    mov u1,^interface_name
+    syscall $LOW_NET_GETHWADDR
+    mul u0,0x1000000
+    mul u1,0x10000
+    add u0,u1
+    mul u2,0x100
+    add u0,u2
+    add u0,u3
+    call :bswab
+    mov u1,:interface_mac
+    mov *u1,u0
+    add u1,1    
+    mul u4,0x1000000
+    mul u5,0x10000
+    add u4,u5
+    mov u0,u4
+    call :bswab
+    mov *u1,u0
+
+    nofail
+    ret 1
+    
+:init_ether_onfail
+    mov u0,:init_ether_error
+    mov u1,^init_ether_error
+    syscall $IO_PUTSTRING
+    halt
+    
+
+#########################################################################
+# calculate_checksum -- in (u0,u1) -- out (u0) -- changes ()
+.DATA
+:calculate_checksum_temp
+    0
+:calculate_checksum_temp2
+    0
+:calculate_checksum_temp3
+    0
+.CODE
+:calculate_checksum
+    mov *:calculate_checksum_temp,u10
+    mov *:calculate_checksum_temp2,u11    
+    mov *:calculate_checksum_temp3,s0
+    mov u10,u0
+    mov s0,u1
+    sub s0,1
+    mov u11,0
+:chksum_loop
+    mov u0,*u10
+    div u0,0x10000
+#    movw0 u0,*u10
+    add u11,u0
+    mov u0,*u10
+    and u0,0xffff
+#    movw1 u0,*u10
+    add u11,u0
+    add u10,1
+    loop :chksum_loop
+    mov u0,u11
+    and u11,0xffff
+    div u0,0x10000
+    add u11,u0
+    mov u0,u11
+    and u11,0xffff
+    div u0,0x10000
+    add u11,u0
+    mov u0,-1
+    sub u0,u11
+    and u0,0xffff
+    mov u10,*:calculate_checksum_temp
+    mov u11,*:calculate_checksum_temp2    
+    mov s0,*:calculate_checksum_temp3
+    ret 1
+
+##############################################################################
+# le version
+.DATA
+:raw_bucket
+    0 repeat 379
+:raw_bucket_len
+    0
+.CODE
+:in_network_handler
+    ifeq *:packet_free,0			# no free buckets... 
+    ret 1
+    mov u0,*:interface_in
+    mov u1,:raw_bucket
+    mov u2,1514
+    syscall $LOW_NET_RECV
+    ifneq s1,1
+    ret 1
+    mov *:raw_bucket_len,s0
+    mov u0,:raw_bucket			# check if our mack in src field
+    mov u1,6
+    mov u2,:interface_mac
+    mov u3,0
+    mov u4,6
+    syscall $MEM_STRCMP
+    ifeq u0,0
+    jmp :in_network_handler
+
+    mov u0,:raw_bucket
+    add u0,3
+#    movw0 u0,*u0
+#    call :bswab_w
+    mov u0,*u0
+    call :bswab
+    div u0,0x10000
+# EOChanges
+    ifneq u0,0x800			# its not IP packet!
+    jmp :in_network_handler
+    
+    mov u0,:raw_bucket
+    mov u1,0
+    mov u2,:raw_bucket
+    mov u3,14
+    mov u4,*:raw_bucket_len
+    sub u4,14
+    mov *:raw_bucket_len,u4
+    syscall $MEM_STRCPY			# let us skip ether header
+    call :check_ip_packet
+    jmp :in_network_handler
+
+
+:check_ip_packet
+    ifbel *:raw_bucket_len,20
+    jmp :bad_or_done
+    mov u15,:raw_bucket
+#    movb0 u0,*u15
+    mov u0,*u15
+    call :bswab
+    div u0,0x1000000
+    call :bswab_b		# to make it endian independent
+    mov u1,u0			
+    and u0,0xf
+    div u1,0x10
+    ifneq u0,0x4
+    jmp :bad_or_done		# bad ip version
+    ifbel u1,0x5
+    jmp :bad_or_done		# invalid header len
+    mul u1,4
+    ifabo u1,*:raw_bucket_len
+    jmp :bad_or_done		# too short eth frame...
+    div u1,4
+#    movw1 u0,*u15
+#    call :bswab_w
+    mov u0,*u15
+    call :bswab
+    and u0,0xffff
+# EOChanges...
+    ifbel *:raw_bucket_len,u0	# again too short 
+    jmp :bad_or_done
+    mov *:raw_bucket_len,u0	# cut to size..
+    mov u4,u15
+    add u4,2
+    ifeq *:endianess,1
+    jmp :part_be
+    mov u2,*u4
+    mov u3,u2
+    mov u5,u2
+    and u3,0xffff
+    and u2,0xffff0000
+    mov *u4,u3
+    mov u0,u15
+    call :calculate_checksum
+    mul u0,0x10000
+    ifneq u0,u2			
+    jmp :bad_or_done		# checksum failure
+    and u5,0xff
+    and u3,0xff00
+    ifeq u5,1
+    jmp :bad_or_done
+    sub u5,1
+    add u3,u5
+    mov *u4,u3
+    jmp :part_done
+:part_be
+    mov u2,*u4
+    mov u3,u2
+    mov u5,u2
+    and u3,0xffff0000
+    and u2,0xffff
+    mov *u4,u3
+    mov u0,u15
+    call :calculate_checksum
+    ifneq u0,u2
+    jmp :bad_or_done
+    and u5,0xff000000
+    and u3,0xff0000
+    ifeq u5,0x1000000
+    jmp :bad_or_done
+    sub u5,0x1000000
+    add u3,u5
+    mov *u4,u3
+    
+:part_done
+    add u4,1
+    mov u0,*u4
+    and u0,*:my_netmask
+    ifneq u0,*:my_netaddr
+    jmp :bad_or_done		# packet from outher space... (CHECKIT)
+    add u4,1
+    mov u5,*u4
+    mov u0,u5
+    and u0,*:my_netmask
+    ifeq u0,*:my_netaddr
+    jmp :bad_or_done		# local target.. borink
+
+    call :packet_new		# oh there is one free packet... i'm sure
+    ifeq u0,0
+    ret 1
+    call :packet_in_link
+    call :touch_structure
+    mov u13,u0
+    add u0,4
+    mov *u0,*:raw_bucket_len
+    add *u0,4
+    add u0,1
+    mov *u0,u5
+    add u0,1
+    mov u3,u0
+    mov u0,*:raw_bucket_len
+    call :bswab
+    mov *u3,u0
+    add u3,1
+    mov u0,u3
+    mov u1,0
+    mov u2,u15
+    mov u3,0
+    mov u4,*:raw_bucket_len
+    syscall $MEM_STRCPY			# copy copy to bucket...
+    mov u14,u5
+    call :route_find    
+    ifeq u0,0
+    call :send_route_request
+
+# debug stuff
+#.DATA
+#:debug_srr
+#    "--- got good IP packet\n"
+#.CODE
+#    mov s15,:debug_srr
+#    mov s14,^debug_srr
+#    call :debug
+# e o d 
+					# packet is ok and linked
+:bad_or_done
+    ret 1
+
+##########################################################################
+# send_ttl_expired: in (u15,u14,u1) out () changes (all)
+.DATA
+:temporary_ip_bucket
+    0 repeat 5
+:temporary_icmp_bucket
+    0 repeat 370
+.CODE
+:send_ttl_expired
+# tworzymy naglowek IP
+    mov u0,:temporary_ip_bucket
+    mov *u0,0x00000054          # ver 4 ihl 5 tos 0 len ??
+    add u0,1
+    mov *u0,0                   # id 0 flags 0 offset 0
+    add u0,1
+    mov *u0,0x00000140          # ttl 64 proto 1 (icmp) checksum ??
+    add u0,1
+    mov *u0,*:my_ip            # we're the sender
+    add u0,1
+    mov u2,u15
+    add u2,3
+    mov *u0,*u2                 # and they're gonna listen
+# teraz liczymy czeksume ip
+    mov u0,:temporary_ip_bucket
+    mov u2,u0
+    mov u10,u1
+    mov u1,5
+    call :calculate_checksum
+    call :bswab_le
+    mul u0,0x10000
+    add u2,2
+    add *u2,u0
+# doklejamy naglowek ICMP
+    mov u0,:temporary_icmp_bucket
+    mov *u0,0000000b            # type 11, code 0 checksum ??
+    add u0,1
+    mov *u0,0                   # unused 0
+    add u0,1
+
+# teraz doklejamy tego no... naglowek pakietu plus 2 dwordy
+    mov u4,u10
+    add u4,2
+    mul u4,4
+    mov u3,0
+    mov u2,u15
+    mov u1,0
+    syscall $MEM_STRCPY
+    div u4,4
+    add u4,2
+    mov u0,:temporary_icmp_bucket
+    mov u1,u4
+    call :calculate_checksum
+    mul u0,0x10000
+    add *:temporary_icmp_bucket,u0
+    mov u0,5
+    add u0,u4
+    mov u2,u0
+    call :bswab_le
+    add *:temporary_ip_bucket,u0
+    mov u1,:temporary_ip_bucket                 # (TODO)
+    mov u0,*:interface_out
+    syscall $LOW_NET_SEND
+    ret 1
+
+
+###########################################################################
+# send_packets	in () out () change (a lot)
+
+.DATA
+:sp_1
+    "--- in send packets\n"
+.CODE
+
+:send_packets
+    mov u1,*:out_packet_first
+    ifeq u1,0
+    ret 1
+#debug stuff
+#    mov s15,:sp_1
+#    mov s14,^sp_1
+#    call :debug
+#end of debug stuff
+    add u1,6
+    mov u0,*u1
+    call :bswab
+    mov u2,u0
+    add u1,1
+    mov u0,*:interface_out
+    syscall $LOW_NET_SEND
+    ifeq s1,1
+    jmp :send_packets_continue
+    ifeq s2,u2
+    jmp :just_done
+:unlink_and_done
+    mov u0,*:out_packet_first	
+    call :packet_out_unlink
+    call :packet_done
+:just_done    
+    ret 1
+
+:send_packets_continue
+    mov u0,*:out_packet_first		# unlink and repeat
+    call :packet_out_unlink
+    call :packet_done
+    jmp :send_packets
+
+

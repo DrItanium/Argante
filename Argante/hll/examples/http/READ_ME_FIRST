@@ -1,0 +1,36 @@
+
+This is tiny HTTP server implementation for demonstration purposes only :)
+It's really simple, but have basic functionality - can serve static webpages,
+graphics and binary files. No scripts, no authorization, no virtual hosts, 
+no numerous other capabilities - written in several hours :>
+
+What's probably interesting, this really effective, non-forking code
+has been done in approx. 200 lines of ellegant code, with no need to care
+about ../.. bugs, overflows and other things.
+
+It's small, fast and secure. It doesn't show even 5% of Argante capabilities
+- we're going to write good HTTP server with cluster architecture etc, but
+it's impossible before Bulba will finish rIPC :)))
+
+NOTE: it does not support async send() for now. But hey - here are
+ApacheBench results for 10 transfers of 4.5 MB libc.so GET :)
+
+Argante:
+Requests per second:    10.48
+Transfer rate:          43169.52 kb/s received
+
+Apache:
+Requests per second:    8.94
+Transfer rate:          36805.81 kb/s received
+
+:) In another test, 1000 transfers of small file, Apache beats us (it's
+about 20-40% faster), but it's pretty good results as we don't have
+async file transfers yet :)
+
+So enjoy - edit custom.ahh, choose your favourite port and go ahead, you'll
+see small demo in default configuration :)
+
+You can build it using './BUILD' command. Generated .img file can be used 
+safely :>
+
+- l

@@ -1,0 +1,39 @@
+
+This is Bulba's Distributed Virtual Router (early beta)
+-------------------------------------------------------
+
+For now, it works on Linux only.
+
+How to use it?
+
+0. Edit conf/ files (you can simply rename the example files, but it's
+   generally better to revise the config); build Argante binaries, then
+   launch it.
+
+1. Connect a few instances of Argante using ripcd. This should be
+   described somewhere in README. Alternatively, you can perform
+   local tests, as well, but you have to provide separate configurations
+   for each DVR instance.
+
+2. Go to work/ and 'make' the project, then load output .img file
+   into Argante sessions on connected boxes or on one box on separate
+   VCPUs or argante instances.
+
+3. Disable packet forwarding on test boxes. Assuming you have the following
+   configuration:
+
+   net1         RT1                           RT2          net2
+   ---------- [ DVR ] ------ (ripcd) ------ [ DVR ] -----------
+   10.1.0.0/16           i n t e r n e t           10.2.0.0./16
+
+   You have to choose one box in net1 and one box in net2, then
+   set route to 10.2.0.0/16 from net1 via RT1 and from net2 to
+   10.1.0.0/16 via RT2. Remember to have packet forwarding disabled on
+   these boxes!
+
+4. Boom. It should work. You can add other locations, build redundant
+   links using ripcd, and so on.
+
+
+Sample configuration can be found at Examples/DVR1 and Examples/DVR2 (two
+complementary routers with basic configuration).

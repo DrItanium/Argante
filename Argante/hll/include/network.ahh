@@ -1,0 +1,146 @@
+/*
+
+   Argante HLL
+   -----------
+
+   Network Interface
+
+   Status: done
+
+   Author:     Marcin Dawcewicz <marcel@linux.com.pl>
+   Maintainer: Marcin Dawcewicz <marcel@linux.com.pl> 
+
+*/
+
+#define NET_SOCK_STREAM                 0
+#define NET_SOCK_DGRAM                  1
+
+#define NET_CLIENT			1
+#define NET_NOCLIENTS			0
+
+#define NET_SHUTRD			0
+#define NET_SHUTWR			1
+#define NET_SHUTRDWR			2
+
+#define NET_RET_OK			1
+#define NET_RET_WOULDBLOCK		0
+
+#define UNIX_EXTERNAL                   10000000
+
+type Socket is unsigned;
+type IPAddr is unsigned;
+type IPPort is unsigned;
+
+procedure IPAddr_2_Fields( s : IPAddr, writable a1 : unsigned, writable a2 
+                             : unsigned,writable a3 : unsigned,writable a4 : 
+                               unsigned) {
+
+  a1 := s; a2 := s; a3 := s; a4 := s;
+
+  a3 /= 256; a2 /= 65536; a1 /= 16777216;
+
+  a1 &= 255; a2 &= 255; a3 &= 255; a4 &= 255;
+
+}
+
+
+procedure Fields_2_IPAddr ( writable s : IPAddr, a1 : unsigned, a2 : unsigned,
+                            a3 : unsigned, a4 : unsigned) {
+
+  local { b1 : unsigned; b2 : unsigned; b3 : unsigned; }
+
+  b1 := a1;  b2 := a2;  b3 := a3;
+  b1 *= 16777216; b2 *= 65536; b3 *= 256;
+ 
+  s := a4; s += b3; s += b2 ; s += b1;  
+
+}
+
+
+
+procedure Connect_Inet (daddr : IPAddr, dport : IPPort, saddr : IPAddr, 
+                        sport : IPPort, timeo : unsigned, prot: unsigned,
+                        writable s : Socket) {
+  syscall(SYSCALL_NET_CONNECT, u0 := daddr, u1 := dport, u2 := saddr, 
+                               u3 := sport, u4 := timeo, u5 := prot,
+                               s := s0);
+}
+
+
+procedure Connect_Unix (pid : unsigned, sid : unsigned, timeo : unsigned,
+                        prot : unsigned, writable s : Socket) {
+  syscall(SYSCALL_NET_SUN_CONNECT, u0 := pid, u1 := sid, u4 := timeo, 
+                                   u5 := prot, s := s0);
+}
+
+
+procedure Listen_Inet (laddr : IPAddr, lport : IPPort, blog : unsigned,
+                       prot : unsigned, writable s : Socket) {
+  syscall(SYSCALL_NET_LISTEN, u0 := laddr, u1 := lport, u2 := blog, u5 := prot,
+                              s := s0 );
+}
+
+
+procedure Listen_Unix (sid : unsigned, blog : unsigned, prot : unsigned,
+                       writable s : Socket) {
+  syscall(SYSCALL_NET_SUN_LISTEN, u1 := sid, u2 := blog, u5 := prot, s := s0);
+}
+
+
+procedure Sync_Accept (desc : Socket, writable s : Socket ) {
+  syscall(SYSCALL_NET_ACCEPT, u0 := desc, u4 := 1, s := s0);
+}
+
+
+procedure Async_Accept (desc : Socket, writable s : Socket, writable ret : unsigned) {
+  syscall(SYSCALL_NET_ACCEPT, u0 := desc, u4 :=0, s := s0, ret := s1);
+}
+
+
+procedure IsWaiting (desc : Socket, writable stat : unsigned) {
+  syscall(SYSCALL_NET_ISWAITING, u0 := desc, stat := s0);
+}
+
+
+procedure Sync_Recv (desc : Socket, writable buf : Bounded_Chunk ) {
+  syscall(SYSCALL_NET_RECV, u0 := desc, u1 := buf.data, 
+                            u2 := buf.size, u4 := 1, buf.len := s0 );
+}
+
+
+procedure Sync_Send (desc : Socket, buf : Bounded_Chunk ) {
+  syscall(SYSCALL_NET_SEND, u0 := desc, u1 := buf.data, 
+                            u2 := buf.len, u4:= 1);
+}
+
+
+procedure Async_Recv (desc : Socket, writable buf : Bounded_Chunk, 
+                      writable ret : unsigned) {
+  syscall(SYSCALL_NET_RECV, u0 := desc, u1 := buf.data, 
+                            u2 := buf.size, u4 := 0, buf.len := s0,
+                            ret := s1);
+}
+
+
+procedure Async_Send (desc : Socket, buf : Bounded_Chunk,
+                      writable ret : unsigned) {
+  syscall(SYSCALL_NET_SEND, u0 := desc, u1 := buf.data, 
+                            u2 := buf.len, u4:= 0, ret := s1);
+}
+
+
+
+procedure Shutdown (desc : Socket, how : unsigned) {
+  syscall(SYSCALL_NET_SHUTDOWN, u0 := desc, u1 := how);
+}
+
+
+procedure Wait_Net_Event ( unused : unsigned ) {
+  syscall ( SYSCALL_NET_EVENT, u0 := unused );
+}
+
+#define SIZE_ANY 0
+
+procedure Send_File ( f : File, s : Socket, off : unsigned, siz : unsigned ) {
+  syscall ( SYSCALL_NET_SENDFILE, u0 := f, u1 := siz, u2 := off, u3 := s );
+}

@@ -1,0 +1,14 @@
+|
+| Default project startup script
+| (C) 2000 Michal Zalewski
+|
+~
+~ Welcome to default Argante project environment. In order to
+~ create working project, please edit this startup file, which can be found at
+~ conf/scripts/argboot.scr, and add standard Argante console commands to
+~ load all the modules and executables you want to include in your project.
+~
+~                                                                Good luck,
+~                                                  Argante Development Team
+~
+*10

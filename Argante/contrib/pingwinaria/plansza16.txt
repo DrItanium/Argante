@@ -1,0 +1,28 @@
+
+ DVR
+ ---
+
+ * odporny na b³edy, w pe³ni konfigurowalny wirtualny routing
+
+ * VPN bazuj±cy na prostym i zarz±dzalnym kodzie
+
+ * zawsze wybierane s± optymalne trasy dziêki budowie rIPC
+ 
+ * znikome nak³ady programistyczne - pêtla, kod decyzyjny i przekazanie
+   do rIPC.
+
+ * autokonfiguracja przy dodawaniu nowych wêz³ów
+
+
+
+
+
+
+
+
+
+
+
+
+
+-----

@@ -1,0 +1,170 @@
+/*
+
+   Argante HLL
+   -----------
+
+   Generic type definitions, syscall numbers, basic types, exception
+   numbers etc
+
+   Status: done
+
+   Author:     Michal Zalewski <lcamtuf@ids.pl>
+   Maintainer: Michal Zalewski <lcamtuf@ids.pl>
+
+*/
+
+type Boolean is unsigned;
+type Character is unsigned;
+type Syscall_No is unsigned;
+type Date is unsigned;
+type Data_Addr is unsigned;
+type Position is unsigned;
+
+type Bounded_Chunk is structure {
+  data : Data_Addr;
+  len  : unsigned;
+  size : unsigned;
+}
+
+
+procedure Attach_Bounded ( writable b : Bounded_Chunk, addr : Data_Addr, 
+                           len : unsigned ) {
+  b.data := addr;
+  b.len  := len;
+  b.size := len;
+}
+
+
+// Exceptions
+
+#define ERROR_STACK_OVER		0x1
+#define ERROR_STACK_UNDER		0x2
+#define ERROR_OUTSIDE_CODE		0x3
+#define ERROR_OUTSIDE_REG		0x4
+#define ERROR_BAD_PARAM			0x5
+#define ERROR_BAD_INSTR			0x6
+#define ERROR_OUTSIDE_MEM		0x7
+#define ERROR_PROTFAULT			0x8
+#define ERROR_TOOBIG			0x9
+#define ERROR_NOMODULE			0xa
+#define ERROR_BAD_SYS_PARAM		0xb
+#define ERROR_ACL_PROBLEM		0xc
+#define ERROR_NOPERM			0xd
+#define ERROR_NOMEM			0xe
+#define ERROR_DEADLOCK			0xf
+#define ERROR_NOOBJECT			0x10
+#define ERROR_FSERROR			0x11
+
+#define ERROR_FS_BAD_PATH		0x12
+#define ERROR_FS_OPEN_ERROR		0x13
+#define ERROR_FS_BAD_OPEN_MODE		0x14
+#define ERROR_FS_CREATE_ERROR		0x15
+#define ERROR_FS_BAD_VFD		0x16
+#define ERROR_FS_NOSEEK			0x17
+#define ERROR_FS_EXISTS			0x18
+#define ERROR_FS_NOFILE		        0x19
+#define ERROR_FS_NODIRENT		0x1a
+#define ERROR_RESULT_TOOLONG		0x1b
+
+#define ERROR_BADID			0x1101 // HLL ;>
+#define ERROR_BADCHAR			0x1101 // HLL ;>
+#define ERROR_BADMODE                   0x1201
+
+
+// Syscalls.
+
+#define SYSCALL_IO_PUTSTRING	0x1
+#define SYSCALL_IO_PUTINT	0x2
+#define SYSCALL_IO_PUTCHAR	0x3
+#define SYSCALL_IO_PUTFLOAT	0x4
+
+#define SYSCALL_ACCESS_SETDOMAIN	100
+#define SYSCALL_ACCESS_SETUID		101
+
+#define SYSCALL_FS_OPEN_FILE		201
+#define SYSCALL_FS_CREATE_FILE		202
+#define SYSCALL_FS_WRITE_FILE		203
+#define SYSCALL_FS_READ_FILE		204
+#define SYSCALL_FS_CLOSE_FILE		205
+#define SYSCALL_FS_LIST_DIR		206
+#define SYSCALL_FS_STAT			207
+#define SYSCALL_FS_MAKE_DIR		208
+#define SYSCALL_FS_RENAME		209
+#define SYSCALL_FS_DELETE		210
+#define SYSCALL_FS_ERRORMODE		211
+#define SYSCALL_FS_CWD			212
+#define SYSCALL_FS_PWD			213
+#define SYSCALL_FS_SEEK_FILE		214
+#define SYSCALL_FS_END_DIR		215
+
+#define SYSCALL_LOCAL_GETTIME		301
+#define SYSCALL_LOCAL_TIMETOSTR		302
+#define SYSCALL_LOCAL_GETHOSTNAME	303
+#define SYSCALL_LOCAL_VS_STAT		304
+#define SYSCALL_LOCAL_RS_STAT		305
+#define SYSCALL_LOCAL_GETRANDOM		306
+
+
+#define SYSCALL_NET_CONNECT             601
+#define SYSCALL_NET_LISTEN              602
+#define SYSCALL_NET_SUN_CONNECT         620
+#define SYSCALL_NET_SUN_LISTEN          621
+#define SYSCALL_NET_ACCEPT              605
+#define SYSCALL_NET_RECV                606
+#define SYSCALL_NET_SEND                607
+#define SYSCALL_NET_SHUTDOWN            608
+#define SYSCALL_NET_ISWAITING           609
+#define SYSCALL_NET_EVENT               630
+#define SYSCALL_NET_SENDFILE            631
+
+#define SYSCALL_MEM_STRCPY              401
+#define SYSCALL_MEM_BZERO               402
+#define SYSCALL_MEM_MEMSET              403
+#define SYSCALL_MEM_STRCHR              404
+#define SYSCALL_MEM_STRCMP              405
+#define SYSCALL_MEM_STRSTR              406
+#define SYSCALL_MEM_STRCASECMP          407
+#define SYSCALL_MEM_TOUPPER             408
+#define SYSCALL_MEM_TOLOWER             409
+#define SYSCALL_MEM_STRTOINT            410
+#define SYSCALL_MEM_STRTOHEX            411
+#define SYSCALL_MEM_STRTOFLOAT          412
+#define SYSCALL_MEM_STRHEXINT           413
+#define SYSCALL_MEM_HEXTOSTR            414
+#define SYSCALL_MEM_INTTOSTR            415
+#define SYSCALL_MEM_FLOATTOSTR          416
+#define SYSCALL_MEM_STRRCHR             417
+#define SYSCALL_MEM_STRRSTR             418
+
+#define SYSCALL_MEM_GETCHAR             452
+#define SYSCALL_MEM_ENDIAN              453
+
+#define SYSCALL_MATH_SIN		501
+#define SYSCALL_MATH_COS		502
+#define SYSCALL_MATH_TAN		503
+#define SYSCALL_MATH_ASIN		504
+#define SYSCALL_MATH_ACOS		505
+#define SYSCALL_MATH_ATAN		506
+#define SYSCALL_MATH_FILLSIN		507
+#define SYSCALL_MATH_FILLCOS		508
+#define SYSCALL_MATH_FILLTAN		509
+#define SYSCALL_MATH_TABLE_MUL		510
+#define SYSCALL_MATH_TABLE_DIV		511
+#define SYSCALL_MATH_TABLE_ADD		512
+#define SYSCALL_MATH_TABLE_SUB		513
+
+#define SYSCALL_GFX_SETMODE             801
+#define SYSCALL_GFX_CHECKMODE           802
+#define SYSCALL_GFX_CLEARSCREEN         803
+#define SYSCALL_GFX_MEMCOPY             804
+#define SYSCALL_GFX_VC                  805
+#define SYSCALL_GFX_SETCLUT8            806
+#define SYSCALL_GFX_SETPALETTE          807
+#define SYSCALL_GFX_SETPALETTESNGL      808
+#define SYSCALL_GFX_GETCHAR             820
+
+// Defines:
+
+#define TRUE	1
+#define FALSE	0
+

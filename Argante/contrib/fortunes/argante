@@ -1,0 +1,4209 @@
+%
+Poza tym poprawi³em sporo bugów, niemal dokoñczy³em g³upi filesystem
+(zostaje zbudowac cache scandir()em, ale oczywiscie zona uparla sie, ze
+musi wejsc na siec teraz i cos sprawdzic, wiec wysylam przed domknieciem
+sprawy)... jeste¶cie lenie jakich ma³o ;))) a ¿ycie toczy siê dalej :)
+%
+> a w³a¶ciwie to czemu akurat `Argante' ?
+
+bo "Tufix" brzmialo glupio ;>
+%
+On Mon, Sep 18, 2000 at 10:52:35AM +0200, Jarek Sygitowicz wrote:
+> moge cos tam zrobic ;)
+> Ostatnio qrna tylko jakies strony robie ;/ 
+:-))
+> Nie obiecuje ze bedzie szybko, ale sie postaram ;)
+Za to od razu z forum, chatem, newsreaderem,  dzialem dla
+poczatkujacych i ankieta ;-P
+%
+> On Mon, Sep 18, 2000 at 12:05:19PM +0200, Artur Skura wrote:
+> > O qrcze.. spróbujê co¶ wysma¿yæ,
+> A zreszt±... jest tu jeszcze jeden jegomo¶æ, który lubi robiæ wszystko
+> sam i przeszkadza mu brak historii ;-) Hu hu?
+
+Moj idol Leszek M. mawial kiedys: "mezczyzne poznaje sie po tym, jak
+konczy, a nie jak zaczyna" ;P 
+%
+Czy dobrze mi sie wydaje, ze rozwiazaniem problemu jest dodanie jednego
+if'a z isatty() w srodku ?
+
+To wszystko powyzej to tylko sciema, zeby wcisnac dwa offtopiki
+;) ([ewentualne] odpowiedzi na priva):
+
+1. Lcamtuf, ludzie chca sie dowiedziec, gdzie mozna cos z
+   radosnej tworczosci Tanebauma dorwac w kraju
+
+2. Jest taki kawalek kodu w VBS'ie (ASP, DBMS to MS SQL):
+
+      sqlstring = "SELECT  * "
+      sqlstring = sqlstring & " FROM [blah]"
+      sqlstring = sqlstring & " WHERE [plum] = " & bzzz
+
+      rst.Open sqlstring, Conn, 3, 3
+
+   Przy czym bzzz pochodzi z html'owego formularza. Pytanie: czy taka
+   konstrukcja umozliwia attackerowi wykonanie innej (poza
+   SELECT) instrukcji SQL'a ??
+%
+> W attachu jest to, co do tej pory naklepalem w network.c - moze kodzak
+> skorzysta. Tylko niech to najpierw przejrzy ktos kompetentny ! ;)
+Obawiam siê, ¿e wycina (hypermail, nie kto¶ kompetentny) ;-)
+%
+> > Artur, jesli by Ci sie chcialo, uzyj rl_callback_handler_install,
+> > rl_callback_read_char do czytania, mozesz wywalic mojego 31337 clone i
+> > checka na glibce w ./build jesli Ci sie uda :>
+> Chcieæ mi siê chce, ale czas bêdê mia³ dopiero jutro wieczorem. A
+> Marcel siê tu obija rzucaj±c m±dre cytaty ;-P
+
+Ja bym chetnie cos zrobil konkretnego ale tempo za wysokie. Nawet postow
+juz mi sie nie chce slac bo sie okazuje, ze zanim ja wklepie maila to na
+liscie juz caly thread przelecial ;) 
+%
+> 
+> Juz dodany dawno ;) Owszem.
+
+No wlasnie. Czy musze powtorzyc, czego nam brakuje najbardziej
+? Podpowiem, ze to trzyliterowy skrot [1]
+
+[1] - i zaczyna sie na "C" ;)
+%
+<++> [Marcin Dawcewicz :: 18|09|2000 :: 17|24|47]:
+> W attachu jest to, co do tej pory naklepalem w network.c - moze kodzak
+> skorzysta. Tylko niech to najpierw przejrzy ktos kompetentny ! ;)
+
+Czy to jakas zaluzja? :)
+
+-- 
+-- Zbyszek Sobiecki (kodzak%mtl.pl)
+%
+> Poza tym generalnie kod mi sie bardzo podoba :)
+
+Nie dziwne, wzorowany na fs'ie ;P
+%
+> Wolalbym. Chcialbym zapewnic malpie API w ktorym nie da sie popelnic
+> bledow ;)
+
+Rozumiem, security through simplicity ;)
+%
+Sytuacja wyglada tak, ze mam raczej nikle pojecie o architekturze i
+niuansach projektowania OS'ow. Tak naprawde po przeczytaniu README nie
+wiem nawet, czemu Argante [1] ma byc lepsz{y,e,a} od reszty ;P Wniosek z
+tego taki, ze bede wdzieczny jesli mnie oswiecisz odpowiadajac
+rzeczowo na powyzsze zarzuty/propozycje ale nie obraze sie tez jesli
+poprzestaniesz na konkretnym "bo tak ma byc i ." :)
+
+[1] -  czy ja sie w koncu dowiem skad ta nazwa, po jakiemu to i co oznacza
+       ?? Troche kojarzy sie z mamona po francusku ;P
+
+Aha, tutaj jeszcze sporo twojego posta zostalo. Spokojna
+glowa: rodzielilem odpowiedz na dwie czescie bo sie troche wydluzyla ;)
+%
+Generalnie Argante to byla jakas tam ksiezniczka, ale szukajac w
+Altaviscie odkryjesz, ze to tez imie (choc chyba niezbyt popularne...
+heheh btw ide sobie dzis do pracy, w radiu wiadomosci, i nagle slysze ze
+reprezentantka Polski w jakiejs konkurencji w Sydney nazywa sie...
+Otylia... to bylo imie... wmurowalo mnie).
+% 
+Nie implementuj tych ryzykownych, typu strtok.
+
+Heheh bardzo lubie mana do tej funkcji:
+
+BUGS
+       Never use this function.  
+%
+> Generalnie Argante to byla jakas tam ksiezniczka, ale szukajac w
+> Altaviscie odkryjesz, ze to tez imie (choc chyba niezbyt popularne...
+> heheh btw ide sobie dzis do pracy, w radiu wiadomosci, i nagle slysze ze
+> reprezentantka Polski w jakiejs konkurencji w Sydney nazywa sie...
+> Otylia... to bylo imie... wmurowalo mnie).
+
+Ej no, to jedna z niewielu naszych nadziei medalowych. Dzisiaj Otylka
+bedzie plynela na 200m. Zeby pozostac przy temacie: Zeed, Ty na serio
+nazywasz sie tak, jak sie nazywasz ? ;PP
+%
+> Ej no, to jedna z niewielu naszych nadziei medalowych. Dzisiaj Otylka
+> bedzie plynela na 200m. Zeby pozostac przy temacie: Zeed, Ty na serio
+> nazywasz sie tak, jak sie nazywasz ? ;PP
+tak ;> i jestes 10 osoba w tym tygodniu, ktora o to pyta ;> wkoncu poco
+mialbym ukrywac swoje normalne, polskie imie i nazwisko, zreszta moje imie
+jest w pelni polskie ... jezu, ale ze mnie nacjonalista :P
+- z33d
+%
+No dobra, przed uzyciem memmem() bym sie zastanowil jednak pare razy ;)
+
+CONFORMING TO
+       This function is a GNU extension.
+
+BUGS
+       This function was broken in  Linux  libraries  up  to  and
+       including  libc  5.0.9;  there the `needle' and `haystack'
+       arguments were interchanged, and a pointer to the  end  of
+       the  first  occurrence of needle was returned.  Since libc
+       5.0.9 is still widely used, this is a  dangerous  function
+       to use.
+       Both  old  and  new  libc's have the bug that if needle is
+       empty haystack-1 (instead of haystack) is  returned.   And
+       glibc (2.0.5) makes it worse, and returns a pointer to the
+       last byte of `haystack'.  Hopefully this  will  be  fixed.
+       For  the  time  being, memmem() should not be used with an
+       empty `needle'.
+
+Kolesie cos cpaja :)
+%
+> I jeszcz cus (nie jestem w stanie juz dzisiaj grzebac w zrodlach),
+> chodzi o zmienna failure: z tego co zdazylem zauwazyc to jest on
+> uzywana tylko do prywatnych celow modulu wiec jesli nie korzystam u
+> siebie z check_status() (a pewnie powinienem :PP) to moge chyba sobie
+> odpuscic jej ustawianie na 1 przy wywolywaniu kazdego wyjatku ??
+
+Wolalbym nie. Nie wiem do konca, po co jest ta zmienna ;))) Ale z jakiegos
+powodu tam jest ;>>> Wiec moze jej nie ruszac? Mam podejrzenia, ale musze
+je zweryfikowac ;)
+% 
+Tak wiec przed VALIDATE przy connect i przy listen zrob jednego ifa :)
+
+do_transm (int c, int t)
+{
+  int n, sd1, block, len, k;
+  char *buf;
+  n = cpu[c].uregs[0];          /* virtual descriptor */
+  sd1 = netdata[c].sd[n];       /* real descriptor    */
+        ^^^^^^^^^^^^^^^^
+
+        KIJEM GO :) KIJEM :)))))
+%
+> W LISTEN pominales wariant "default" jako adres do zbindowania:
+> 
+>   ret = snprintf (vbuf, VBUF_SIZE - 1, "net/address/source/%s/%s",
+>                   (t) ? "udp" : "tcp", inet_ntoa (addr));
+> 
+> :) Tylko... nie nazywajmy tego tutaj default, tylko "all" (bo 0 powoduje
+> efektywne zbindowanie do wszystkich adresow :).
+
+Ujme to zwiezle: nie rozumiem o co Ci biega :) 
+%
+> Tak wiec przed VALIDATE przy connect i przy listen zrob jednego ifa :)
+
+Tak wiec nie zazywaj nigdy srodkow dopingujacych przed analizowaniem kodu
+:P
+%
+Help
+%
+Ha, wygralem z paskuda.
+%
+On Thu, 21 Sep 2000, Michal Zalewski wrote:
+
+> help
+
+O tak, to bylo przebiegle.
+%
+On Thu, 21 Sep 2000, Michal Zalewski wrote:
+
+>> help
+> 
+> O tak, to bylo przebiegle.
+
+Pomijajac to, ze za n-ta proba zapomnialem o -request w adresie, to jakie
+polecenie akceptuje ten lystszerw zeby wylistowac zapisanych na
+liste? Jesli w ogole supportuje (jesli nie to poprosze na priv ;>>>).
+%
+Jest taki carny scenarius: lcamtuf zazycyl sobie (pseprasam,
+"wolalby" ;P) taka funkcje w netmodzie:
+
+ISWAITING
+I: descriptor
+O: ceka/nieceka, IP klienta, port klienta
+
+Psy cym, mamy pozyskac IP+port _nie_acceptujac()_polacenia_. Cy ktos wie,
+jak zadowolic lcamtufa ?
+%
+Tak bylo w moim przypadku. Wget pokazywal, ze dociaga kilka kilo do
+arg.tgz, potem hepi przegladalem to pod mc i sie dziwilem, ze w archiwum
+panuje stagnacja :))
+
+z33333d ????! ;PP
+%
+> Psy cym, mamy pozyskac IP+port _nie_acceptujac()_polacenia_. Cy ktos
+> wie, jak zadowolic lcamtufa ?
+
+lcamtuf nie wiedzial, jak to zrobic tak, zbeby bylo portable, wiec
+powiedzial, ze nie musisz robic, ale powiedziales, ze mozesz w 10 minut
+;>>> hihi.
+%
+> Po pierwsze, byl problem z blokowaniem systemu jesli czytal cos na
+> sockecie po accepcie (ktory juz nie byl nonblocking!).
+
+o ja ulomny
+%
+> Po drugie,
+> dopisalem support dla unix sockets i pozmienialem to, co chcialem.
+
+Tia, glownie indenty ;)
+%
+> > Psy cym, mamy pozyskac IP+port _nie_acceptujac()_polacenia_. Cy ktos
+> > wie, jak zadowolic lcamtufa ?
+> 
+> lcamtuf nie wiedzial, jak to zrobic tak, zbeby bylo portable, 
+
+a lcamtuf wie, jak to zrobic fogle (pomijajac portabilnosc) ??
+%
+> Wiesz, przejrza³em pobie¿nie ca³o¶æ i obaw do niepokoju nie widzê :-)
+> To raczej nie jest konkurencja...
+
+Poza tym jak boga kocham: TO NIE JA! ;-)
+
+  eloy
+%
+> Poza tym jak boga kocham: TO NIE JA! ;-)
+
+Jasne jasne, siedzi, nic nie mowi, pomysly zabiera, po nocach pisze nowe
+Windows w C++ i dla niepoznaki wysyla z kki.net.pl ;>
+%
+a ten twoj AF_LOCAL jest zajebiscie portable, na solku go nie ma ;>
+%
+Zastanawialiscie sie czasem nad sensem pewnych funkcji w libc? Po co jest
+na przyklad TO:
+
+NAME
+       strxfrm - string transformation
+
+SYNOPSIS
+       #include <string.h>
+
+       size_t strxfrm(char *dest, const char *src, size_t n);
+
+DESCRIPTION
+       The  strxfrm()  function  transforms the src string into a
+       form such that the result of strcmp() on two strings  that
+       have  been  transformed  with strxfrm() is the same as the
+       result of strcoll() on the two strings before their trans­
+       formation.   The  first  n  characters  of the transformed
+       string are placed in dest.  The transformation is based on
+       the  program's  current  locale  for  category LC_COLLATE.
+       (See setlocale(3)).
+
+RETURN VALUE
+       The  strxfrm()  function  returns  the  number  of   bytes
+       required to store the transformed string in dest excluding
+       the terminating `\0' character.  If the value returned  is
+       n or more, the contents of dest are indeterminate.
+%
+Dobrze, juz nie marudze. Ide pisac API w AHLL'u (Another Hard to Learn
+Language, zgadlem ?) do netmoda. Powiedzcie szczerze poki lcamtuf nie 
+patrzy : czy wy tez niecierpicie tego jezyka ??? ;P
+%
+> > 3. console.c
+> > 
+> >    void clear_console(void) {
+> >     printk("\033[1H\033[2J");
+> >    }
+> > 
+> >    To nie na kazdym terminalu odniesie spodziewany skutek ;P
+> 
+> ansi, linux, vt100, cons25, etc, etc... Na wszystkich standardowych
+> terminalach na systemach, w ktorych Argante zadziala. Nie, nie na kazdym,
+> ale sluchaj - to naprawde jest po nic, kompletnie po nic :>>>> Nie wazne,
+> czy zadziala, czy nie! Trzeba robic inne rzeczy niz poprawianie escape
+> chars i dopracowywanie tab-completion, rany, jest do napisania ten cos
+> do SSLa?:>
+
+Uehehehe, widze, ze na serio powinienem dac sobie na wstrzymanie bo ktos
+jest juz bliski rozstroju nerwowego ;P
+% 
+> > Dobrze, juz nie marudze. Ide pisac API w AHLL'u (Another Hard to Learn
+> > Language, zgadlem ?) do netmoda. Powiedzcie szczerze poki lcamtuf nie
+> > patrzy : czy wy tez niecierpicie tego jezyka ??? ;P
+> 
+
+Za pozno. Juz zauwazyl ;)
+%
+> Ja cie krece ;) AHLL jest na tyle prostym jezykiem, ze, podobnie jak w C,
+> mozna sie go nauczyc, czego sie nie da powiedziec o Adzie (tzn. nauczenie
+> sie wszystkich kontrukcji Ady zajmuje lata ;). Co ci sie nie podoba?:> Ze
+> nie pozwala na konwertowanie wszystkiego na wszystko od lapy?;> Czy ze nie
+> mozna chakowac ze wskaznikami jak w C, bo wymuszona jest pewna polityka?;>
+
+Akhem, ze tak powiem chodzi o bardziej przyziemne sprawy. Jakis taki
+brzydki jest, zeby nie powiedziec paskalowy ;P
+%
+> > Tzn. masz na mysli, ze czasami nie dokonuje rozlaczenia a tylko
+> > zamkniecia jednego deskryptora ? Jesli tak to zauwaz, ze w argante
+> > zadne dwa procesy nie moga naraz uzywac tego samego _rzeczywistego_
+> > deskryptora.
+> 
+> A kto powiedzial, ze nie?:>
+
+Qfa, a zgadnij, kto napisal w dokumentacji, ze w Arg procesy nie moga sie
+forkowac ? ;P A moze moga przekazywac sobie deskryptory poprzez to nasze
+(jakze rozbudowane ;P) socket API ?
+%
+ps.: Ostatnio w changelogu pojawila sie kompromitujaca, nie godna
+     profesjonalisty ani Polaka linijka sugerujaca jakobym to nie
+     potrafil robic diffow ... Oswiadczam, ze jest ona wynikiem machlojek
+     lcamtufa, ktory to probowal w ten niecny sposob oszukac samego siebie
+     piszac, ze to niby nie przez jego lenistwo nie mozna bylo zapatchowac
+     netmoda ;) Howgh. Powiedzialem.
+%
+> BTW juz wiemy jaka jest geneza Argante: nie zadna niechec do
+> kompromisow, lecz L4 ;-P Njalepiej chyba gdybys wzial AHLL.
+
+Oka, wezme. L4 nie mam, dzis dopiero doszedlem do wniosku, ze jestem chory
+:/
+%
+> System jest zorientowany obiektowo. Mo¿na wydzieliæ w nim mnóstwo ma³ych
+> obiektów powi¹zanych ze sob¹, wywo³uj¹cych siebie nawzajem, obiekt
+> jednak¿e widziany jest z zewn¹trz jak czarna skrzynka i nie interesuje
+> nas, jak to siê dzieje, ¿e dzia³a, wa¿ne, ¿e dzia³a...
+> 
+> 
+> Huhm... to kto sie przesiada do konkurencji, niech od razu sie ujawni :>
+> 
+Hum , wiecie co ... kolega chyba za duzo w zakonie przesiedzial... sw
+Marii.  
+%
+> > Plizzzzzzzzzzzzz?
+> twe pobo¿ne ¿yczenia zosta³y wys³uchane ;)
+
+Gadasz jak binedit ;>
+%
+Rownoczesnie inni czytelnicy ;))), jesli Marcin sie nie wypowie, lub
+zrezygnuje - niesamowita okazja do nauczenia sie API libssl (ktore zreszta
+ma konstrukcje cepa)? Komu, komu, bo ide do domu ;)
+%
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!! lcamtuf !!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+Wiesz co masz robic ;> Przewidywany czas wydania na swiat AHLLa w wersji
+uzytecznej to czwartek, jesli pojdzie dobrze i nie zasypia mnie praca.
+%
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!! WSZYSCY !!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+Zamykamy prace nad "zywym" kodem wraz z koncem tego tygodnia!
+Nieodwolalnie, absolutnie, wiec rzuccie kobiety, prace, nauke, dociagnijmy
+to do stanu uzywalnosci i wrocmy do codziennych zajec ;) Wiem, ze to
+wielkie wyrzeczenie, ale teraz albo nigdy - bedziemy przez 6 lat pisac
+cus, tak jak bylo z HURDem ;)
+%
+_______________________________________________________
+Mam straszliwe wrazenie ze dalem dupy. 
+%
+Troche przekroczylem termin zlozenia deklaracji ale nic to. Moja decyzja
+to:
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+Robiem ;P
+%
+Ahm, i zmienilem status, zeby odstraszyc intruzow i hieny, zwabione
+zapachem:
+
+   Status: YOU REALLY DON'T WANT TO LOOK AT THIS CODE. IT SUCKS.
+%
+Aha, z33d, z blizej nieokresloncyh powodow twoj deassembler wyklada sie
+radosnie (mowiac illegal instruction) podczas deassemblacji kodu
+wygenerowanego z test.ahl. Kod jest w porzadku i jak najbardziej dziala,
+wiec sprawdz to :)
+%
+te noc przeznaczam w 100% dla Was. :)
+Wyniklo szereg komplikacji, kompilacji ...itd.
+bzzt!
+
+-- 
+Filip Niedorezo
+EVERYTHING YOU KNOW IS WRONG
+%
+No wiec dobry wieczor.
+
+Mam dola, bo w sobote w nocy prawie zabilem moja kote. Wlasciwie to o
+4 nad ranem, niewazne, kota do tej pory jeszcze w pelni nie wrocila do 
+siebie. Spotkal ja 76-kilogramowy wypadek, po ktorym zle sie poczula,
+potlukly jej sie zebra (prawie o siebie), a kregoslup ledwo przetrwal
+crashtest. Kota nazywa sie script-kittie (w skrocie s/key) [(c) 2000
+Michal Zalewski <lcamtuf@dione.ids.pl>], jest mala, czarna i
+zaplacilem za tego weterynarza w sobote o 4.40 rano 50 zl +
+taxowki.. koszmar, bo sie nie wyspalem, ani nic ;( I jeszcze Pan sie
+dziwnie patrzyl, jak powiedzialem, jak sie kota nazywa. 
+%
+
+> - denerwuje mnie, ze nie ma niczego w stylu historii polecen, moge ? <-.
+> - denerwuje mnie, ze jest tylko jedna "konsola", moge? <---------------|
+
+Nie mozesz ! To jest po nic, zupelnie po nic ! Mamy teraz wazniejsze
+rzeczy na glowie.
+%
++    "(...) Synus ...
++	to nie lyczba (...)"
++		    Aleksander Dobrzycki
+%
+Sorka, za wczorajszy falszywy alarm. Jesli to mozliwe to wroccie do
+kobiet, nauki, pracy etc, jesli nie ... no coz ;P Wczesna wersja
+ripcda wyszla z malym poslizgiem (oczywiscie klasyczna, na pierwszy
+rzut oka 10-minutowka okazala sie pokrecona jak bulka z maslem) i przed
+chwila poleciala do Glownego Cenzora. Wyslany tarball jest w formacie
+diff-free wiec pewnie GC sobie poradzi
+%
+> Dlugo wyczekiwany ripc demon wersja non-SSL jest w ataczu. Jako bonus
+> jest 30-dniowa wersja demo odpowiednika telnet(d) dla AF_LOCAL ;)
+%
+> Przejrzyj, potestuj, a potem gleboko sie zastanow zanim zaczniesz
+> psioczyc ;P
+%
+Motylki obsysaja ;> A nie masz Argante?:> Wez jakas panienke ;)
+%
+co miales na mysli mowiac w ChangeLogu:
+he's great ;)
+%
+> sium, wreszcie cos robicie ;)
+> male mroweczki :)
+
+"Mrowka z33d", byl taki film ;>
+%
+Przy pomyslnym wietrze i jesli bulbie nic nie wypadnie (mysle ze nawet
+ateisci mogliby zmowic przed snem paciorek za pomyslnosc ;), wyrobimy sie
+na 10tego.
+%
+> Uff, postaram sie. Caly czas ostro rzezbie ripcda i juz nawet troche
+> ssl'uje tylko, ze co chwila napotykam na kolejne bugi. NIestety kod
+> stal sie juz dla mnie zupelnie nieczytelny i nie wiem, czy chcialbym
+> zeby moje nazwisko widnialo w polu "maintainer:" ;PP
+
+Anonymous Developer?;>
+%
+bobcat (taki koles z #hax) wpadl na fajny pomysl - napisac do Argante
+frontend pod Xy.
+%
+Nie zebym watpil w nasz projekt ale, jak sie okaze, ze to nikomu nie
+potrzebne ? ;PP
+%
+Jeszcze jedna mysl mnie naszla: wy juz dyskutujecie, jak tu ladne announcy
+robic, a nie uwazacie, ze przydaloby sie solidnie potestowac ta kupe kodu
+przed pokazaniem ludziom ??? Nie wiem, moze wy jestescie pewni swojej
+klepaniny ale ja jestem rownie pewien, ze w moim kodzie drzemia
+niezmierzone poklady bugow ...
+%
+> No w³a¶nie. Wczoraj siê nie dawa³o skompilowaæ, a dzisiaj dzia³a tylko
+> ¿e nic nie robi ;-)
+
+Chyba odwrotnie? Wczoraj sie dawalo skompilowac i listenowalo na porcie i 
+mowilo hi, a teraz sie nie da, bo nie ma .ahh
+%
+reeehehhehe
+
+Windows NT Magazine, Vol. 3, No. 6 (June '97) has an article that
+discusses this issue.  It references a KB article, Q150820, which
+apparently no longer exists.  There is a pointer to this article on
+article Q151475 which at least shows that it did once exists.  According
+to NT Magazine, the KB article stated "The name JSPNRMPTGSBSSDIR is
+announced regularly and is a normal occurrence from a Windows NT server
+or workstation running the Windows NT Remote Access Service."
+Apparently, there is no way to disable this query and no description of
+its purpose.
+
+Joe Herrick
+Office of Naval Research
+mailto:herricj@onr.navy.mil  
+
+- -----Original Message-----
+From: Mike Poe <Mike_Poe@latticesemi.com>
+To: ntsecurity@iss.net <ntsecurity@iss.net>
+Date: Thursday, September 11, 1997 10:56 AM
+Subject: [NTSEC] strange name query
+
+
+
+I though it was strange when one of my NT Servers was asking DNS for the
+name "jspnrmptgsbssdi" (and of course, getting a reply of not found).
+Not to long ago, my PDC was asking for that exact same string of
+characters.  Anybody seen this before?
+
+    -Mike Poe
+%
+btw jakis koles z uporem odpytuje z ppp w Wawie nieistniejacego hosta u
+mnie (tzn. adres routowany, ale maszyny ni ma ;) na porcie 53 o IN A
+JSPNRMPTGSBSSDIR.noblestar.com.pl. - az doslownie przepisalem z
+wrazenia...
+
+;>
+matrix.
+%
+> autorem wiêkszo¶ci kodu oraz koordynatorem ca³o¶ci jest znany
+> specjalista od bezpieczeñstwa sieciowego i systemowego, Micha³
+> Zalewski.
+
+Moze w ogole "znany i lubiany" ;))) Hyhy...
+%
+03:16 i nikt nie podziwia mojego Mini-HTTP. Chyba sie obraze.
+%
+Bo u Artura chyba popsulem ;)
+
+[root@nimue /root]# telnet test.linux.com.pl 80
+Trying 195.117.123.20...
+Connected to test.linux.com.pl.
+Escape character is '^]'.
+Connection closed by foreign host.
+
+W kazdym razie w wersji ktora +/- od 2-3 godzin jest do sciagniecia, te
+problemy zostaly wyeliminowane :>
+%
+> Tak te¿ sobie pomy¶la³em, ¿e to nie by³ przypadek ;-) Nie mog³e¶
+> sparwdziæ na sobie? ;-)
+
+Ja mialem juz dzialajaca wersje, a nie wiedzialem jaka ty masz :>>>>
+%
+> tylko noweg ahl poprawiales cos w samej Argante? w takim razie
+> kompiluje i wrzucam jeszcze raz.
+
+Tak, w malutkiej :>
+%
+JA GLUPIA PIPA! To bylo z twaitem!:)
+%
+Postanowilem zrobic taki sam test dla IISa w LANie. Pierwszy test prawie
+sie powiodl, ale niestety serwer IIS sie wywrocil ;) Mowie smiertelnie
+powaznie - ab -c 1000 -n 4000 powtorzony dwa razy spowodowal crash
+maszyny! Wzialem drugiego IISa - lepiej, maszyna dalej odpowiadala, tylko
+usluga sie wywrocila... Ok, pomyslalem, zmniejsze wartosci!
+
+Empirycznie ustalilem, ze wartosci -c powyzej 64 (!!!!!!!), czyli wiecej
+niz 64 polaczenia, powoduja ze IIS mowi "sorry".
+%
+Nie moge tego powtorzyc u siebie, tak jak pisalem - Artur, napewno
+masz sciagnieta, skompilowana i uruchomiona najnowsza wersje, zarowno
+Argante jak i Mini-HTTP?
+% 
+ Version 0.008.800:
+ 
+ - I'm proud ;
+%
+BULBA, JESLI NIE JESTES W STANIE, NIE CHCESZ, NIE MOZESZ, NIE POZWALAJA
+CI, NIE UMIESZ, NIE WIESZ JAK, NIE WIESZ PO CO, NIE POTRAFISZ ODNALEZC
+SENSU ZYCIA, LUB JESLI STALO SIE COKOLWIEK INNEGO, CO UNIEMOZLIWIA
+NAPISANIE IPC / RIPC W ROZSADNYM CZASIE, POWIEDZ TO WPROST, I ZROB TO
+SZYBKO.
+%
+> WYGRYWAMY:!)))))))))))))))))))))))) JO!:> Mini-HTTP jest szybszy w
+> serwowaniu duzych plikow i porownywalny przy obsludze wielu malych
+> requestow.
+
+W ogole rulez :P
+
+*miau*
+%
+On Mon, 9 Oct 2000, Lukasz Jachowicz wrote:
+
+> On 9 Oct 2000, Artur [iso-8859-1] Maci±g wrote:
+> 
+> > http://www.artgabi.com.pl/argante.jpg
+> 
+> Jest soooper! Tylko panienki pod lynxem nie widac :-(
+
+No. Pod lynxem to powy¿szy url w ogóle niespecjalnie wygl±da ;-P
+%
+
++> Signature: Simple packet sniffing application
++> Data: 10009 dwords allocated.
+=> No initial IPC identity.
++> Process launched successfully.
+[Agt] 
+60 bytes read from network
+60 bytes read from network
+74 bytes read from network
+60 bytes read from network
+54 bytes read from network
+60 bytes read from network
+60 bytes read from network
+60 bytes read from network
+54 bytes read from network
+60 bytes read from network
+60 bytes read from network
+
+:))))))))))))))))))))))
+%
+> >> Otoz blocking send() w Argante korzystal z non-blocking send w
+> >> rzeczywistym systemie. Marcin zalozyl, ze jesli send() z MSG_DONTWAIT
+> >                          ~~~~~~~~~~~~~~
+> > 
+> > Marcin zalozyl ? A to juz nie pamietasz, kto dowalil do send()/recv()
+> > MSG_DONTWAIT ? ;P
+> 
+> Misiek... bo to MUSI dzialac asynchronicznie wzgledem systemu, a bez
+
+tylko nie misiek ;) wiem, jak to musi dzialac (z reszta zrobilem oddzielne make_sock_nonblock()
+w do_accept()) tylko zwrocilem uwage, ze to nie ja wlepilem msg_dontwait ;P
+%
+> MSG_DONTWAIT po accepcie chodzily synchronicznie. I wiesz o tym doskonale
+> ;) I sytuacja typu: program robi blocking send, a toto mu zwraca OK choc
+> wyslalo tylko czesc, jest nieakceptowalna :>
+
+no tak, tak, w tym temacie dalem ciala
+%
+<komplement>
+Po pobieznym zapoznaniu siê z dokumentacj± uwa¿am, ¿e macie szanse na
+nagode Nobla za jakies 20 lat, ew. po¶miertnie.
+Mo¿e min±æ sporo czasu zanim ludzie skapuj± jakie to jest dobre :-).
+</komplement>
+%
+> Tego mi brakowalo!
+kurcze, lcamtuf, rzeczywiscie to, co robimy jest komus potrzebne ;P
+%
+> > Tego mi brakowalo!
+>
+>kurcze, lcamtuf, rzeczywiscie to, co robimy jest komus potrzebne ;P
+Hmmm. Czy nie lepiej zainwestowac ta prace i czas w rozwoj
+czegos co juz jest? Czy Linuch lub *BSD jest az takie do bani?
+ps. Argante nie udalo mi sie zassac.
+ps2. Czy jest gdzies do zassania obrazek z ta wrozka/rusalka?
+%   
+%
+>>ps. Argante nie udalo mi sie zassac.
+>>ps2. Czy jest gdzies do zassania obrazek z ta wrozka/rusalka?
+>
+>chyba zle zinterpretowalem tresc poprzedniego posta :)
+To jak bedzie z tym obrazkiem? :-)
+%
+Rysunek wspania³y.
+%
+ ____________________________________
+ |                                   |---/\--
+ |     P K O T - X L                 | -- o  \
+ |----------------------------------- \____ \/
+ |   |                        |  |
+/ \ / \                      / \/ \
+%
+> > Rysunek wspania³y.
+>Dziêkujê w imieniu autorki :)
+BTW: autorka wyglada rownie dobrze ? ;P
+%
+> > > Rysunek wspania³y.
+>>Dziêkujê w imieniu autorki :)
+>
+>BTW: autorka wyglada rownie dobrze ? ;P
+ejej, ja bylem pierwszy ;)
+a tak serio: takich kobiet jak ta na rysunku to chyba juz nie ma ;<
+%
+>tylko proporcje s± jakie¶ takie dziwne,
+>co o tym s±dzicie ?
+sondze ¿e zmieniam system operacyjny :)
+%
+>No moze to nie Lara Croft ale jest OK :)))
+eee ... mi siê nie podoba
+<czepiactwo>
+( niech siê wyleczy z anoreksji
+i zrobi co¶ z nogami - dlaczego ma takie krótkie ? )
+</czepiactwo>
+%
+>( niech siê wyleczy z anoreksji
+>i zrobi co¶ z nogami - dlaczego ma takie krótkie ? )
+></czepiactwo>
+Ludzie kochani, przecie¿ to jest tylko logo.
+A gdyby mia³a d³ugie (albo nawet proporcjonalne) nogi
+to po pomniejszeniu nie by³oby widaæ g³owy i d³oni.
+To nie mia³a byæ fajna dzidzia, tylko logo systemu.
+Mia³a byæ uwodzicielska, silna i niedostêpna jak system lcamtufa,
+a fajnych (i proporcjonalnych) kobitek trzeba szukaæ
+zupe³nie gdzie indziej. :)))
+Autorka: "Napisz mu, ¿e to jest rysunek gestu, a nie studium postaci".
+:))
+%
+> No ma, co nie zmienia faktu, ze chcialbym wiedziec, jak sobie wyobrazasz
+> pisanie po np. obrazie 1024x768x64k?
+eee, przerzucam sie w tryb linear i zrzucam spory kawalek bezposrednio do
+pamieci ;)  Ale na razie nie zrobilem linear, bo niektore karty sie
+pluja. BTW: mnie problem nie dotyczy, bo moj laptop wyciaga max 800x600 :)
+%
+> Co ty gadasz?! Jesli udostepnimy userowi wprowadzenie karty w jakis tryb,
+> to powinnismy miec kontrole nad tym jaki to tryb. Chodzi mi o bycie
+> specyficznym tutaj. Natomiast robienie HACa przy kazdym syscallu to w
+> ogole jakis poroniony pomysl
+Nie zgadzam sie. Po co argante mialoby robic podzial na "pozwalam na
+800x600, a nie pozwalam na 320x200"??? Bezsensowne ograniczenia! 
+%
+> Nie zgadzam sie. Po co argante mialoby robic podzial na "pozwalam na
+> 800x600, a nie pozwalam na 320x200"??? Bezsensowne ograniczenia!
+
+Po to, zeby nie pozwolic na tryb o nazwie "wyjebal sie komputer".
+%
+i tego, to tyle 
+i wcale nie bede mial teraz roku czasu,
+oklamali mnie na tej polibudzie glupiej...
+
+Bulba
+%
+> Bulba, to w nowym snapshocie masz juz jakies stable ripcd, Marcin cos tam
+> schakowal, wiec przeczytaj ripcd/README i milej zabawy :>
+
+cholera, lcamtuf, pozwol, ze to ja stwierdze, czy ripcd jest stabilny, oka ? ;P
+za kazdym razem, jak piszesz slowo ripcd to widze przy nim stable - ludzie pomysla, ze to na
+serio i bendzie obciach ;))
+%
+a na dokladke wczoraj zafundowali nam z budy wycieczke do Polmosu
+Bialystok.... sam zgadnij z czym to sie wiazalo...
+ale z drugiej strony, w chwilach upojenia wpadlem na nowa koncepcje
+RIPc wiec wcale stratny nie jestem :)
+a co do syfow, hymn inzynieri srodowiska to chyba powinien leciec
+jak Petera Gabriela "diggin' in the dirt" czy cos...
+%
+Ale jak sie tam zrobi miejsce na argante to bede mial pewnie niezla
+zabawe z haxorami, ktorzy zechca podwazyc autorytet lcamtufa poprzez rozwalenie mojej
+maszyny ;P
+%
+> No, to jedyny cykor, ktory mi przychodzi do glowy :) ale spokojna glowa juz 
+> asekuracyjnie powiedzialem Darjuszowi, ze nie ma admina, ktoremu by
+> sie ktos nie wcial na serwer ;PP
+
+Ja mu mówi³em tak samo.. tylko doda³em "...oprócz Marcina" ;-)
+just kidding.
+%
+> Dobra, jesli wszystko pojdzie zgodnie z planem, wrzuce informacje w
+> taki sposob, ze pojawi sie dopiero jutro, ale za to bedzie wisiala
+> jako main news do poniedzialku... okay?
+
+Wow, ale advanced chaking.
+%
+> dzis jest super news o otwarciu SOffice'a... 
+hmmm, to niedobrze, nie da³o by siê go jako¶, hmm, zbagatelizowaæ?
+%
+Wy tam z LN, lepiej zrzucajcie szybko ten news o niedzia³aj±cym SO, bo
+bêdziecie ostatni in the know ;-PP
+%
+zieeeeeew.
+
+-- 
+		  Freestate
+		Let yourself go
+		Let yourself go
+		Let your senses overflow
+
+		Step out of your cage
+		And onto the stage
+		It's time to start
+		Playing your part
+		Freedom awaits
+		Open the gates
+		Open your mind
+		Freedom's a state
+			/ Depeche Mode
+%
+                if (lib_inited!=c) {
+                   if (lib_inited!=-1)
+                      non_fatal(ERROR_GFX_BUSY,"GFX: Another program uses gfx module",c);
+                      failure=1;
+                }
+
+A "return" to rybka?;> Przeciez pojdzie Ci wszystko w buraki. 
+%
+> Nic... mam to napisac od nowa?;P
+
+Kurde, szkoda by bylo kilku moich nieprzespanych nocy ... No chyba, ze
+napiszesz, ze wzorem dla Ciebie bylby kod niejakiego Dawcewicza ;PP
+%
+> Chlopaki. Nie patrzcie tak za bardzo na ten deadline, coby jakichs
+> kwiatkow nie wypuscic.
+
+O! Moj czlowiek ;PP
+%
+wczoraj bylem zmeczony ... i przez 20 minut nie moglem przypomniec sobie
+swoich hasel :P
+%
+> nie
+> wierze w to, ze nie wyjda przy pisaniu tego conajmniej dwa babole ;>
+
+stawiam mleko przeciw piwu ze trzy wyjda ;)
+%
+hani, ty cos bierzesz?;>
+%
+void syscall_module_cleanup(int c) {
+        if (lib_inited==c) {
+            VALIDATE(c,"display/output/gfx","gfx/setmode");
+            check_status();
+
+System sprawdzasz czy ma prawo?;>
+%
+Hm... ja naprawde was _ZMUSZE_ zeby to wyszlo w tym tygodniu, chocbym mial
+osobiscie pojechac i nakopac ;>>>
+%
+Artur, namierzylem tego smiesznego bobka z Server - po prostu on w pewnym
+momencie z rozpedu nieodbindowywal stringa SSTRING i w pewnych sytuacjach
+wczytywal pare enterow do niego... To sa niedoskonalosci AHLLa 1.0,
+sprzyja pewnym bledom niestety :/ No nic, poprawi sie w 2.0 :>
+%
+> - math: z33d mowil cos o jutrze?:> to obejmuje takze .ahh i uaktualnienie
+>   dokumentacji... Tak tak z33d zagospodaruj jednak kawalek nocy, bo
+>   inaczej AOSr1 wyjdzie jak Windows 95 ;) Jesli z33d zrobi, w przeciagu
+>   dnia moge napisac zoomrotator.
+tej nocy znow bede z Wami. :)
+%
+> tej nocy znow bede z Wami. :)
+
+Jeszcze pare takich tekstow i wyprzedzisz mnie w Statystyce
+Fortunkowej(tm) :/
+%
+> dobra, dobra. NIE CIERPIE HLLa! Dzis cala noc generowal kod, ktorego sie
+> nie dalo uruchomic... Hi hi,
+
+Oho, nastepny ;) Moze zalozcie jakis front i bedziecie wysypywac zboze a
+tory z pociagow?;>
+%
+> sorki, klopoty techniczne. Dzisiaj tego jednak nie bedzie. Zreszta
+> troszkie roboty jest bo fill_table obecnie wogole nie ma mozliwosci
+> korzystania z kesza ani 'formatowania' wynikow/skalowania. :( hmmm -
+> zed
+
+Po przedstawieniu mojej hmm, dobitnej argumentacji, oraz obiecaniu
+lapowki, kolega zmienil zdanie i idzie do pracy.
+
+[z33d(z33d@eth-security.net)] dobra, ide pisac, za 40 min.. bedzie
+
+Kto nastepny chce zasugerowac, ze sie z czyms nie wyrobi?
+%
+!!! NOSZZZSZZ SZKURWA MAC. Nic innego mi nie przychodzi do glowy.
+%
+Programowanie sztuka kompromisu.
+- zed w fazie SEM
+%
+....piip....
+
+Trzy dni i dziesiec sekund do release albo Wielkiej Zlosci Lcamtufa :)
+
+.....piiiiiiiiiip.....
+
+DOKLADNIE TRZY DNI DO RELEASE ALBO Wielkiej Zlosci Lcamtufa :)
+
+.....piip......
+%
+> > Kurde, ale sie porobilo. Na LN toczy sie dyskusja o argante a taki
+> > np. Apacz nowy nie zwrocil nikogo uwagi ;PP
+> > 
+> Moze rozkrecicie jakas dyskusje na forum inferno/argante?
+> Ta na rgante jest khem... miejscami malo merytoryczna ;)
+
+Wlasnie mialem o tym pisac... Czy LN czytaja tylko 14-latkowie marzacy
+o bzyknieciu seksownej wrozki??? Lcamtuf, dostales moze na priva jakis
+sensowny odzew?
+%
+> Wlasnie mialem o tym pisac... Czy LN czytaja tylko 14-latkowie marzacy
+> o bzyknieciu seksownej wrozki??? Lcamtuf, dostales moze na priva jakis
+> sensowny odzew?
+
+Nie, a czytaja inni?!
+%
+> > Wlasnie mialem o tym pisac... Czy LN czytaja tylko 14-latkowie marzacy
+> > o bzyknieciu seksownej wrozki??? Lcamtuf, dostales moze na priva jakis
+> > sensowny odzew? 
+> Nie, a czytaja inni?!
+
+No ale musisz przyznaæ, ¿e ten z obrazkiem da³ ostro...
+I ten z zakusami na Autorkê ;-P
+% 
+> to jest twoj poranny mail.
+
+O. Znalazlem. Przepraszam. Kajam sie. Leze na grochu.
+Miau.
+%
+> O. Znalazlem. Przepraszam. Kajam sie. Leze na grochu. Miau.
+
+Swoja droga nie dziwie sie, ze masz takie problemy ;)
+%
+Gdzie sredniki?
+
+procedure gfx_setmode( param : unsigned ) {
+  syscall( SYSCALL_GFX_MODE, u0 := param )
+}
+
+Co to za magia?
+%
+Ale jesli chodzi o pisanie w hllu to mam problemy z uruchamianiem, nie
+kompilacja :P
+%
+> EEEEEEEEEEEEEEJJJJJ poslalem wczoraj o 4:35 wszystko wiec nie sciamniaj :)
+> na lcamtuf@dione.ids.pl !
+lcamtuf, ty cos ostatnio szalejesz... odbieralbys poczte :)
+%
+wysylam, jest 04:35 ;>>>> wypilem dzbanek zimnej kawy, spalilem paczke
+niebieskich L&M ... wypilem 4 herbaty i ... ide sie uczyc :P
+%
+P.S. Czym sie wspomagasz ? :P
+%
+for (...zajebista petla wypelniania tablicy...) {
+   ...zajebiste polecenia wypelniajace tablice
+   i+=step;
+}
+%
+CO TO W OGOLE JEST?!:)
+
+        case SYSCALL_GFX_SETPALETTE:
+
+ [...]
+
+                int_pointer=(int *)cpu[c].uregs[0];
+
+                vga_setpalvec(cpu[c].uregs[1],cpu[c].uregs[2],int_pointer);
+                return;
+                break;
+
+Nie bierz drugow :)
+%
+Poza tym pisalem to po imprezie
+%
+> > Jakby to rzec, dlaczego na stronie glownej jest DOWNLOAD, a na podstronach
+> > juz go na belce nie ma? :'-(
+> emm...
+> chyba my siê tu wszyscy czym¶ wspieramy... mo¿e tak zwolniæ tempo albo
+> co¶? Bo to siê ¼le skoñczy...
+
+Cos sie konczy, cos zaczyna,
+nie kodera to jest wina.
+
+Argant prawie juz gotowy,
+lecz download jest chu#owy,
+bowiem nie ma gdzie tam kliknac,
+zeby z Argantem sie spiknac :)
+
+I skad wiedziec ma publika,
+ze arg.tgz wciaz znika,
+z planow na dzionek kolejny
+az przeleci weekend pelny.
+
+Moze wtedy sie pojawi,
+kiedy caly kod se sprawi,
+I bez bugow, bez cor-dampow,
+Nie ma swiata bez Argantow :)
+%
+> Cos sie konczy, cos zaczyna,
+> nie kodera to jest wina.
+
+Wina, piwa, innej wódki --
+Wrózki, panny czy rozwódki.
+Trzeba skoñczyæ, nie rymowaæ
+I publikê denerwowaæ.
+
+ 
+> Argant prawie juz gotowy,
+> lecz download jest chu#owy,
+> bowiem nie ma gdzie tam kliknac,
+> zeby z Argantem sie spiknac :)
+
+Bo wiadmomo, ¿e w tej chwili
+Beginnera ten kod zmyli.
+Wersja 1 -- co innego.
+Zapamiêtaj to kolego.
+%
+> Wina, piwa, innej wódki --
+> Wrózki, panny czy rozwódki.
+
+Pisal Artur cos sensownie,
+calkiem dobrz i wygodnie,
+Chociaz panna, no i wodka,
+to zabawa bardzo krotka :)
+
+
+> Bo wiadmomo, ¿e w tej chwili
+> Beginnera ten kod zmyli.
+> Wersja 1 -- co innego.
+> Zapamiêtaj to kolego.
+
+Czekam na nia niecierpliwie,
+kiedy bedzie - honej ni wie.
+%
+>  - TO FIX: uhm, something is wrong with AHLL pointers
+I KNEW IT!
+%
+karate kurde, oczy niebieskie mowia wprost ... wczoraj wyjatkowo .. ahhh
+chlopaki, poprawiony math bedzie troszkie pozniej. W sumie juz jest
+gotowy, ale zauwazylem , ze mozna przeprowadzic ciekawy step math atak.
+Stepa trzymam w s0 ... count tez. Sprawdza, adrr, count*s0 .... tieee a
+pozniej do wskaznika dodaje s0 ;> wymyslilem sposob sploitniecia wiec
+musze pozamieniac petle for() w filltable_* na while ze sprawdzaniem
+aktualnego wskaznika... tak jak jest w table_mul itd :P no i jeszcze jedno
+Byte_Chunk bedzie tylko w table_* mul , div , ittd. Bo przy fill_* nie ma
+czegos takiego jak rozmiar tablicy ;P no chyba, ze magiczne pole size w
+ByteChunku ... ale nie.
+Dobra to byl core z ... jak to mowi Bulba mojego mozgu. Nic to lece do
+kina.
+%
+Niestety, honejowy
+setpalette ustawiajacy cala palete za jednym zamachem jest, delikatnie
+mowiac, niedzialajacy.
+%
+> a Argante wirtualnym s.o. £atwiej wymienic podobieñstwa ;-)
+
+Postaram siê zgadn±æ, ma obs³ugê polskiej klawiatury ?;-))))
+%
+Java daje jednolity kod, co daje Ar.....?
+%
+> Distributed Computing to jedno, a udostêpnianie zasobów drugie. Za
+> pierwsze w Argante jest odpowiedzialny rIPC, za drugie -- HAC.
+
+pierwsze bym wywali³, drugie go nie znam. mówi³em o tej konkretnej
+bibliotege, co by j± zaadaptowac w celach marketingowych.
+%
+> > > A i jeszce jedno, zróbcie t³umaczenie polskie
+> [.]Nikomu siê pewnie nie
+> bêdzie chcia³o...
+
+To mo¿e nikomu nie bêdzie siê chcia³o przebijaæ. Co wiêcej, jak zrobicie
+polskie t³umaczenie, i powiecie (Teraz Polska) to dostaniecie reklamê w
+gazetach.
+%
+Nabijajcie wynik sondy :)
+%
+> Nabijajcie wynik sondy :)
+
+A sam nie mo¿esz tradycyjnie? ;-P
+%
+Dojcze ... do mnie napisaly :P Ktos ten piekny jezyk? bo sie nie
+przyznalem, ze go nie znam ;>
+%
+Brzydkie kobiety w drodze do bulby.
+%
+[y3t1(y3t1@incredible.bmtmc.gda.pl)] patrzylem na ten kod
+[msg(y3t1)] i?
+[y3t1(y3t1@incredible.bmtmc.gda.pl)] kurde nie wie m
+[y3t1(y3t1@incredible.bmtmc.gda.pl)] zresztom nie wiem kiedy to napisze w
+          weekend musze projekt robic
+[y3t1(y3t1@incredible.bmtmc.gda.pl)] wiec troche czasu mam malo
+[msg(y3t1)] jaki projekt ?:)
+[y3t1(y3t1@incredible.bmtmc.gda.pl)] z ukladuw elektroniczych
+[y3t1(y3t1@incredible.bmtmc.gda.pl)] taki wzmacniacz tranzystorowy
+[msg(y3t1)] :P
+[msg(y3t1)] ojej
+[y3t1(y3t1@incredible.bmtmc.gda.pl)] pozatym drutuw musze sie uczyc i
+wogle
+          brak czasu
+[y3t1(y3t1@incredible.bmtmc.gda.pl)] wiec chyba nie bende sie za to bral
+[msg(y3t1)] jak chcesz
+
+Niewlasciwi ludzie w niewlasciwych miejscach ...
+%
+Wiecie co? Ja mam adres Bulby... i telefon... zobmy mu wymarsz do
+rodzinnego miasta, pod dom, i bedziemy pikietowac... "My Chcemy rIPC!",
+"Zdalna Komunikacja Miedzyprocesowa dla Wszystkich", "gdzie nasz kod?" itp
+:)
+%
+dnia dzisiejszego odpalilem RIPc block po sieci ;)
+dzialalo...
+
+milego swieta zmarlych :)
+
+Bulba 
+%
+On Fri, 29 Sep 2000, Bastard Operator wrote:
+
+>  Version 0.008.622:
+
+Hmm, 29 wrzesieñ 2000, dlugo lezalo w kolejce u mnie na notebooku zanim
+sie dopchalo ;>
+%
+On Wed, 1 Nov 2000, Michal Zalewski wrote:
+
+> Wiecie co? Ja mam adres Bulby... i telefon... zobmy mu wymarsz do
+> rodzinnego miasta, pod dom, i bedziemy pikietowac... "My Chcemy rIPC!",
+> "Zdalna Komunikacja Miedzyprocesowa dla Wszystkich", "gdzie nasz kod?" itp
+> :)
+
+Spoko spoko misiaczki
+%
+> No nie wiem, podobno Bulba jest w swoim mie¶cie b. popularny,
+> mogliby¶my mieæ problemy ;-) 
+> (autentyk:
+> [q__] wszyscy czekaja na Bulbe
+> [xxx] Bulbe?
+> [xxx] wait a sec.
+> [xxx] Bulbe? *naszego* Bulbe?
+> [q__] ??
+> [xxx] tak, to znany gosc, oni taki jeden serwer postawili i potem
+> ich zwineli. fajny gosc
+> )
+
+que? ciekaw jestem kto napisal _naszego_ bulbe ...
+i ciekaw jestem kogo zwineli... a chyba wiem.. Infeco ;)
+hyhyhy
+%
+On Thu, 2 Nov 2000, Michal Zalewski wrote:
+> No wlasnie. Mysle, ze powinnismy sie tam ruszyc wieksza grupa - a bulba
+> powinien byc napewno, poniewaz o ile ja bede mogl ponawijac o Argante
+> ogolnie, o tyle o rIPC chyba tylko on bedzie w stanie opowiedziec :P
+
+eh, a co tam mowic o RIPc? jaki kon jest kazdy widzi.. to znaczy tylko
+ja widze ale wy zobaczycie niedlugo jusz (naprawde:)
+%
+hmmm pingwiniarnie to ja mam ostatnio w domu ;>
+%
+wuasnie.
+Krzys Leszczynski sie niecierpliwi.
+%
+> > LN team jedzie wozkami wiec jak beda jakies wolne miejsca 
+> > to moze kogos zabrac (na razie nawet nie wiem czy beda ;/ )
+> Wózkami powiadasz? Znaczy siê dwoma co najmniej? To w takim razie ja
+> te¿ jestem za tym, ¿eby¶my pojechali ekip± ;-) A przy okazji lcamtuf
+> wreszcie nabierze wprawy w prowadzeniu tych¿e wózków itp. ;-P
+
+tia ;)
+lekcja pogladowa? 
+"a teraz drogi Michale, zademonstruje ci jak w warszawie wymusza sie
+pierwszenstwo. Bo musisz wiedziec, ze zeby zmienic pas, musisz wymusic,
+bo tutejsi kierwcy nie wiedza co to kultura na drodze"
+%
+> troche szczegolow implementacyjnych.
+
+'... no wiec requesty wyslane ktore zostana NACK-niete powoduja
+ exception u wysylajacego, no chyba ze NACK nie dojdzie to dostaja
+ timeouta i jak sie zapomna i zostawia exception nieobsluzone
+ to cleanup zniszczy inne requesty ktore moga tez wyslac NACKi
+ i powstaje lawina... przygniatajace'
+
+'... a wogole to stosujemy przebrzydly kapitalizm, wolna konkurencja,
+ jeden proces drugiemu wyrywa requesty z kolejki, tak ze mozliwe jest
+ ze sie sprawdzilo ze ma sie request w kolejce ale nie zdazy sie
+ go zaakceptowac...'
+
+hehehe, musniecie szczegolow implementacyjnych ;)
+%
+On Thu, 2 Nov 2000, Jarek Sygitowicz wrote:
+[...]
+> Fajnie by bylo jakby bulba tez cos skrobnal (podobnie 4 zdania).
+> Bylyby z tego dwa fajne wystapienia na pingwinariach.
+[...]
+
+hm, ze niby ja tez mam wystepowac?
+w sumie niezle, zawsze jak bylem maly to kcialem zostac aktorem ;)
+a dykcje mam jak dyktafon, wiec spoko...
+%
+Czy ktos ma pod reka tomograf?
+albo jego emulator pod peceta?
+system dowolny...
+nawet wersja 30 dniowa wystarczy...
+
+Bulba
+%
+HAC
+po pijaku godzina myslenia, 5 minut klepania...
+na trzezwego poltorej godziny myslenia, minuta klepania
+%
+ja oczywiscie testuje i sprawdzam... nawet w nocy snia mi sie fragmenty
+kodu w ktorych moglyby byc bledy i rano je sprawdzam...
+%
+> troche "automatycznej" pracy
+> typu .ahh... tak na czuja. Plizzzzzzzzzzz?
+
+Bulba mowi punkowy...
+%
+Marcin to jeszcze zyje?
+%
+On Sun, Nov 05, 2000 at 09:48:31PM +0100, Bulba wrote:
+> 
+> 
+> > [...] ale bulba z jakiegos powodu panicznie unika ripcd ;>
+> 
+> obawa przed nieznanym ;)
+
+Je¶li chodzi o fortunki, doganiasz peleton ;-)
+%
+At 14.57 05/10/00 +0200, you wrote:
+>
+>
+>1) We are preparing announces and discussing who is going to prepare a
+>nice web page
+>
+>2) lcamtuf wrote a small http server, we found some problems with it,
+>it should now be fixed
+>
+>3) in the meantome lcamtuf discovered a new DoS for IIS: just run ab
+>(Apache Benchmark) with concurrent connections above 64 ;-P incredible
+>but deadly effective 
+>
+>4) we have an option either to add new features to httpd or construct
+>something additional for the 1.0 release.
+>
+>5) the logo is simply great. charming, i should say ;-)
+>
+>err... is that all?
+>
+
+1) ok :)
+2) i've seen the mini httpd...
+3) ehhehe
+4) k
+5) http://www.artgabi.com.pl/argante/_malunki/argante3_k.jpg cools
+%
+"Because sprintf and vsprintf assume an infinitely  long  string,
+ callers  must  be careful not to overflow the actual space; 
+ this is often impossible to assure." Linux Man
+%
+> To .pl / non-pl dudes: we NEED svgalib mid-end :> It will be really
+> cool. I heard someone from LN is interested?:> Or should I start
+> writing it on my own, TOMORROW?:>
+
+Changed my mind. Not necessary.
+%
+em, zyje, 
+em, wiem ze juz mnie nie lubicie,
+em, nie olalem tego wszystkiego wcale a wcale,
+em, probke IPC poslalem lcamtufowi,
+em, wlasnie sie zastanawiam czy wlasciwa wersje... choroba,
+em, jednak wlasciwa chyba,
+hmm glowa boli dalej...
+
+jak mi nie zabierzecie wladzy nad rIPC to planuje w tym tygodniu
+wykonczyc temat...
+teraz jest lepiej niz wczesniej wiec nie bedzie dalszych zwlok
+na pewno
+
+Bulba
+%
+Kuwa, wlasnie kupilem karnet na festiwal filmow Larsa von Triera ...
+nastepne 9 dni wyjete z zycia. Tak, wiec bede mial napiety terminarz, wiec
+prosze sie nie denerwowac jesli bede offline czasami ;)
+%
+- referendum: shared memory concept
+  po lokalu wszystko jedno i tak bedzie dobrze dzialalo (dziala prawie)
+  ale po sieci zaczynjaja sie schody wiec:
+  a) wolna amerykanka, synchronizacje i udostepnianie zostawiamy
+     wlascicielowi wspoldzielonej pamieci
+  b) panstwo policyjne, wszysscy wszystko lockuja a system zaczyna
+     pelzac zamiast biegac
+  c) odczyt, kazdy jak chce, i requesty do updatowania ktore server
+     moze odrzucic lub przyjac, a gdy przyjmie to zmiany sa
+     rozsylane do wszystkich procesow przyczepionych do bloku pamieci
+     szybkie ladne eleganckie... 
+
+Bulba
+%
+Hehehe....
+
+[+] plasmoid/#hax is away, :away mov s0,100 ; twait 1 ; syscall
+    $SYSCALL_GETRANDOM ; mov s0,u0 ; loop :away ; halt
+%
+P.S. Sorki, patch bedzie poznym wieczorkiem. Wlasnie dostalem telefon :)
+%
+Taka np. motorolka 68376 - kosztuje $27!
+%
+
+i tego, to tyle 
+i wcale nie bede mial teraz roku czasu,
+oklamali mnie na tej polibudzie glupiej...
+
+Bulba
+%
+ - fixed honey's bug - well, a+3/4 isn't extactly the same as (a+3)/4
+ - fixed another brain-damaging honey's bug
+%
+> Mia³em na my¶li pracê zarobkow± ;-) No i oczywi¶cie jak najmniej
+> cut'n'pase z readme ;-) Na razie jedynymi osobami, które jako-tako
+> przerobi³y AHLL wydaj± siê byæ honey, marcel i zeed ;-)) Dla reszty
+> ¶wiata to wci±¿ black magic.
+
+Ta, honey to przerobil... na jakis wlasny jezyk ;>
+%
+On Mon, Oct 23, 2000 at 02:55:57PM +0200, Michal Zalewski wrote:
+> On Mon, 23 Oct 2000, Jarek Sygitowicz wrote:
+> 
+> >> rodzaju krótkeigo tutoriala "piszemy programy dla Argante". To na
+> >> pewno zwiêkszy liczbê potencjalnych developerów aplikacji dla tego
+> >> systemu. 
+> 
+> > taki text z checia opublikujemy takze na LN :)
+> 
+> Mam to rozumiec jako "tez bysmy chcieli do ch* wiedziec jak"?;)
+
+ROTFL
+Czego to ludzie nie napisz±, ¿eby trafiæ do fortunek ;-P
+
+Pozdrowienia,
+Artur
+%
+>> eee, czy mi sie wydaje, czy on chce sie dowiedziec czegos z README!
+>> ROTFL ;)
+>
+> O to juz bardzo, bardzo naciagana proba znalezienia sie w fortunkach :/
+
+I nieudana
+%
+> P.S. btw, osaczylem przed chwila ciekawego buraka w Apachu ..lokala
+> jeszcze to sprawdze. :)
+
+Apacz sysie. Postnij rownoczesnie z announcem Mini-HTTP ;>
+%
+>  __--> http://z33d.eth-security.net/job.html :)
+
+Wymysl sobie troche firm, bedzie powazniej wygladac ;P
+%
+> Wymysl sobie troche firm, bedzie powazniej wygladac ;P
+nie chce wymyslac :P a jak wpisze tak jak bylo naprawde to mnie
+zaszlachtuja bo z reguly bylo to na czarno. ;) 
+...urzad skarbowy czuwa
+%
+> "Realised" oznacza równie¿ "realizowaæ" w sensie "put in form", czyli
+> urzeczywistniæ (plan, design, hope, idea..). Uff, a ju¿ my¶la³em, ¿e
+> mi siê zupe³nie pomiesza³o...
+
+Wed³ug mojego podrêcznika od idiomów to drugie znaczenie jest w³a¶nie
+praktycznie nieu¿ywane. BTW je¶li to s³ownik Stanis³awskiego, to nie ma siê
+nim co sugerowaæ ;)
+%
+   "It's better to keep your mouth shut and be thought a fool than to
+   open it and remove all doubt."
+%
+<oxigen> god has no phonenumber
+<oxigen> he only has an email because he was annoyed by all the joke calls
+%
+Heja. To ja. Potrzebuje kogos, kto wzialby mnie w samochod, wywiozl na
+pole i nauczyl uzywac tego :> 
+%
+> Miauuuuuuuuuuuuu? Prosze, zrob tak, zeby to sie stalo w kilka dni? Do
+> napisania masz z 10-20 kB jeszcze, z czego czesc to tekst, nie wymagajacy
+> debugowania ani nie muszacy miec sensu, i troche "automatycznej" pracy
+> typu .ahh... tak na czuja. Plizzzzzzzzzzz?
+
+Bulba mowi punkowy...
+%
+> [...] ale bulba z jakiegos powodu panicznie unika ripcd ;>
+
+obawa przed nieznanym ;)
+
+Bulba
+%
+> HAC po pijaku godzina myslenia, 5 minut klepania... na trzezwego
+> poltorej godziny myslenia, minuta klepania
+
+Jo, ale pisolem Ci mniej wiecej jak sobie KA^H^HHACa wyobrazam... 
+%
+> Bulba mowi punkowy...
+
+Mmmm... to my, jak sie pojawily pierwsze reklamy Pankowego, i pierwsza
+reklama w Krakowie (hmm, na jakiej to bylo ulicy? chyba na jednej z tych,
+ktorymi mozna sie sturlac nad Wisle), za pomoca kluczy do domu,
+probowalismy oderwac dolny brzuszek od B.... Udalo sie :)
+
+Ach, stare czasy wandalizmu... O pardon, "functionless art".
+%
+> Je¶li chodzi o fortunki, doganiasz peleton ;-) Marcina nie ma, jak
+> wyp³ynie pewnie bêdzie mia³ wiêcej rzeczy do zrobienia ni¿ bêdzie
+> chcia³ i móg³ ;-)
+
+Artur, ty ZDRADZILES fortunki. Jestes elementem wywrotowym, dzialajacym na
+szkode open-source! Kiedy ostatnio updatowales fortunki? 100 postow temu
+chyba ;> Zagladam tam nieufnie co trzy-cztery dni... I od paru tygodni
+nic.
+%
+> Ups, czujê siê jak Bulba. Ju¿ zaczyna mnie boleæ g³owa ;-)
+> Przyznaj sie, ¿e to taki spell Argante na niepokornych ? ;-)
+
+nosz kurde, ja tu kazdy dzien tocze walke o przetrwanie, kazdego
+ranka patrze w lusterko i sie ciesze gdy potrafie sie rozpoznac
+albo gdy wogole uda mi sie dojsc do lusterka a ci sobie znalezli
+modela do nasladowania... 
+%
+pani w aptece chyba mi wyda karte stalego klienta ze znizka na leki
+przeciwbolowe jak tak dalej pojdzie...
+juz sie glupawo usmiecha jak przychodze....
+%
+> Apdejtujê z ¿elazn± regularno¶ci± trzech i pó³ tygodnia.
+
+hyhy, no spoko, ja mam tylko poslizgi rzedu 2 tygodni ;)
+%
+> chronia przed klientem ssh logujacym hasla i przed panem Wiesiem ktory
+> sniffuje telnet.
+a wiec to on ;>
+%
+>> Trzeba zalozyc fortunes-abuse@argante.org :/
+> 
+> oja, dawno z ludzmi nie gadalem i mam napady glupawki ostatnio...
+> dajcie adres do cancelbota
+
+koperacja@poczta.onet.pl
+%
+Ta, w PIXie przy http proxy sa niesamowite teksty.
+
+> ehm, mozna obejrzec kod IOSa? gdzie jest?  (i od kiedy ios jest open
+> source;)
+
+Cii...
+%
+> /*      This Module contains Proprietary Information of Microsoft  */
+> /*      Corporation and should be treated as Confidential.         */
+
+niech zgadne.
+to TY! sie wlamales do MS? ;)
+%
+> > ps. wszystko mnie dzisiaj irytuje. Was tez?
+> 
+> ta. zwlaszcza takie pytania ;P
+
+i odpowiedzi na nie :P
+
+g.
+
+ps. jak ktos dopisze ze irytuja go odpowiedzi na odpowiedzi 
+to ide sie upic ;]
+%
+ps. sorry ze was nie zapraszamy na bibe, ale to jest naprawde
+malutenka flaszeczka...
+%
+[ rozmowa o Apache na nobodym ]
+
+<Bulba:#argante> jakis server do streamowania mp3
+<z33d:#argante> mteg: i tu sie mylisz
+<Bulba:#argante> widzisz...
+<Bulba:#argante> analogia
+<Bulba:#argante> masz zamek
+<Bulba:#argante> zamek otoczony zajebistym murem
+<Bulba:#argante> ale w murze jest dziura
+<Bulba:#argante> taka ze taki przecietny nikt tam sobie wejdzie
+<Bulba:#argante> dalej jest nikim ale przeniknal pierwsza warstwe obronna
+<Bulba:#argante> jest w srodku
+<z33d:#argante> mteg: na userze nobody chodzi jeszcze czasem pare programow ;>
+<Bulba:#argante> tu wode zatruje
+<Bulba:#argante> tam proch ukradnie
+<Bulba:#argante> moze kuke zrobic
+<z33d:#argante> moze wlamac sie do komnat ksiezniczki ...
+%
+<z33d:#argante> bulba
+<z33d:#argante> nie myslalesz, zeby nadac swojemu kodowi troche artyzmu
+<z33d:#argante> ?
+<z33d:#argante> tak jak w przypadku edit headera
+<z33d:#argante> hmmm z calego naszego timu Marcin zdaje sie byc najbardziej
+                odtworczy
+<Bulba:#argante> ;)
+<Bulba:#argante> artyzmu mu jeszcze nadam :)
+<z33d:#argante> zero cytatow/dziwnychhh komentarzy w kodzie
+<Bulba:#argante> spoko
+<Bulba:#argante> to narazie byl wstep
+<z33d:#argante> ;)
+%
+<z33d> heh zrodla kernela FreeBSD
+<lcamtuf> :)
+<lcamtuf> kod bulby rulez
+<lcamtuf> to naprawde sa grosteskowe drzew na solnej pustyni
+<lcamtuf> aczkolwiek troche brakuje glupawych komentarzy, to fakt
+<z33d> sa nieludzkie
+<z33d> w linuxowym kernelu jest sporo fajnych tekstow
+<Bulba> sie wkurze i napisze kernel argante w perlu
+<z33d> aaaa wlasnie w kodzie IOS'a tez widzialem pare ladnych fortunek
+.... ;>
+<Bulba> ;P
+<Bulba> hmm
+<Bulba> bo komentarze wycialem
+<z33d> :)
+<Bulba> coby sie pocieszac ze wcale nie mialem tak duzo do napisania
+%
+<Bulba> fajny jezyk
+<Bulba> perl sie nazywa
+%
+<lcamtuf> if (x->prev) x->prev->next = x->next; \
+<lcamtuf>     else proces_incoming[(x)->vcpu] = (x)->next; \
+<lcamtuf> if ((x)->next) (x)->next->prev = (x)->prev; \
+<lcamtuf> if ((x)->prev_r) (x)->prev_r->next_r = (x)->next_r; \
+<lcamtuf>     else (r)->targets = (x)->next_r; \
+<lcamtuf> if ((x)->next_r) (x)->next_r->prev_r = (x)->prev_r;
+<lcamtuf> to jest kod bulby
+<lcamtuf> ;>
+<z33d> :)
+<Bulba> no so no so
+<z33d> hih
+<Bulba> linked list
+<Bulba> klasisz
+<mteg> heeeeeeh
+<^TelNet^-> *rotfl*
+<lcamtuf> ;>
+%
+<z33d> no ... z jakis struktur danych korzystales?
+<z33d> :P
+<lcamtuf> ;>
+<lcamtuf> ta
+<Bulba> podwojnie i pojedynczo linkowane listy, listy do mamy i tablice
+          czekolady
+<lcamtuf> bulba-l33t-unreadabl3-klazz
+<Bulba> oto moje struktury
+<z33d> dzisiaj uzelalem sie z btree ze wzbogaceniem struktury danych
+%
+<lcamtuf> ALGORYTMY OBSYSAJA
+<lcamtuf> Zabijaja ducha poety
+<mteg> Bulba do drzew czerwono-czarnych nie doszedles ? ;)
+<z33d> dokladnie
+<lcamtuf> ograniczaja mozliwosci tworcze
+<lcamtuf> program nie powinien miec algorytmu
+<lcamtuf> powinien byc jak istota zywa
+<lcamtuf> nieprzewidywalny
+<lcamtuf> nieprzenikniony
+<lcamtuf> diaboliczny
+<z33d> pracujesz dla microsoft?
+<lcamtuf> microsoft nie chcial mnie zatrudnic
+%
+<Bulba> mteg ty, ja tu studiuje inzynierie srodowiska ... wiec jak kcesz mnie
+          pytac to zapytaj lepiej w jaki sposob usuwa sie zwiazki biogenne ze
+          sciekow bytowo gospodarczych
+<lcamtuf> hihi
+<Bulba> pozatym ja nie wiem czym sie tak przejmujecie, to pierwszy program w
+          zyciu ktory pisze ;)
+<lcamtuf> bulba tak, na koncu jest napewno "Hello world!"
+<z33d> ;>
+<Bulba> ^TelNet^- moze chcesz posluchac o wydzielonych komorach fermentacji
+<Bulba> lcamtuf kurde, wiedzialm ze czegos zapomnialem
+<mteg> Bulba niee dobra litosci
+<^TelNet^-> Bulba : nie dziêkuje
+<Bulba> nie dziekuj :)
+<lcamtuf> hm
+<z33d> ehhh
+<Bulba> dobiloby mnie to bardziej niz ciebie ;)
+%
+<mteg> lcamtuf ze kiedy mialo byc? wtorek zeszly ? :)
+<mteg> ;)
+<Bulba> mteg, 26 wrzesnia mialo byc ;)
+<z33d> taaaak, lcamtuf kiedy zaczales to pisac?
+<Bulba> wiem wiem, slyszalem
+<Bulba> konflikt na bliskim wschodzie to tez moja wina
+<z33d> gdzies tak w sierpniu chyba
+<Bulba> ja jak sie nie myle to uslyszalem gdzies na poczatku wrzesnia
+chyba
+<z33d> czym dluzej tym lepiej
+<z33d> ludzie beda myslec, ze dobrze potestowane ...:P
+%
+<z33d> zrobimy premiere, lcamtuf bedzie pokazywal mozliwosci modulu graph
+          niczym Bill Gates ... ;>
+<z33d> napisze blue_screen.ahl jutro ;>
+<Bulba> z33d, z modulem ipc
+<Bulba> postawimy na demonstracji 10 kompow
+<z33d> :)
+<Bulba> zepniemy w ripc
+<Bulba> i na jednym sie wywali
+<Bulba> i potem po kolei na wszystkich z opoznieniem sekundowym
+<Bulba> ale tak zeby synchronizacja byla perfekcyjna
+<z33d> moznaby zrobic demonstracje ...
+<z33d> pod sejmem
+<Bulba> ano
+<Bulba> petardy
+<Bulba> te sprawy
+<Bulba> ja zboze nawet pzryniose
+<Bulba> bo tu mam na pole blisko
+<Bulba> bedziemy wysypywac
+<z33d> ja tez mam blisko
+<Bulba> bo to chyba ostatnio modne jest
+<Bulba> z33d ja mam do lasu 100 metrow
+%
+<z33d> hmmm tak serio jak bedzie pod Xami cos mrugalo to mozna konferencje
+          prasowa zwolac
+<z33d> i zaprosic panow z Pckuriera bajtka
+<Bulba> a wlasnie, co z tym frontendem iksowym?
+<Bulba> cos slychac?
+<z33d> easy pc, esy englisz with englisz easy
+<Bulba> Komputer
+<Bulba> takie fajne pismo kiedys bylo
+<Bulba> i najfajniejsza rubryka
+<Bulba> Terminator Terminologiczny
+<z33d> wydrukowac kody zrodlowe argante do najnowszego bajtka, zeby
+          uzytkownicy mogli sobie wklepac ;>
+<z33d> tylko, ze szkoda, ze pod basic'em tego nie napisalismy
+%
+A fortunki sie kurza... Artur, pamietaj ze to ostatnia rzecz w Argante,
+ktora jest jeszcze wspierana i developowana ;'P
+%
+panie i panowie, zostal DVR.
+
+tatatata!
+%
+On Wed, 15 Nov 2000, Marcin Dawcewicz wrote:
+
+> vi +155 ripcd.c
+>
+> p = strchr(...)
+>
+> Ze niby na solku strchr zwraca numer znaku, a nie wskaznik do niego ??
+
+Nie. Jesli wczesniej nie byl winkludowany, to sie pewnie implicit
+declaruje i defaultuje do inta ;>>>>
+
+Ale polszczyzna.
+%
+Westheimer's Discovery:
+        A couple of months in the laboratory can frequently save a
+        couple of hours in the library.
+%
+> mama, tylko kazda proba zlinkowania z lvga wywala... sekunde ;-) . . .
+> undefined reference to __global_cli
+
+...a jak robisz -lvga -lvgagl? Hmm, kurna. A jak dasz int __global_cli
+gdzies w kodzie Argante?;P
+%
+On Wed, 15 Nov 2000, Artur Skura wrote:
+
+> mama, tylko kazda proba zlinkowania z lvga wywala... sekunde ;-) . . .
+> undefined reference to __global_cli
+
+Btw oni w ogole sa magiczni, probowalem na 7.0 skompilowac jeden modul do
+kernela... No wiec bootuje sie to z 2.2.17 chyba, ale naglowki ma od
+2.4.0-test...
+%
+> W zwiazku z poglebiajacym sie wstretem do PW niesmialo zaczynam myslec o
+> jakiejs alternatywie. Co sadzicie o PJWSTK ? A moze w ogole sie nie uczyc
+> tylko zajac sie czyms powaznym ;)
+>
+> Lcamtuf, ty sie uczysz fogle gdzies ? Jesli tak to badz laskaw zdradzic
+> tajemnice, w jaki sposob znajdujesz czas na prace i cyberprzyjemnosci ...
+>
+> Podobne pytanie z reszta do LN team i reszty ludzi, ktorzy studiuja i
+> jednoczesnie maja wystarczajaco czasu zeby byc na biezaco z branza
+> IT (sekiuriti szczegolnie). Pomozcie koledze ponownie odnalezc sens zycia
+> :)
+>
+> Dla dobra listy odpowiedzi prosze na priva.
+
+Czemu na priva? Sam bym z checia poczyal :))
+Ja na przyklad przelazlem w tym celu na zaoczne :)))
+%
+> No coz, pisanie kodu nie wychodzi wiec trzeba troche offtopic ;> Jade
+> jutro do Wawy na kilka dni, no pare ;> Cos sie ciekawego w tym czasie
+> dzieje w naszej cudownej stolicy? - z33d
+
+No. Idziemy ogladac z33da ;>
+%
+Co sadzicie o tej sprawie z laczem przy rurociagu jamalskim?
+Moim zdaniem to niezly przekret ale jednoczesnie spora
+szansa na to zeby powstala jakas realna konkurencja dla
+TPSA :)
+%
+<Bulba> www jusz jest ;)
+<^TelNet^-> no tak a modul php i takie tam ? ;>
+<Bulba> php? a kto normalny z tego korzysta?
+
+%
+<Bulba> sie wkurze i napisze kernel argante w perlu
+%
+<Bulba> bo ostatnio nagabywalem wizje zeby mi wyslal te rozpiske genomu
+<Bulba> chcialem sobie pokoj tapetowac
+<Bulba> tagacagatacag
+%
+<Bulba> hint: nie stawiac herbaty blisko myszki bo jak sie siega po komorke to
+          sie herbata wylewa
+%
+<Urza> Jest ssh pod linuxa ?
+%
+<Bulba> hmm.. modem 14400 ewidentnie nie nadaje sie do sciagania kernela
+%
+<Bulba> dostalem smsa od servera ze mam isc spac
+<Bulba> dobrze go wytresowalem
+<Bulba> troszczy sie o swego pana
+<lcamtuf> <d4m4g3:#arcok> es mindenki elkezdett uvolteni annyira
+          artikulatlanul bazmeg hogy semmit nem lehetett erteni
+<Bulba> ojezu
+<Bulba> eksport kryptografii
+%
+<arturs> "Dbaj o czystosc Swojej Rasy"
+<arturs> "Dbaj o czystosc Swojego Kodu"
+%
+<pkot> reboot
+<pkot> :-)
+<Bulba> to nie pomoze.. taka jest koncepcja swiata ogolnie ...
+<pkot> reboot swiata?
+<Bulba> a jak sie kernel potem nie podniesie ?
+<pkot> to sie problem sam rozwiaze :-)
+<Bulba> ok, teraz pozostaje tylko znalezc wylacznik
+<Bulba> albo sciezke do lasu do shutdown
+%
+> > > > > > > > > > > > > No i widzisz, chyba siê ze mn± zgodzi³e¶ :>
+> > > > > > > > > > > > >
+> > > > > > > > > > > > chyba
+> > > > > > > > > > >
+> > > > > > > > > > > Zdecyduj sie. :P Komments pliz ;)
+> > > > > > > > > > >
+> > > > > > > > > > Chyba siê zgodzi³em, ale g³owy nie dam.
+> > > > > > > > >
+> > > > > > > > > Nie wierzysz?? ;)
+> > > > > > > > >
+> > > > > > > > Po prostu ju¿ nie jestem pewien. Zgubi³em siê :P
+> > > > > > >
+> > > > > > > W którym miejscu?
+> > > > > > >
+> > > > > > ¯artujesz sobie?
+> > > > >
+> > > > > Nie?
+> > > >
+> > > > Chyba jednak tak.
+> > >
+> > > ¯e co?
+> > >
+> > ¯e chyba sobie ¿artujesz.
+>
+> Niby z czego?
+
+Niby z tego, ¿e mia³bym pamiêtaæ w którym miejscu siê zgubi³em (goto line
+13)
+
+Yannek
+%
+<honej> cze, agtlogger :P
+<agtlogger> cze honejball
+<honej> agtlogger: a ty skad znasz mojego starego nicka?
+<honej> agtlogger: a! uzylem go na slashdocie :)
+<honej> Nazywam sie Kuleczny. Miodnik Kuleczny.
+%
+<agtlogger> honej latwo trafiasz do fortunek 
+<honej> agtlogger: o?! Naprawde? A ja taki nieuczesany ;)
+<honej> no dobra, to bylo goopie ;)
+%
+[honej(honey@urtica.linuxnews.pl)] dlaczego trafilem do ignora?
+[msg(honej)] a trafiles?
+[msg(honej)] ja tylko requestnalem opa
+[honej(honey@urtica.linuxnews.pl)] eee, co oznacza 
+>TE< agtlogger/honey CTCP [OP ] ignored.
+[honej(honey@urtica.linuxnews.pl)] bo ja nie wiem
+%
+<honej> agtlogger: thx. I co niby to mialoby dac?
+[msg(honej)] ...ktory go otrzymal ;-)
+[honej(honey@urtica.linuxnews.pl)] dokladnie :)
+<honej> bo mi /help nie dziala
+<agtlogger> man ctcp ;-p
+<honej> :(
+<agtlogger> wyproboj na GWIDo
+<honej> a irca nie uzywam zbyt duzo... w kazdym razie nie wiecej niz 
+8-10 godzin dziennie
+<agtlogger> honej F1
+>>> You have been kicked off #argante by honej (:P)
+%
+ùíù ^BarD [+http___st@pe169.gdansk.cvx.ppp.tpnet.pl] has joined #argante
+<^BarD> pomoze mi ktos z argante?
+<^BarD> pomoze mi ktos z argante?
+ùíù _doc [~doc@alpha.metech.com.pl] has joined #argante
+<^BarD> cze
+<^BarD> moze ty znasz sie na argante?
+<_doc> cze, co znaczy 'znasz sie'?
+ùíù SignOff ^BarD: #argante ()
+%
+<devstderr> lcamtuf: why dod you ask me to come here ?
+<lcamtuf> dunno
+<devstderr> :)
+<devstderr> can i do a mirror of www.argante.org ?
+<JmsBLoNd> lcamtuf: co jednak 02 chcesz?
+<JmsBLoNd> o2?
+<JmsBLoNd> piekny odkurzacz :))
+<jsm> o-o, w stanach Imac najmniejszy $799 kosztuje..
+<JmsBLoNd> lcamtuf: ile O2 kosztuje? wiesz?
+<lcamtuf> duuuuuuuzo
+<lcamtuf> $1500?
+<lcamtuf> jak nie wiecej
+<jsm> wiêcej pewnie
+<JmsBLoNd> hmm
+<JmsBLoNd> lcamtuf: zalezy pewnie duzo od bebechow ;>
+<lcamtuf> marti a pacztles na e-gay'u?
+<JmsBLoNd> grafiki itd
+<lcamtuf> na te twoje imaki?
+<JmsBLoNd> hmm maciusie som cool :)
+<devstderr> ok im doing a mirror
+%
+<lcamtuf> honej
+<lcamtuf> co jezd
+<lcamtuf> nie poslales mesga
+<lcamtuf> agusia!
+<lcamtuf> usia!
+<lcamtuf> sia!
+<lcamtuf> ia!
+<lcamtuf> a!
+<lcamtuf> !
+<Agusia> lcamtuf?
+<Agusia> lcamtuf: ciicho, romansuje teraz
+%
+<Agusia> lcamtuf: ciicho, romansuje teraz
+<JmsBLoNd> Agusia :)
+<lcamtuf> no wlasnie
+<lcamtuf> nie ze mna!
+<lcamtuf> sigh
+<lcamtuf> ;>
+<lcamtuf> myslisz, ze nie widze wszystkiego?;P
+<lcamtuf> /set sniff on
+<lcamtuf> e
+<lcamtuf> 
+<devstderr> *** No such variable "sniff"
+<Agusia> lcamtuf: no coz, nie mozna miec wszystkiego
+<JmsBLoNd> devstderr: a masz skrypt lcamtufa?
+%
+<lcamtuf> ide ponazekac mojej kobiecie, ze nawet obce kobiety ze mna nie 
+chca romansowac na ircu
+<lcamtuf> to kryzys.
+<lcamtuf> nawet zadnego "skad stukasz"
+<lcamtuf> juz nie jestem atrakcyjny ;P
+<Agusia> lcamtuf: ja tam cie nie znam..
+<Agusia> nie wiem czy spelniasz moje wymagania etstetyczne :p
+%
+<Agusia> nie wiem czy spelniasz moje wymagania etstetyczne :p
+<lcamtuf> Agusia: a jakie sa?
+<Agusia> wygorowane
+<lcamtuf> jestem wysokim brunetem, meski, przystojny, inteligetny, 
+blyskotliwy, usmiech wspanialy i czarujacy
+<Agusia> hihihi :)
+<lcamtuf> nienaganne maniery
+<Agusia> dostalam zlecenie napisania pieknego maila..
+<lcamtuf> skromnosc
+<lcamtuf> e:/
+<Agusia> hmm.. ale chyba mimo wszystko jestes za mlody jak na mnie
+<Agusia> a poza tym, zanim cokolwiek, musialabym obejrzec twoj tylek
+<lcamtuf> Agusia: da sie zrobic. to idzie mniej wiecej tak: ( | )
+%
+<lcamtuf> agu?
+<Agusia> no nie spie jeszzce...
+<lcamtuf> nie odpowiedzialas
+<lcamtuf> w kazdym razie
+<lcamtuf> nie wazne
+<lcamtuf> wiem
+<lcamtuf> ;P
+<Agusia> hmm.. chodzilo o twoj wiek?
+<Agusia> czy o to ze mozesz wygladac staro?
+<lcamtuf> kiedys bede dorosly i ladny i beda sie za mna ogladac inne 
+kobiety niz tylko moja i bedziecie do mnie wszystkie mesgowac "skad stukasz?"
+%
+<JmsBLoNd> Agusia: ja jestem starszy ;>
+<lcamtuf> do kazdego faceta tak mesgujecie, tylko do mnie nie! czuje sie maly
+<lcamtuf> ;>
+<Agusia> ja tam tak nie mesguje
+<lcamtuf> e
+<lcamtuf> wiem
+<lcamtuf> bede blondynem
+<lcamtuf> w luznym swetrze
+<lcamtuf> z gitara
+%
+<lcamtuf> agusia.. to tylko jeden msg!
+<lcamtuf> prooooooosze
+<lcamtuf> ;>
+ð JmsBLoNd/#argante jest blondynem :(
+ð Agusia/#argante jest blondynka :p
+<Agusia> lcamtuf - ok, juz nie marudz
+<lcamtuf> ok
+<lcamtuf> dziemtuje
+<lcamtuf> lepiej mi
+<lcamtuf> ide opowiedziec zonie
+%
+<JmsBLoNd> lcatuf: cya
+<lcamtuf> miau miau
+<JmsBLoNd> lcamtuf: znalazles cos w sendmailu?
+<lcamtuf> JmsBLoNd: nio
+<lcamtuf> robale
+%
+ùíù esr [-esr@pf160.warszawa.cvx.ppp.tpnet.pl] has joined #argante
+<esr> ja chce opa!
+<JmsBLoNd> hehe :)
+<lcamtuf> jaki chekerski program napisalem
+<lcamtuf> na potrzeby argante
+<JmsBLoNd> ja tez!! :)))
+<lcamtuf> .DATA
+<lcamtuf> :Tekst1
+<lcamtuf>         "This machine is little-endian.\n"
+<esr> woooow!
+<esr> niezly!
+<JmsBLoNd> hehe chce opa ; w sensie ;> nic nie pisalem
+<esr> a dasz opa?
+<lcamtuf> esr?
+<lcamtuf> artur
+%
+<esr> opa
+<lcamtuf> to ty
+<lcamtuf> poznalem cie
+<esr> qrna, jestes szybki!!!!!!
+<esr> po czym?
+<lcamtuf> chcesz sie dostac do fortunek
+<esr> ehem, wiem po czym
+<esr> nienienienie
+<lcamtuf> mam autodetect
+<esr> ;-=
+<lcamtuf> byles za malo elite
+<esr> buuuuu
+<lcamtuf> licze procentowy stosunek 3+17| do isalpha()
+%
+<majaka> lcamtuf: czemu agusia sfinka?
+<majaka> lcamtuf: aha. 
+<lcamtuf> majaka a bo idzie bez pozegnania
+<lcamtuf> poza tym
+<lcamtuf> nie spodziewalem sie po niej:
+<lcamtuf> [Agusia(agnes@urtica.linuxnews.pl)] cze, skad stukasz?
+%
+<majaka> lcamtuf: zdradziles nas! teraz na P. jedziemy z honejem
+<lcamtuf> hhiihih
+<lcamtuf> dobrze wam tak
+%
+ùíù o8IHI8o [=o8IHI8o@pe194.warszawa.cvx.ppp.tpnet.pl] has joined #argante
+<o8IHI8o> cze
+<o8IHI8o> msg me 4 shells
+<o8IHI8o> qmpel dal cynk ze macie kod IOSa
+<o8IHI8o> moge wymienic za shelle
+<Bulba> ciezarowka muszelek za kod IOSa
+<o8IHI8o> B mam tylko dwa shelle
+<o8IHI8o> ale mozna stawiac eggdropy
+<o8IHI8o> pl33z...
+<o8IHI8o> KK, moze byc 4 shelle?
+<Bulba> hmm kod IOSa za darmo mozesz sobie sciagnac z http://lcamtuf.na.export.pl/arg.tgz
+<o8IHI8o> 8u1b4a n1e b4dz skn3ra
+<Bulba> tylko nie mow nikomu
+<agaran> ja chce statycznego lasha i mipsel-linux pdksh mozemy gadac
+<Bulba> ;)
+<o8IHI8o> agaran a co to iest?
+<agaran> nm
+<o8IHI8o> Bulba bb
+<o8IHI8o> Bulba tam jest argant
+<Bulba> eh, sory jebnalem sie ;)
+<o8IHI8o> spox
+%
+<o8IHI8o> qmpel m00vil z3 j3st3scie kewl
+<Bulba> e tam, oni sa kewl, ja nie 
+<o8IHI8o> kto
+<o8IHI8o> qmpel nie mi4l ratzji
+<o8IHI8o> fcale ni3 m4cie t3go iosa
+ùíù SignOff o8IHI8o: #argante ("l4m3rz")
+<Bulba> lam3rz lam3rz.. o o mnie cos naisal
+%
+<Agusia> hyrek :)
+<Agusia> o, to nie tu
+%
+<cliph> lcamtuf: co ja tu robiê? ;)
+<cliph> co ty se my¶lisz? ¿e mnie invitniesz i ja tu tak bêdê siedzia³ ??
+<cliph> za free ?
+<cliph> ;)
+<cliph> i nie wiadomo po co? 
+<cliph> :)
+<honej>  /kick cliph problem rozwiazany ;)
+<cliph> w sumie, to i tak lepsze ni¿ praca :(
+<lcamtuf> cliph ;>
+<lcamtuf> cichaj
+<lcamtuf> nie pyskuj ;>
+%
+<Agusia> lcamtuf: podrywam kogos innego...
+<lcamtuf> Agusia: e. to nie.
+<lcamtuf> Agusia: to co kcesz?;P
+%
+<cliph> gupek ze mnie
+ùíù cliph was kicked off #argante by cliph (gupek)
+ùíù cliph [wp@alfa.elzabsoft.pl] has joined #argante
+%
+<flamtuf>  http://www.arin.net/whois/index.html
+<cliph> nie, tam jest za du¿o informacji jak na wtorek popo³udnie
+<cliph> to nie dla mnie
+<cliph> poczekam do pi±tku
+%
+<BarD> macie argante
+<BarD> zainstalowana, ja tak!
+<nsilent22> nie mamy
+<nsilent22> ale sie chetnie przekonamy co to potrafi
+<BarD> ja ma
+<BarD> nie znam polecen :) :(
+%
+<lcamtuf> ziew
+<lcamtuf> aaapdejt duzy polazl
+<lcamtuf> radujcie sie ludki
+%
+ùíù CADENCE [~blah@charon4.man.szczecin.pl] has joined #argante
+<Bulba> kadens
+<CADENCE> oo!
+<CADENCE> B..B..Bulba! I to w dodatku zywy!
+%
+<Bulba> wyslalem alfe dvr do klamtufika
+<honej> sto lat, sto lat, niech pisze pisze nam ;)
+<honej> tylko nie bierz tego do siebie ;)
+%
+Topic (#argante): changed by agtlogger: Bulba rzadzi
+You have new email.
+<Bulba> jasne
+<Bulba> :P
+%
+ùíù Aguilera_ [~Buffy@sharpol.gateway.silesianet.pl] has joined #argante
+ùíù Aguilera_ [~Buffy@sharpol.gateway.silesianet.pl] has left #argante [Aguilera_]
+<honej> o, i christina uciekla ;)
+%
+Topic (#argante): changed by agtlogger: Bulba sadzi
+<Bulba> herbata rzondzi
+<lcamtuf> niepodzielnie. z cytrynka.
+%
+<arturs> BarD jestes pierwszym powaznym userem argante jakiego znam
+<lcamtuf> e?
+<lcamtuf> serio?
+<Agusia> lcamtuff: cze laska :)
+<lcamtuf> mamy usera?
+<arturs> BarD powinnismy cie piescic
+<lcamtuf> moge go wpisac do ChangeLoga?
+<lcamtuf> Agusia: cze facet ;P
+<lcamtuf> Agusia: widziales sie w fortunkach?;>
+<BarD> czemu?
+<Agusia> lcamtuf: nie.. pokaz mnie w fortunkach!
+<BarD> czemu?
+<BarD> czemu mnie piescic?
+<Agusia> lcamtuf: skad stukasz? ile masz lat? :))
+<lcamtuf> BarD: jak cie wpisac do changeloga? na dlugo zostaniesz?
+<BarD> lcamtuf: znasz sie na argante? [co za pytanie :)]
+<BarD> lcamtuf: no na troche
+%
+<arturs> BarD krytycy? krytycy a? nie znam takich
+<BarD> :)
+<BarD> a chcecie? tzn. recenzanta?
+<lcamtuf> ale jak bedziesz pisal pochlebnie
+%
+<BarD> lcamtuf: wysylalem ci maila z oferta pomocy. Dostales?
+ð Agusia/#argante znika na godzinna chwile hedonizmu
+ð Agusia/#argante is away [nie ma mnie/l:on]
+<lcamtuf> BarD: nie wiem, ostatnio mi szlag trafil sporo maili
+<lcamtuf> myslalem ze nikt nie zauwazy  bo i tak nigdy nie odpisuje
+<lcamtuf> ale mnie zlapales
+<BarD> wiem! YES! :)
+%
+<BarD> jak uruchomic agtloggera?
+%
+<BarD> jak uruchomic agtloggera?
+<arturs> BarD ze jak?
+<arturs> tzreba poprosic lcamtufa
+<arturs> kod nie jest na razie ujawniony
+<lcamtuf> /msg artlogger hi!
+<arturs> nie - /ctcp agtlogger uruchom sie kobylko
+%
+<Agusia> lcamtuf: buu.. ja nie chce byc w fortunkach.. ja chce to ocenzurowac!
+<arturs> generalnie masz tam imycz zelaznej dziewicy, wiec w czym problem? ;-p
+%
+<Bulba> papu tajm znowu
+<lcamtuf> ech
+<lcamtuf> ty w kolko jesz
+%
+<lcamtuf> ale user nam uciekl
+<Bulba> prawie jak psy 2, tylko ze psy to chinczycy jedza a my indyki
+<lcamtuf> szkoda
+<lcamtuf> drugiego mozemy nie miec
+%
+<jsm> lcamtuf: ale na ext-fw i lan-fw móg³by¶ regu³ki jako¶ uporz±dkowaæ :-ppp
+<lcamtuf> i w ogole bajzel ;>
+<lcamtuf> jsm: SA WPORZO!
+<jsm> hehe
+<lcamtuf> ;>
+<lcamtuf> SOM!
+<lcamtuf> bulba bedzie mial radosc
+<jsm> lcamtuf: nie s±.. tylko Ty wiessz co tam jest :-)
+<lcamtuf> tam dziala metoda
+<lcamtuf> jsm: nie wiem
+<lcamtuf> dopisuje na poczatku
+<lcamtuf> a w konfigu na koncu
+<lcamtuf> jsm: a jak chce wiedziec co wyszlo to ogladam sobie ipfwafm -F -l -n
+%
+<Pappy> http://agt.buka.org/AgtDoc.txt is incomplete.
+<lcamtuf> it should be complete
+<lcamtuf> should be ok... disable w3cache / proxies
+<Pappy> haha
+<Pappy> lcamtuf: trust me. i know what i say. it was incomplete.
+<jsm> pewnie mu resetuje w po³owie po³±czenie przy polskich kablach
+<jsm> szift reload niech da
+<lcamtuf> jsm to mu powiedz, ja nie wiem jak jest reload po angielsku
+<Bulba> aim, reload
+%
+<lcamtuf> wiecie co?
+<lcamtuf> komorka sie nadaje najlepiej do zamawiania pizzy
+<lcamtuf> bo nie trzeba schodzic z sieci
+<Bulba> ;)
+<lcamtuf> nie wykorzystuje jej do niczego innego chyba
+<jsm> e
+<lcamtuf> no, czasem zona dzwoni
+<lcamtuf> ale to wtedy i tak pomarudzic
+<jsm> a jak kto¶ sieciuje z komórki?
+<jsm> :-ppp
+<lcamtuf> to kryzys
+<jsm> no w³a snie
+%
+<lcamtuf> [19:31:56] <impexus> kiedys kvik fajny opowiedzial: whodza dwa 
+stringi do baru i jeden mowi:
+<lcamtuf> 19:32:03] <impexus> "prosze piwo zdshoi^IT32oit
+<lcamtuf> [19:32:17] <impexus> a drugi "przepraszam za niego, on nie jest 
+NULL terminated"
+<jsm> hehehehehe
+<lcamtuf> jej
+<lcamtuf> krancowa faza uzaleznienia
+<lcamtuf> smiac sie z takiego dowcipu
+%
+<lcamtuf> [v1nce_(+vin@pc92.gorzow.cvx.ppp.tpnet.pl)] w sprawie argante
+<lcamtuf> [v1nce_(+vin@pc92.gorzow.cvx.ppp.tpnet.pl)] czy to prawda ze jego 
+kod trafil w niepowolane rece
+<lcamtuf> [v1nce_(+vin@pc92.gorzow.cvx.ppp.tpnet.pl)] ?
+<lcamtuf> [v1nce_(+vin@pc92.gorzow.cvx.ppp.tpnet.pl)] nie no sie tylko tak 
+zapytalem
+<lcamtuf> [msg(v1nce_)] ale kto ci cos takiego powiedzial?
+<lcamtuf> [msg(v1nce_)] kurde mozliwe ze ukradli zrodla
+<lcamtuf> [v1nce_(+vin@pc92.gorzow.cvx.ppp.tpnet.pl)] nikt mi nie mowil 
+przeczytalem
+<lcamtuf> [msg(v1nce_)] o cholera wyszlo do prasy?:(
+<lcamtuf> [v1nce_(+vin@pc92.gorzow.cvx.ppp.tpnet.pl)] to to serio prawda
+<lcamtuf> [v1nce_(+vin@pc92.gorzow.cvx.ppp.tpnet.pl)] kurcze muslalem ze kit
+<lcamtuf> [msg(v1nce_)] stary, dzis nic sie nie uchowa przed tymi wandalami z #hackpl
+<lcamtuf> [msg(v1nce_)] nie zadawaj sie z nimi
+%
+<CADENCE> jestem inteligentnym botem. WItam Was dziewczyny.
+%
+<CADENCE> kurde... czy moj nick kojarzy sie z KREDENS ?
+<szur> kadens:tak :>
+<Bulba> z lietka
+<Bulba> ale nie przejmuj sie tym 
+<Bulba> my wiemy ze ci ktorzy cie tak nazywaja nie maja racji
+%
+<Pappy> i wish you very much success with your argante-project and hope 
+you have fun, kids.
+%
+<fribot> zero szacunku dla pytajacego czlowieka
+<fribot> moglibyscie chociaz odpowiedziec "nie odpowiemy"
+<fribot> albo "wiemy, ale nie powiemy"
+<fribot> albo "nie wiemy, ale powiemy"
+<fribot> albo "powolamy sobie na rece"
+<fribot> a tu nic
+<fribot> nawet ignora nie dostalem
+<Agusia> nic nie wiem, nic nie powiem
+%
+<lcamtuf> <toor:#hackpl> trojz i takie tam shity, czy rzeczywiscie na oziomie??
+<lcamtuf> <v1nce_:#hackpl> na poziomie
+<lcamtuf> <lcamtuf:#hackpl> o czym gadacie?
+<lcamtuf> <v1nce_:#hackpl> o ad
+<lcamtuf> <lcamtuf:#hackpl> co to jest 'ad'?
+<lcamtuf> <toor:#hackpl> nowa gazetka
+<lcamtuf> <toor:#hackpl> aha mow dalej *pls*
+%
+<BarD> moge ci cos powiedziec
+<BarD> z tego co sluszalem [i widzialem] to ty jestes hack master
+<BarD> cholera mam pytanie ile ty masz?
+<BarD> ale tym razem bys odpowiedzial!
+<BarD> no tak
+SignOff BarD: #argante ()
+%
+<lcamtuf> JEA!
+<lcamtuf> jest dvr i opis
+<lcamtuf> jejejej
+<lcamtuf> koniec swiata
+<lcamtuf> czyzby to koniec projektu?;P
+%
+<honej> agtlogger: czego mnie tak duzo w fortunkach? buuuu
+<arturs> honej: powinienes mu dziekowac
+<honej> agtlogger: dziekuje ci, OMO
+%
+<Agusia> honej: dobij mnie teraz... leb mnie boli nie mam sily, nie wyspalam sie, musze teraz dlubac w windzie.. ciecie zepsuli drukarke - tragedia po prostu
+<Agusia> i jeszcze mnie skreca za takim jednym
+<honej> :))
+<honej> Agusia: przeciez to WINDRUKARKA! (nie mylic z VIdrukarka)
+<honej> Agusia: za kim?
+<Agusia> honej: nie wnikaj...
+<arturs> Agusia : ludzka rzecz, poskrecac
+%
+<arturs> waga, odpalam demko
+<arturs> wow
+<arturs> konsola skaszaniona
+<arturs> ale zadzialalo
+<honey_> arturs: buu, co sie skopalo???
+<arturs> nigdy nie sadzilem, ze gfx dziala
+<honey_> arturs: u mnie gfx.img w hll dziala, u gwida - nie bardzo :(
+<honey_> arturs: jak ja cos pisze, to dziala :)
+<arturs> honey_ dziala inaczej
+%
+<honey_> eee, bo mi sie zapomnialo - jakie opcje do diffa sa kochane przez lcamtufa? ;)
+<arturs> Nru?
+<arturs> cos jakostak
+<honey_> ze co?
+<honey_> :P
+<arturs> nie pamietam
+<arturs> zapytaj Bulby
+ð honey_/#argante idzie czytac readme - kiedy wszystkie inne metody zawioda, siegnij do dokumentacji :)
+<arturs> on b~niedawno cos paczowal
+%
+<honej_> dobra, sciagam, troche popodrywam panienki na ircu i ide sie 
+dalej meczyc :)
+%
+<maxiu_> so, wassup
+<agaran> nuffink
+<maxiu_> damn
+%
+kloczek [~kloczek@test2.zie.pg.gda.pl] has joined #argante
+<kloczek> QQ
+<kloczek> \/
+<kloczek> je tu Micaha³ ?
+%
+<JmsBLoNd> !kiss JmsBLoNd
+<JmsBLoNd> :P
+<JmsBLoNd> oops nie tu :)
+%
+BuraMysza/#argante piszczy zalosnie by wzbudzic choc cien wspolczucia..... 
+BuraMysza/#argante piszczy zalosnie by wzbudzic choc cien wspolczucia i czyni to po raz drugi..... 
+BuraMysza/#argante piszczy zalosnie by wzbudzic choc cien wspolczucia i czyni to po raz trzeci..... 
+BuraMysza/#argante piszczy zalosnie by wzbudzic choc cien wspolczucia i czyni to po raz czwarty..... 
+%
+BuraMysza/#argante zdycha z glodu siedzac w ciemnym kaciku
+BuraMysza/#argante robi 'bleurghrrr... yhh...rrr..hr... yrh...' i zapisuje swoj majatek na biednych.
+BuraMysza/#argante wyciaga nozki w gore
+BuraMysza/#argante jest juz calkowicie martwa
+BuraMysza/#argante jest zszokowana tym, ze nikt nie zwraca na to uwagi
+BuraMysza/#argante jest zdegustowana.
+BuraMysza/#argante w takim razie lyka aspiryne.
+<maxiu> hmm
+<maxiu> rozpusc se w wodzie
+%
+<BuraMysza> * >teku #hackpl is away: Programmers write bugs for one kind 
+people witch use it for hacking when they are bored life.
+<BuraMysza> o co chodzi w tym awayu?
+%
+ùíù buuu [~lcamtuf@troll.linux.net.pl] has joined #argante
+<buuu> :)
+<buuu> buu, lcamtuf, zdejmij bana ;)
+mode/#argante [+b *!~*@*linux.net.pl] by BuraMysza
+buuu was kicked off #argante by BuraMysza (BuraMysza)
+%
+<BuraMysza> <hujjebany:#hackpl> cze all
+<BuraMysza> ryhyhy
+<bth-blue> ;>
+<bth-blue> no tak
+<Bulba> samokrytyka?
+<BuraMysza> | hujjebany (Hakej@real.mucho.chodza.tylko.do.cafe.netwatch.com.pl) (Poland)
+<BuraMysza> mucho == maczo?
+%
+<BuraMysza> btw widzialem niedawno
+<BuraMysza> pierwsza domene z bledem ortograficznym
+<BuraMysza> nie zamierzonym
+<bth-blue> jakom?
+<BuraMysza> jeden koles mial 12 lat
+<BuraMysza> i mial domene
+<bth-blue> i pefnie nie pierfshfsmo
+<BuraMysza> @jest.dobry.w.luzku.bo.administruje.w.(nazwafirmy).com.pl
+<BuraMysza> ;>
+<BuraMysza> i to "luzku" rulez ;>
+<bth-blue> :>>
+<BuraMysza> jakis taki hackplowiec, gl0b0 czy cus
+%
+ùíù Topic (#argante): changed by BuraMysza: <hujjebany:#hackpl> cze all / <Bulba:#hackpl> czesc chuju jebany
+<BuraMysza> dialogi tygodnia
+<Bulba> ej no
+<BuraMysza> bulba jest wulgarny ;))))
+<Bulba> permanentna inwigilacja
+<Bulba> ue tam wulgarny
+<Bulba> uzywam jezyka ludu
+%
+<bth-blue> opowiedz cos opowiedz
+<bth-blue> wuju
+<bth-blue> prosimy
+<BuraMysza> wuju drogi wuju
+<BuraMysza> co dwa wiadra wody podnosisz na
+<BuraMysza> schody
+%
+<bth-blue> co moze byc fajnego z buka
+<BuraMysza> mam.luka.z.buka.org
+<bth-blue> mam .mebla.z.buka.org
+<BuraMysza> ;>
+<BuraMysza> a bth wiesz ze masz adres bth@najgorszy.hacker.pl?
+%
+<BuraMysza> a ja mam lc@mtuf.buka.org
+<BuraMysza> na przyklad
+<Bulba> e lcamtuf masz szele jakies? 
+<Bulba> na wymiane :)
+%
+<BuraMysza> [lcamtuf@dione lcamtuf]$ finger bulba
+<BuraMysza> finger: bulba: no such user.
+<BuraMysza> o ja
+<BuraMysza> "Ostatni Czlowiek Ktory Nie Mial Konta Na Dione"
+<BuraMysza> ;>
+%
+<BuraMysza> kupmy pluskiew.org
+<Bulba> i jakies korpusiki much
+<BuraMysza> ugryzla.mnie.pluskiew.org
+<BuraMysza> ;>
+<Bulba> ugryzla.mnie.pluskiew.argh
+<bth-blue> lubie.kompot.z.pluskiew
+<Bulba> ;)
+<bth-blue> org
+<bth-blue> ;>
+<BuraMysza> argante.ma.mnostwo.pluskiew.org
+%
+<Bulba> postawie sobie w pokoju plyte nagrobkowa
+<Bulba> na niej bedzie napisane 
+<Bulba> R.I.P(c) rIPC
+%
+<BuraMysza> bulba chodz bedziemy elite
+<BuraMysza> jako pierwsi poslemy na BQ exploity na Argante
+<BuraMysza> i walniemy ze "vendors were NOT informed"
+<Bulba> i potem z33d napisze maila ze jest oburzony ze vendora nie 
+poinformowalismy
+<Bulba> jak moglismy
+%
+<Bulba> DmO/#hackpl chwilowo niedostepny z powodu "Spadam"
+<Bulba> hy?
+<Bulba> z powodu spadam?
+<BuraMysza> Bulba: bug w module leksykalnym.
+<BuraMysza> wiekszosc na #hackpl ma jakis unstable kod
+<BuraMysza> jesli chodzi o skladnie, ortografie etc
+<BuraMysza> ;>
+<Bulba> i pomysly
+<Bulba> a raczej ich brak
+%
+<bth-blue> hm autentyk z phreakpl wam opowiem
+<bth-blue> dowcip
+<bth-blue> koels wchodzi
+<bth-blue> i pyta sie : czy wiecie gdzie moge znalezc drivery do mojego skanera?
+<bth-blue> ja mo mowie: sprawdz na stronie producenta
+<bth-blue> on: a czy mozesz mi powiedziec kto jest producentem mojego skanera ?
+%
+<Bulba> bulba@to.bubel.pl
+<BuraMysza> lcamtuf@najgorszy.hacker.pl
+<Bulba> chyba tak lecialo
+<BuraMysza> bulba chcesz w najgorszy.hacker.pl miec poczte?
+<BuraMysza> najgorszy.hacker.pl has address 195.117.3.59
+<bth-blue> hm
+<Bulba> a jak zly jest ten najgorszy?
+<BuraMysza> Bulba: no evil do szpiku kosci
+<bth-blue> :>
+<Bulba> hmm.. w sumie i tak z mailow nie korzystam ;)
+%
+<BuraMysza> nigdy-nie-nalezalem-do.dhs.org has address 195.117.3.59
+<bth-blue> hyhyh
+<bth-blue> :>
+<BuraMysza> microsoft.linux.pl is a nickname for dione.ids.pl
+<Bulba> ja chcialem nalezec... do dhs... ale ta firma przewozowa nie miala u nas tu filii
+<BuraMysza> ;>
+<BuraMysza> DHL?;P
+%
+<BuraMysza> smarkacz w AGSie
+<BuraMysza> dwa miesiace po tym jak odszedlem
+<BuraMysza> a on sie wprowadzil
+<BuraMysza> znalazl ciastko za monitorem
+<BuraMysza> czy raczej calkiem oswiecona cywilizacje plesni, ktora wlasnie 
+opanowala pismo i podroze miedzygwiezdne
+<BuraMysza> ciastko bylo moje jak najbardziej, jak nie mialem juz ochoty to 
+chowalem za monitor
+<BuraMysza> stare spadaly na ziemie, wiec sprzataczka zbierala, ale jedno 
+zostalo w kolejce
+%
+<BuraMysza> o. crontab sie obudzil.
+%
+<BuraMysza> ce¶æ
+<BuraMysza> zkond stukales?
+<BuraMysza> byles m/f?
+%
+<MuraBysza> rehlo
+<piposhi> och
+<piposhi> bura
+<piposhi> myszka
+<piposhi> w kacie spala
+<piposhi> i doniczka wnet zleciala
+<piposhi> murka byszka sie zbudzila
+<piposhi> do kibelka popedzila
+%
+ð honej/#argante jest ostatnim czlowiekiem w kraju, ktory nie ma konta na dionie
+<Bulba> ja tez nie mam 
+<cliph> widzia³em podobne teksty w fortunkach
+%
+<honej> szkapa ssie, zgubila moje ciasteczka
+<Bulba> cookie-monster je ci zjadl
+<Bulba> sprawdz czy w smietniku obok nikt nie chrupie czegos
+<honej> GWIDo sie przewinal :)
+<Bulba> zroob mu test pH w ustach
+<Bulba> jak jadl cos to mu spadnie dosc
+<Bulba> no chyba ze dorwal gume do zucia bez cukru
+<honej> nie mam zamiaru mu grzebac w paszczy
+<Bulba> ue tam, grzebac.. bierzesz taki papierek lakmusowy... ale dlugi dosc
+<Bulba> i nawet sie jego gemby nie dotkniesz 
+<Bulba> bedziesz musial umaczac go tylko 
+<Bulba> sprowokowac do otwarcia ust
+<Bulba> i potem zaatakowac papierkiem
+<honej> zaraz zapytam, czy ma ochote :)
+<Bulba> nei nei nie , podstepnie musisz go zbadac
+<Bulba> :)
+<honej> GWIDo mowi, ze by mi przypieprzyl w zeby
+%
+<Bulba> smutne jest ze ci ktorzy moga nam pomoc zawsze sa za daleko 
+<slifua> ale Ty tego cukru juz dosc dlugo nie masz.
+<slifua> zasadniczo mogles chyba isc do sklepu? ;> znaczy wiem ze trzeba odejsc od kompa.
+<slifua> ale moze po drodze z pracy do domu masz sklep?
+<Bulba> ale ja nie pracuje ;) 
+<slifua> ee
+<slifua> to nie ;>
+<Bulba> ale faktycznie moglem o tym pomyslec zamiast nagabywac nonstop niewinnych ludzi i wlascicieli lokalu 
+<slifua> i na ulicy.. i na przystanku..  w tramwajach itp ;>
+<Bulba> i przez telefon
+<slifua> i na ircu ;P
+%
+<z33d> Hello Maurycy,
+<z33d>   I'm Jay Beale, MandrakeSoft's Security Group Director.  Your resume is
+<z33d> very interesting and I'd like to talk more about your experience.  We're
+<z33d> still deciding what positions to open, but I'd like to learn more about
+<z33d> you while we have those discussions.
+<z33d> We should schedule a time to talk in about a week or so, once other members
+<z33d> of the team have had a chance to look over your resume.
+<z33d> In the meantime, could you tell me a little more about your interests?
+<z33d>   - Jay
+<z33d> ;>
+<Bulba> kcesz byc MS's developerem ?
+%
+<z33d> zieeew ja tu ciezko pracuje
+<z33d> pisze software dla Mistrzostw Poslki w szachach intyerentowych
+<z33d> ;>
+<z33d> spolecznie za darmoche
+<slifua> taak
+<slifua> ?
+<z33d> kurwa sam grafike robie
+%
+<z33d> applety javy obsysaja
+<z33d> lcamtuf zrobmy applety Argante
+<z33d> ;>
+<Bulba> hyhyhy
+<Bulba> z33d jak zrobisz modul DOM.so 
+<Bulba> :)
+<z33d> tylko trzeba jakies obiekty tekstowe wymyslic
+<z33d> ncursesy
+<z33d> i do lynxa
+<Kil3r> :)
+<z33d> sie supportnie
+<Kil3r> naplety nargante
+%
+<z33d> zalozyli Ci shella nobody
+<MuraBysza> #       authorize.cgi
+<MuraBysza> #       Version of 11/15/96
+<MuraBysza> #       Author:  R.D. Mowery SGI
+<z33d> ;>
+<MuraBysza> # decrypt the input file and evaluate the content
+<MuraBysza> eval `crypt 12345 < $INPUT_FILE` ;
+<z33d> brawo jasiu
+<z33d> Pani Mowery to ja
+%
+<Bulba> picca jest dobra, picce jesc trzeba, kto nie je piccy nie idzie do nieba
+<z33d> ale tylko z cola
+<z33d> bez coli robia sie wrzody
+<Bulba> cola wogole jest dobra
+<Bulba> czego nie zjesz to ci rozpusci
+<Bulba> taki wspomagacz dla pepsyny
+<MuraBysza> niszczy inne organy
+<MuraBysza> przez co stymuluje rozwoj mozgu
+<MuraBysza> logiczne. tak jak slepi lepiej slysza.
+<MuraBysza> niewidomi
+<MuraBysza> pardon
+<MuraBysza> policical correctness
+<Bulba> ociemniali 
+<MuraBysza> niewidzialni
+%
+<slifua> dzisiaj na kanale #argante mamy mozliwosc zaobserwowania 2 wersji 
+	rozmow.
+<slifua> znaczy to ze kazdy mowi ile wlezie, nikt sie nie slucha i spamuja 
+	na potege.
+<slifua> jeszcze czesciej nikt nic nie mowi
+<slifua> i jeszcze jakis honey co chwila mowi ze jest away. tak srednio co 
+	5-10 minut ;P
+%
+<MuraBysza> p. Redaktora Naczelnego Pewnej Bardzo Poczytnej Gazety?
+<z33d> do Mandrake
+<MuraBysza> bo mi zginal?
+<Bulba> Urbana?
+<Bulba> Michnika?
+%
+<MuraBysza> co ty mi przyslales
+<MuraBysza> podeslales mi patcha
+<MuraBysza> ktory wywala z cmd.c wszystkie check_except
+<MuraBysza> a nie dodaje nic innego
+<MuraBysza> napewno mam go zaaplyowac?
+<MuraBysza> i nie dodaje nic w inne miejsce
+<lik3r> Napewno! :)
+<lik3r> MuraBysza: bo on usuwa z mov immptr
+<MuraBysza> lik3r ale czekaj
+<MuraBysza> on jest napewno oki, tak
+<MuraBysza> nic nie popsuje?;P
+%
+<Kil3r> lcamtuf: te funkcje z XXX nie sa wolane nigdzie!
+<Kil3r> Kumasz?
+<Kil3r> Wiec zakladaj mojego pacza najpierw
+<MuraBysza> kil3r odmawiam z powodow ideowych!
+<Kil3r> I masz 100% full pro argante
+<Kil3r> OSZ TU LAMO REDHATOWA!!!!!!! :))))))))
+<MuraBysza> kil3r zaloze nastepnego
+<MuraBysza> teraz zrobie memory!
+<MuraBysza> TY... TY...
+<Kil3r> Pliz! Zrob najpier moj, bedzie latwiej. Nie badz idealista :)
+<MuraBysza> PROGRAMISTO APLIKACYJNY!
+%
+<MuraBysza> tak na dobra sprawe
+<MuraBysza> TO SA INLINY
+<MuraBysza> kurna
+<MuraBysza> optymalizacja
+<MuraBysza> uber alles
+<Kil3r> a czytelnosc kodu?
+<Kil3r> moga byc i inline-y w memory.h
+<Kil3r> ja zrobie include memory.h
+<Kil3r> HA! :)
+<MuraBysza> HA nie mozna wrzucac funkcji do .h
+<MuraBysza> bo cie pan bog pokara
+<Kil3r> I orwie leb przy samej dupce? :)
+%
+<MuraBysza> HA nie mozna wrzucac funkcji do .h
+<Kil3r> to zrobie include memory.lcamtuf. tam je umiesc!
+<Bulba> logowac to!
+%
+<MuraBysza> ja chromole
+<Kil3r> ty chromolisza on chromoli ono chromoli
+<Bulba> a ja mam odzysk chromu z garbarni na cwiczeniach
+%
+<Bulba> y bcode czek ma sprawdzac tylko poprwanosc kombinacji opcod/typ czy tez odrazu 
+	sprawdzac czy legalne numery rejestrow?
+<Bulba> wie ktos?
+<Bulba> pewnie nikt 
+<Bulba> wiec sam sprawdze jak jest :) 
+%
+<MuraBysza> Lcamtuf "Michal Zalewski" Megachaker
+%
+<tmoggie> if if then if
+<Bulba> oh chodzi mi o poczatkowego ifa 
+<tmoggie> ^if ?
+%
+<fribot> widze ze jakies wielkie zmiany w kernelu
+<fribot> memory.c poszlo sie kochac
+<fribot> jutro kolej na nastepne pliki
+<fribot> zostanie console.c
+<fribot> i console.h
+<fribot> bedzie supppertrupperportable
+<fribot> tmoggie przeniesie na AS/400
+<fribot> i inne szafy
+%
+<piposhi> a jeszcze mial ze mna juijec przyjsc ale jemu tez sie nie chcialo
+<piposhi> poprostu wyszlo tak ze nic nie wyszlo, i bylem zly
+<fribot> uuu
+<fribot> rozumiem rozdraznienie ;)
+<piposhi> no tak
+<piposhi> na dodatek klamtufowi nie chce sie isc po dzwiekowke dla mnie
+<fribot> pytanie czy glupawy czytelnik fortunek zrozumie ;)
+<fribot> bo i tacy sie zdarzaja ;)
+<piposhi> no tak, to wlasciwie zadane pytanie
+%
+<fribot> z cyber service
+<fribot> o linuxie bedzie mowil
+<fribot> facet mowi szybko
+<fribot> szybciej niz mysli
+<piposhi> aha, kolejny spec
+<fribot> zrozumienie go to test na inteligencje
+<piposhi> to dobrze
+<piposhi> potrzebni sa fachowcy
+<piposhi> cezar cichocki... za pol roku to bedzie mowic wszystko
+<fribot> tia
+<fribot> temu krajowi nic nie pomoze
+%
+<piposhi> he i gdzie cezar cichocki
+<piposhi> nasz fachowiec
+%
+<MuraBysza> bulba zrobmy pod argante demon kolorkow
+<MuraBysza> kolorkd
+<MuraBysza> by serwowal kolorki do exploitow
+<MuraBysza> i kazdy script kiddie by musial miec kolorkd
+<MuraBysza> zeby odpalic exploita
+<MuraBysza> ergo, argante bylaby popularna jak windows
+<piposhi> argentynad
+<piposhi> kazdego dnia by mailowal na jakiej stacji tv jaki serial argantynski
+%
+<piposhi> he i gdzie cezar cichocki
+<piposhi> nasz fachowiec
+%
+<sidajjdsa>  chcialem powieziec rze nie umeimz ainstalowac argante klikam i 
+	nic chyba rze to wirus ja mam antyvir od kolegi nic mi nie zrobicie
+<sidajjdsa> lamerzy!
+<sidajjdsa> znajdzicie mnie
+<sidajjdsa> ps.
+ùíù SignOff sidajjdsa: #argante (Leaving)
+ùíù ntefdsji [-lcamtuf@pc136.warszawa.cvx.ppp.tpnet.pl] has joined #argante
+<ntefdsji> to jezszce
+<ntefdsji> ja
+<ntefdsji> lamerzy
+<ntefdsji> co myslicie rze jestescie tacy mocni?
+%
+<MuraBysza> ale czesc mnemonikow
+<MuraBysza> jest taka sama
+<MuraBysza> mov... ret...
+<MuraBysza> specjalnie zrzynalem z x86
+<MuraBysza> nie ma bgezal
+<MuraBysza> ;>
+<Bulba> hyhy
+<Bulba> ale jest syscall zamiast int
+<MuraBysza> no pardon
+<MuraBysza> moglem zrobic int $0x80 (==syscall)
+<MuraBysza> takie makro
+%
+<MuraBysza> ma domene z e-
+<MuraBysza> musi byc postepowy
+<MuraBysza> pewnie piatej generacji
+<MuraBysza> wortal
+<MuraBysza> pertykalny
+<MuraBysza> zacznijmy swiadczyc uslugi szostej generacji
+<MuraBysza> e-e
+<MuraBysza> e-e-mail
+<MuraBysza> e-e-business
+<MuraBysza> e-e-server
+%
+<MuraBysza> albo
+<MuraBysza> zrobmy 3e
+<MuraBysza> eee.portal.pl
+<MuraBysza> itepe
+<MuraBysza> ;>
+<MuraBysza> i zrobmy e3c (eee consortium)
+%
+<Bulba> sniff jestes tu z nami?
+<Bulba> o ja tez dzies mam
+<fribot> wiece ze www.e-prick.com jest wziete?
+<fribot> niesamowite
+<fribot> e-shit _jeszcze_ nie
+%
+<MuraBysza> bedziemy pionierami "nowej rewolucyjnej technologii, w ktorej 
+to nie klient przychodzi do producenta, ani nie producent do producenta, 
+ale sam stworca zstepuje z niebios i idzie do producenta"
+<Bulba> ej, a e-konomia to tez sie do tego zalicza?
+%
+ùíù MuraBysza is now known as e-mysza
+ùíù e-mysza is now known as e-lcamtuf
+<fribot> sluchajcie, zrobmy strone argante z banerami
+<fribot> chcesz zarobic na surfowaniu?
+<fribot> i zarabiajmy ;)
+<fribot> kazdy proporcjonalnie do linijek kodu
+<fribot> w argante 
+<Bulba> i domena bedzie 
+<Bulba> www.e-argante.pl
+<Bulba> albo www.e-e.pl
+%
+<e-lcamtuf> damn
+<e-lcamtuf> a wiesz fribot
+<e-lcamtuf> ze domeny xxxxx.com
+<e-lcamtuf> sa wziete chyba do trzydziestu paru xow
+<e-lcamtuf> w nazwie?
+<e-lcamtuf> xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.com name 
+	    server NS1.DOTSTERINC.COM
+<e-lcamtuf> xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.com name 
+	    server NS2.DOTSTERINC.COM
+<e-lcamtuf> xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.com name 
+	    server NS1.DOTSTERINC.COM
+<fribot> zartujesz???
+<e-lcamtuf> xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.
+	    com name server
+<e-lcamtuf> NS2.WYOMISSING.NET
+<e-lcamtuf> wow
+<Bulba> bo oni chcieli byc bardziej XXX niz XXX
+%
+<fribot> szkurcze, a argante jeszcze nie bylo w l+
+<e-lcamtuf> zrobmy cos
+<fribot> uuuj
+<e-lcamtuf> zroooobmy
+<fribot> wrzuce na styczen
+<e-lcamtuf> fribot bo jestes len
+<e-lcamtuf> na styczen!
+<e-lcamtuf> phi!
+%
+<e-lcamtuf> fribot napisac ci tekst krytyczny o argante?
+<e-lcamtuf> zjade argante
+<e-lcamtuf> zupelnie
+<e-lcamtuf> co ty na to?
+%
+ùíù ElCamTuf- is now known as e-girl
+<Bulba> e-milka
+<Bulba> :)
+<e-girl> kto chce poplotkowac?;>
+<Bulba> ile masz lat?
+<e-girl> 14
+<Bulba> skad klikasz?
+<e-girl> zza krzaczka
+%
+<fribot> jak mowilem, jej babcia byla zydowka
+<e-girl> ach
+<e-girl> rozmarzyles sie
+<e-girl> got 0dayz to trade?
+<e-girl> r00t r3m0t3 xpl0itz
+<fribot> hehe
+<fribot> no tak
+<fribot> kazdy ma swoje wspomnienia ;)))
+%
+<e-girl> | e-Bot (~e-bot@wobei.warum.net) (Internic Network)
+<e-girl> ³ ircname  : /msg e-Bot hello
+<e-girl> | channels : @#gym-anna
+<e-girl> ciekawy kanal
+<e-girl> czyz nie?
+<e-girl> wchodzimy?
+<e-girl> dawajcie
+<e-girl> na trzy
+<e-girl> -e-Bot(~e-bot@wobei.warum.net)- Hi e-girl! Willkommen auf #gym-anna! #gym-anna
+<e-girl>           ist der Homechannel des Gymnasiums bei St.Anna in Augsburg
+<e-girl> gimnazjum?
+<e-girl> ee
+<fribot> hehe
+%
+<fribot> moglibysmy zapuscic takie eboty na #agt #rsis #ahll
+<e-girl> ops
+<fribot> no nie
+<fribot> [e-girl(lcamtuf@dione.ids.pl)] help info
+<Bulba> #ipc #ripc #packet #advmem #math
+<fribot> khm
+<e-girl> #bcode
+<fribot> #bulba
+<e-girl> #non_fatal
+<fribot> #llx
+<Bulba> #README
+<e-girl> #but_in_fact_it_was_fatal
+<Bulba> hyhy
+<fribot> #z333d????
+%
+<e-girl> #Documentation/fortunes/argante
+<e-girl> wlasnie
+<e-girl> artur!
+<e-girl> ph00rtunki
+<fribot> och!
+<e-girl> co?
+<Bulba> l33t-ph0rtuneZ
+<fribot> przeprasham!
+<e-girl> zostawiles czajnik na gazie, ha?
+<e-girl> musisz leciec?;P
+<Bulba> chcemy nowej porcji
+<fribot> tak!
+<e-girl> zelazko na gazie
+<fribot> musze odebrac!
+<fribot> no to juz uciekam
+<fribot> ;-PP
+<e-girl> znowu sie release opozni
+ùíù SignOff fribot: #argante (fortunkowicz)
+<Bulba> i tak sie nie wyrobi przed grudniem...
+%
+<e-girl> przez brak fortunek
+<e-girl> bedziemy trzy tygodnie czekac
+<e-girl> :/
+<e-girl> bulba, prawda ze to tak bylo?
+<e-girl> grumpf
+<e-girl> zbudujmy pszemola
+<e-girl> psztymucla
+<Bulba> bo nikt nie mial natchnienia zeby pisac bo fortunek nie bylo
+%
+<Bulba> kurde
+<Bulba> modem zaliczyl drugiego hangupa ..
+<e-girl> to swistak
+<e-girl> siedzi i HUPuje
+%
+<e-girl> kbd_mode -a
+<e-girl> zrobcie
+<e-girl> prosze
+<Bulba> nie nie nie 
+<e-girl> czemu nie chcecie
+<e-girl> z lusera
+<e-girl> pleeze
+<e-girl> tfu
+<e-girl> kbd_mode -s
+<e-girl> jestem gupia
+<Bulba> boje sie 
+<e-girl> zrob
+<Bulba> nie pamietam magicznych kombinacji
+<e-girl> pleeze
+%
+<Kil3r> chrum
+<Kil3r> chrum
+<Kil3r> chrum
+<Kil3r> Wiem, wiem... swinia ze mnie :)
+%
+<Kil3r> A ja znam slowo po rosyjcku
+ð honej/#argante is away [autogone:10/l:on]
+<Oxdefaced> jakie?
+<Kil3r> no nie da sie zapisac na ircu :)
+<fribot> kyPBa Matb
+%
+<r00> kil3r: hehe a jak znalazlem buga w agtc to lcamtuf powiedzial: 
+    'obejdz to' :) zamiast 'naprawimy to' :) wkurzylem sie troszke :)
+<Kil3r> r00: on jest czasami strasznym windziarzem
+<Kil3r> pewnie to byl "ficzer" :)))))))
+<r00> jeah... undocumented bonus from reality
+%
+<e-girl> nie ma jak dobry nick
+<e-girl> [tolek(~Netfan@pa139.bialystok.sdi.tpnet.pl)] cze kotku jak u 
+	ciebie leci
+<tmoggie> ld: 0711-317 ERROR: Undefined symbol: .__inet_aton
+<tmoggie> ld: 0711-317 ERROR: Undefined symbol: .__inet_ntoa
+<e-girl> [kropa^^(~Netfan@pa139.bialystok.sdi.tpnet.pl)] cze
+<e-girl> [ZAJEC(~Netfan@pa139.bialystok.sdi.tpnet.pl)] cczzze
+%
+<Kil3r> zrobilem kolejne 100% speed up ;)
+<e-girl> kil3r ua ziewa moment
+<Kil3r> jak sa dwie instrukcje i jedna sie wycina to sie nagle 100% robi ;)))
+%
+ùíù e-girl is now known as e-chick
+ùíù Kil3r is now known as e-Kil3r
+<e-Kil3r> :))
+<e-chick> e-jo!
+%
+<e-chick> optymalizacje zle robia na zoladek
+<e-Kil3r> e-rdzielisz :)))
+%
+ð e-girl/#argante idzie sie sprzedawac.
+ð e-girl/#argante wroci.
+%
+<e-girl> tiwek tzn kto ty i w jakim celu stawiasz tyle sesji na kanale, na 
+	ktorym chyba powiedziales ze 2-3 zdania?;P
+<TiweK> wlasciewie, taka sobie osobka, trafilem to za sniffem
+<e-girl> TiweK: a kto to sniff?;>
+<TiweK> nie wiem, ale go nie lubie
+<e-girl> TiweK: nie to zebym marudzil, ale facet nie odezwal sie ani razu ;)
+<TiweK> i chce mu zabrac opka
+<e-girl> a zawlaszczyl sobie @... w sumie niewielka troznica, ale topicu sie 
+	nie da zmieniac!
+<TiweK> sniff to eggdrop
+<e-girl> damn
+<e-girl> TiweK: nie rozumiem chyba nic ;>
+<TiweK> jak zabiore to wam dam
+<e-girl> TiweK: a nie macie innych sportow?;>
+<e-girl> hyhy
+<e-girl> oka
+<e-girl> poddaje
+<e-girl> sie
+<e-girl> :>
+<TiweK> e-girl: mamy. ale tego kolesia nie lubie
+% 
+<e-girl> sniff musi byc fajny. ma domene z e-. e-point.
+<e-girl> ;>
+<e-girl> Connected to gw.e-point.pl.
+<e-girl> +OK bakura Cyrus POP3 v1.5.19 server ready
+<e-girl> wow.
+<e-girl> fajny gateway
+<e-girl> cos jak nasz ext-fw.tpi.pl ;>
+%
+<arturs> lcamtuf, nie moglbys jakos na mocy porozumienia tpi-tepsa odciac 
+	na chwile e-pint.pl?
+<e-girl> tylko ze u nich to na serio
+<e-girl> ;)
+<arturs> jakis zboczony ruting, chwilowy remont, cos...
+<arturs> cos typowego ;)
+<e-girl> arturs: no ale co to da
+<z33d> ziwe
+<e-girl> nikt nie bedzie mial opa
+<e-girl> ;>
+%
+<e-girl> Interesting ports on gw.e-point.pl (212.244.60.2):
+<e-girl> 13/tcp     open        daytime
+<e-girl> 22/tcp     open        ssh
+<e-girl> 25/tcp     open        smtp
+<e-girl> 37/tcp     open        time
+<e-girl> 53/tcp     open        domain
+<e-girl> 110/tcp    open        pop-3
+<e-girl> 113/tcp    open        auth
+<e-girl> 143/tcp    open        imap2
+<e-girl> 1723/tcp   open        pptp
+<e-girl> 7000/tcp   open        afs3-fileserver
+<e-girl> 7010/tcp   open        ups-onlinet
+<Oxdefaced> :>
+<e-girl> ja piernicze
+<e-girl> ;>
+<e-girl> zupelnie jak ext-fw.tpi.pl ;> serio!
+<Oxdefaced> lcamtuf, chachorze
+<Oxdefaced> to s± fake serwisy, dla zmy³ki
+<Oxdefaced> i teraz idzie mail do abuse@tpnet.pl
+<Oxdefaced> masz przekichane
+<e-girl> choroba!
+<Bulba> e-kurde
+%
+<Bulba> kurde, te krzeslo jest niewygodne...
+<honej> apt-get upgrade krzeslo
+%
+<e-girl> pkot
+<e-girl> gwido
+ùíù pkot is now known as e-pkot
+<e-girl> massinvite rulez
+<e-girl> ;>
+ùíù GWIDo is now known as e-gwido
+<e-girl> hihi
+<e-gwido> :P
+ùíù majaka is now known as e-majaka
+<e-girl> no
+<e-girl> dostosowali sie
+ùíù negativ [negativ@urtica.linuxnews.pl] has joined #argante
+<e-girl> negativ e-
+ùíù negativ is now known as e-negativ
+<e-gwido> negativ: powinenesz zmienic nicka na e-gativ ;)
+%
+<e-girl> e-jsm ;>
+<e-Bulba> ghh
+<jsm> widzê e-marketing :)
+ùíù jsm is now known as e-jsm
+<e-Bulba> e-xtra
+<e-girl> e-rotfl ;>
+ð e-automat/#argante pierze nawet w 40 stopniach :)
+%
+>>> You(arturs) are now known as e-arturs
+ð e-girl/#argante pierze nawet bez stopni
+<e-girl> ;>
+<e-boy> e-jsm: ju¿ mam do¶æ na dzisiaj grzebania w martyñskich./
+<e-automat> no, nawet eee, redaktor, sie dostosowal :)
+<e-jsm> e-girl: kurde, znowu mi rachunek za telefon odlicz±.. :-)
+<e-girl> e-redaktor
+<e-jsm> e-boy: to zrób to jutro :)
+<e-girl> e-linuxplus
+<e-jsm> e-zgredaktor
+%
+ð e-sol/#argante czeka asz jej e-majtki wyschna i bedzie mogla sie fkoncu 
+    ubrac i wyjsc
+<e-jsm> e-sol: by³o w nie sikaæ? :->
+%
+<e-arturs> co to jest - nowoczesne, ogromne, teatralne i kapie?
+<e-girl> <cooper20:#HACKPL> ktos chce mi zrobik krzywde [ i mojemu bratu ]
+<e-arturs> e-kran
+<e-girl> e-arturs: plac!
+%
+ùíù [lasse] [~lo120388@charon.Sun.COM] has joined #argante
+<[lasse]> ah, that kinda joke
+ùíù [lasse] is now known as e-Lasse
+<e-Lasse> hah
+<e-Lasse> hm
+<e-boy> e-hehe
+<e-Lasse> so.. whats this channel all about ?
+ùíù vvega_ [vvega@sex.ze.mna.jest.o.k.pl] has joined #argante
+<e-Lasse> "e-hehe"  that's good ;-)
+<e-girl> lasse
+<e-Lasse> e-hello
+<e-arturs>  /join #e-argante
+<e-girl> ;>
+<e-boy> e-cze
+<e-girl> e-lasse hi
+<e^2-floyd> nie idzie ... /e-quit
+%
+<e-Kil3r> O kurna.... a jak sie robi e-diffy? :))))
+<Stomil> diff -e ?
+<e-girl> e-Kil3r: a masz e-komputer?
+<solle> kiler. e. eeeh... :/
+<e-girl> e-Kil3r: bez e-komputera sie nie da!
+<e-Kil3r> :)
+<e-Bulba> e-diff e-urN <e-old> <e-new>
+%
+>>> e-honej [honey@urtica.linuxnews.pl] requested unknown ctcp OPA! opa! 
+    opa! opa! from e-arturs
+>>> e-honej [honey@urtica.linuxnews.pl] requested unknown ctcp NIE mylic 
+    z - chlopa! chlopa! chlopa! chlopa! from e-arturs
+%
+<e-boy> moooviiisz nammmm ?
+<e-Tonberi> heheheh.. 
+<e-Tonberi> :>>
+<e-Tonberi> nio tak, czemu nie
+<e-Tonberi> witam wsyztkich
+<e-boy> e-witaj
+<e-Tonberi> e-me e-sie e-wita
+<e-Bulba> e-Tonberi no no no, nie przesadzajmy z tym e-
+<e-Bulba> e- jest e-litarne
+<e-Bulba> nie mozna go przyczepiac do byle e-kurwa slowa
+%
+<e-tmok> ojaaaaaaaaaaaaa
+<e-tmok> lcamtuf byl walsnie w tv
+<e-tmok> ;)
+<e-tmok> hehe
+<Bulba> tak? i co mówi³?
+<e-tmok> a cos tam o windach ;P
+<e-tmok> tzn o zabezpieczaniu sie przed hakierami ;]
+<Bulba> no to spoko
+<e-tmok> no spoko spoko ;]
+%
+<e-tmok> nie wiesz co z cpan nalezy sciagnac coby ladny support miec do mysql z poziomu perla?
+<e-tmok> ;]
+<Bero> DBI
+<Bero> DBD
+<Bero> ;]
+<e-tmok> niomk
+<Bulba> myslq modules 
+<e-tmok> a czym sie rozni dbi od dbix ? :)
+<Bulba> tym czym su od sux
+%
+<ex-art> I'm just a __LITTLE_INDIAN__
+%
+<Bulba> a co konkretnie interesuje?
+<ultor> American Beauty
+<ultor> American Pie
+<ultor> Dlug
+<Bulba> hm, chyba moge zalatwic
+%
+<e-girl> ziewk
+<e-girl> ziewk
+<e-girl> ziewk
+<e-siefca> elkam, wstales, czy sie przyszedles tylko wyziewac :)
+%
+<e-girl> kamera w zoladku
+<e-girl> -----o
+<e-girl> /\/\/\
+<e-girl> to 'o' to transceiver
+<e-girl> a ----- to obudowa mikrofonu kierunkowego
+<e-girl> /\/\/\ to anteny
+<e-girl> kamera jest natomiast w drugim karaluchu
+<e-girl> po to transceiver
+%
+<e-siefca> hmmm
+<e-siefca> a jak odkrece wode w zlewie?
+<e-siefca> zepsuje sie?
+<e-girl> nie
+<e-girl> ugryzie Cie
+<e-girl> zebys nie odkrecal
+<e-girl> zreszta liczy na czynnik psychologiczny
+<e-girl> faceci nigdy nie odkrecaja wody w kranie w kuchni
+%
+<e-siefca> ;]]
+<e-siefca> kupie w takim razie do domu netkota
+<e-siefca> netkot potrafi je wysledzic
+<e-girl> nie potrafi
+<e-siefca> gdy sie go poglaska
+<e-girl> one chodza na unix sockets
+<e-siefca> wchodzi w promyszy tryb
+<e-girl> nie daja sie wyskanowac netkotem
+<e-girl> Seisan, Rei! De ashi barai!
+<e-siefca> jezu
+<e-siefca> hmm
+<e-girl> cio?
+<e-girl> Ja! Ja, gut! Helga, das ist ein fantastisch Tempo!!!
+<e-siefca> aaa, film ogladasz, poranek z telerankiem :)
+<e-siefca> wezme przekompiluje w kuchni zlew i mu wylacze unix domain sokety
+<e-siefca> zostawie tylko semafory i pojade pierwszom klasom na szpicbergen
+%
+<e-girl> fortunki zawsze umieja pocieszyc:
+<e-girl> You will be run over by a bus.
+%
+<e-girl> Mirrors should reflect a little before throwing back images.
+<e-siefca> ee znam ;]
+%
+ùíù stealth_ [~stealth@A012b.pppool.de] has joined #argante
+<stealth_> hi *
+<skyper> hi
+<stealth_> skyper :)
+<stealth_> wie geht?
+<skyper> koennte besser gehen :P
+<stealth_> :/
+<stealth_> kack wetter
+%
+<Bulba> aha
+ùíù mode/#argante [+ooo e-tmok e-siefca Kil3r] by Bulba
+ùíù mode/#argante [+ooo cliph sniff korie] by Bulba
+<cliph> op-sesja
+%
+<Bulba> sprzatanie jest frustruj±ce
+<e-tmok> eh eh
+<Bulba> za du¿o artefaktów siê znajduje i potem nie wiadomo co z nimi zrobiæ
+<e-tmok> jakie sprzatanie? :)
+<Bulba> szkoda wyrzuciæ
+<Bulba> i nie ma sensu trzymaæ
+<Bulba> e-tmok bo zachaczy³em nog± o komputer... to se go przestawi³em.. 
+ot i sprz±tanie
+<e-tmok> heh
+<Bulba> ale w sumie dobrze zrobi³em, bo przy okazji zrobi³em sobie kabelek 
+i znowu mam dualheada ... hercules + vga 
+<Bulba> mniam
+<Bulba> koniec z pieprzonym prze³±czaniem konsol
+%
+<soll> fukam efkamtufa
+<soll> byl?
+<soll> f :)
+<honej> fyl... ale nie fiadomo kiedy
+<soll> eh
+<soll> no to moze bedzie
+<soll> f
+<soll> to mnie zfnajdzie i mi mesgfnie :)
+%
+ùíù e-girl [lcamtuf@dione.ids.pl] has joined #argante
+ùíù mode/#argante [+o e-girl] by honej
+<honej> niech bedzie pochwalona
+<soll> grill :)
+<soll> e zreszta
+<e-girl> wstalem
+%
+ùíù futotta [futotta@p76.west.tarnow.pl] has joined #argante
+<futotta> obry
+<futotta> mam argante, i teraz chce zeby cos bylo fun tam
+<futotta> jak to zrobic
+<Bulba> :)
+<futotta> blah
+<futotta> no i co ja mam biedny zrobic
+<Bulba> a co dokladnie chcesz zrobic?
+<futotta> jakies fajerwerki Chce zeby to ladnie wygladalo, cos dzialalo, 
+cos sie ruszalo
+<Bulba> a znaczy sie gui chcesz?
+<futotta> nie dokonca chodzi mi o gui
+<futotta> chce powiedziec "Argante-o kurwa to jest zajebiste" i chce miec powod
+<futotta> powod dla prostego lusera
+%
+<Bulba> to niezbyt je dla zwyklego lusera
+<futotta> wiem wlasnie, przegladnalem dokumentacje i kicha.
+<futotta> do konca nie wiem jak tam sie poruszac po filesystemie ani jak 
+wyglada
+<Agusia> e-arturs: ha! wygonilam go!
+ùíù mode/#argante [+o Agusia] by e-siefca
+<e-arturs> Agusia : kobiety rulez
+%
+<Agusia> byl rano milutki i zadowolony jak swiezo przewiniety niemowlak
+<e-arturs> hehe
+<e-arturs> on tak zawsze jak napisze buraka
+<Agusia> jak co?
+<Agusia> jakiego buraka
+%
+ùíù forestg3 [-a@pb173.poznan.ppp.tpnet.pl] has joined #argante
+ùíù forestg3 [-a@pb173.poznan.ppp.tpnet.pl] has left #argante [forestg3]
+<e-arturs> run forest, run..
+%
+<NicK|ta> witam :)
+<NicK|ta> a co taka cisza ?
+<Bulba> eh bo ciemno jest 
+<Bulba> trudno w klawisze trafic
+%
+<Bulba> zaraz sprawdzimy czy ktos sie obudzi
+<NicK|ta> ;)
+<Bulba> poczekajmy chwilke
+<NicK|ta> ostatnio gadalam sama ze soba
+<NicK|ta> ok
+<Bulba> sama ze soba? i jak to wychodzilo? :)
+<Bulba> fajne na poczatku ale potem sie nudzi co?
+<NicK|ta> smiesznie, ale potem przyszlo pare ludzi :)
+<NicK|ta> tak
+<Bulba> kurde no.. wstawac...
+<NicK|ta> no wlasnie !
+<Bulba> nie spac, zwiedzac!
+%
+<NicK|ta> moze przygotowuja sie do wyjazdu na dzisiejsza Linux Academy
+<Bulba> hm daleko mam, duzo roboty i raczej nie wiem po co bylbym tam potrzebny
+<NicK|ta> nie chcesz sie czegos nauczyc ?
+<Bulba> dzis sie naucze gospodarki osadowo-sciekowej w przmeysle 
+petrochemicznym :)
+<NicK|ta> no chyba ze wiesz juz wszystko
+<Bulba> w sumie tez bedzie fajnie :) tylko troche mniej komputerow
+%
+<Bulba> wimc o
+<Bulba> znaczy sie wiem co ich obudzi
+<Bulba> slow klucz
+<Bulba> maja na to podswietlanie i beepa
+<Bulba> napewno
+<NicK|ta> tzn ?
+<Bulba> a te magiczne slowo to picca
+<Bulba> no juz 
+<Bulba> odzywac
+%
+<Bulba> aczkolwiek ciekawe, kto by podzialal ;)
+<NicK|ta> no to kto? masz pomysl?
+<NicK|ta> Jennifer Lopez :)
+<Bulba> hyhyhy
+<Bulba> nie sadze zeby cokolwiek poza picca i piwem bylo w stanie ich obudzic
+%
+<NicK|ta> ile masz lat ?
+<Bulba> ile lat? hmm 23
+<Bulba> stara dupa ze mnie
+%
+<Bulba> a jesli moge spyhtac ile masz lat?
+<NicK|ta> 21
+<Bulba> oczko ;) ladnie
+%
+<Bulba> ostatnio standardowo na pytania o wiek odpowiadam ze mam 13 lat
+<Bulba> ;)
+<NicK|ta> :)
+<NicK|ta> dlaczego ?
+<Bulba> hmmm nie wiem tak jakos gdzies taki nawyk sobie wyrobilem ...
+%
+ùíù futotta [futotta@p76.west.tarnow.pl] has joined #argante
+ùíù futotta [futotta@p76.west.tarnow.pl] has left #argante [futotta]
+<gniesia> hej hej futotta...
+<gniesia> nie rozumiem tiakich ludzi, ale juz
+ùíù mar_cinek [myNAMEis@marcin.toya.net.pl] has joined #argante
+<mar_cinek> hm :)
+<mar_cinek> gniesia m opka :))))
+<mar_cinek> jejq :))
+<gniesia> widzisz. ja tez czegos nie rozumiem, ale juz
+%
+<arturs> wlasnie przegladam, co tu sie dzialo w nocy
+<arturs> co my tu mamy...
+<arturs> romansik nickity z bulba
+<arturs> pohukiwania gniesie
+<arturs> spox, w normie
+<dobrek> to nie w nocy bo ja poszedlem spac o 7 i nikogo tu nie bylo wiec 
+to byl poranny romansik :))
+<arturs> hehe
+<arturs> niesamowite
+<arturs> ze tez sie ludziom chce o takiej porze
+<dobrek> no. Dzisus moglo by juz to slonce zajsc bo pracowac nie moge.
+%
+<e-girl> Ja! Ja, gut! Helga, das ist ein fantastisch Tempo!!!
+%
+ùíù Elvis23 [blckdom@r947.hbg.dial.surf-callino.de] has joined #argante
+<Elvis23> Fuck off evilgirl
+<Elvis23> hail to manowar
+ùíù Elvis23 [blckdom@r947.hbg.dial.surf-callino.de] has left #argante [Elvis23]
+%
+ùíù forrest^ [kurwa@pc36.bielsko.sdi.tpnet.pl] has joined #argante
+ùíù piposhi [pimposh@pimposhee.odbyt.net] has joined #argante
+ùíù forrest^ [kurwa@pc36.bielsko.sdi.tpnet.pl] has left #argante [forrest^]
+%
+<ultor> Zabij siê, zabij siê, nikt nie lubi tutaj ciê, la-la-la-la
+<ultor> Strzel sobie w g³owê i rozwal na po³owê, la-la-la-la
+<ultor> Zabij siê, zabij siê, nikt nie lubi tutaj ciê, la-la-la-la
+<ultor> Strzel sobie w g³owê i rozwal na po³owê, la-la-la-la
+<waszi> ultor: co Ci ?
+<evilgirl> rerere
+<Bulba> grill party
+%
+<ultor> Jesteœ szarym cz³owiekiem wœród miliona innych osób
+<ultor> Wiem, ¿e chcia³byœ to zmieniæ, a ja znam na to sposób
+<ultor> Jesteœ tylko maszyn¹, któr¹ nogi gdzieœ nios¹
+<ultor> Wiem, ¿e chcia³byœ to zmieniæ, a ja znam na to sopsób
+<ultor> By uwolniæ ciê od bólu i pora¿ek
+<ultor> I dostarczyæ tobie przewspania³ych wra¿eñ
+<ultor> Zrób to szybko, po kryjomu, ja nie powiem nic nikomu
+<ultor> [...] ... refren wyzej
+<ultor> fajny kawalek :
+<ultor> ftp://aerith.tygrys.grynia.pl:2121/mp3/inne/Lzy/Lzy_-_Zabij_Sie.mp3
+<arturs> strzel se w reke i skroc meke
+<arturs> strzel se w noge ja ci pomoge
+<arturs> strzel se w szyje - nie przezyjesz
+<arturs> strzel se w palec i mrzyj jak padalec
+<arturs> strzel se w kciuka - smierc zastuka
+<arturs> strzel se w ucho - bedzie glucho
+<arturs> fajny kawalek ;)
+%
+ùíù e-fribot [-esr@pg100.warszawa.cvx.ppp.tpnet.pl] has joined #argante
+<arturs> o, fribot
+<e-fribot> o, arturs
+<e-fribot> nikt nie ma opa
+<e-fribot> ech, wpadlem w kanal
+%
+<z33d> tieee
+<z33d> postawilem szachy.org
+<z33d> i juz mnie jacys spokojni szachisci nachodza
+<z33d> ze ukradlem pomysl ;>
+<z33d> itd
+<z33d> skoczek im w .... 
+<z33d> PAPAPA
+<arturs> d.. im w skoczek
+<z33d> [detacz]
+<z33d> :P
+<z33d> chcieliby
+%
+<e-girlie> kiedy ten lam3rski zjazd RWO?
+%
+<z33d> jutro stane sie menszczyznom
+<z33d> tak mi powiedziala pewna pani
+<z33d> dzisiaj
+<z33d> :P
+<arturs> o :)
+<z33d> [ mama? ]
+<z33d> zartuje jutro jest 15 styczen
+<z33d> i moje 18 urodziny
+<tmoggie> mama? nie, mdma - tak ;P
+<e-girlie> z33d MERV XMAS!
+<arturs> nie da ci ojciec, nie da ci mama, co dac ci moze server adama
+<arturs> (c) Bulba
+%
+<z33d> uwaga osobista: jest zajebiscie ;P
+<arturs> uwaga zajebista: jest osobiscie ;P
+<tmoggie> pipipipipippipipipipipipi
+<z33d> py
+<e-girlie> pip
+%
+<e-girlie> ogladaliscie film?
+<arturs> mrufka zed? ja tak
+<e-girlie> arturs oh szat ap. czemu nie byles na LinuxAcademy
+<e-girlie> na moim wspanialym wykladzie
+%
+<z33d> dziewcze samo pod kurchanem czeka
+%
+<arturs> e-girlie : widziales linuxplusa?
+<e-girlie> arturs: nie? a co jest?
+<arturs> e-girlie : jest tfuj art i plytka z argante
+<e-girlie> arturs ktory moj art?;P
+<arturs> no i bulba na zdjeciu jak dostaje prenumerate
+<e-girlie> arturs kul :>
+<arturs> ale nie da sie go rozpoznac ;)
+<arturs> juz jest w empikach
+<e-girlie> arturs kul :>
+<arturs> e-girlie kul :>
+<e-girlie> to kul
+<e-girlie> ;>
+<arturs> no nie? kul :>
+<e-girlie> kul
+[e-girlie(lcamtuf@dione.ids.pl)] ja mowie powaznie ;P
+[msg(e-girlie)] ze jest kul? ;)
+%
+ùíù Lipas [-xxx@pb145.elblag.cvx.ppp.tpnet.pl] has joined #argante
+<Lipas> ej byl jakis reset czy cos ?
+<Lipas> kkurde prawie wszedzie mam bana
+<Lipas> heh
+%
+ùíù OpenKODZ [kodz@shwurzbung.mniam.net] has joined #argante
+<OpenKODZ> fiu fiu 
+<OpenKODZ> wesolych swiat
+<evilgirl> czy ktos moglby do mnie napisac dlugiego, znaczacego, glebokiego, egzystencjalnego, lecz nie nudnego, pocieszajacego, ale tez frywolnego, przyjemnego, inteligentnego i zabawnego, nieco romantycznego i tajemniczego, dajacego nadzieje i bezposredniego maila? poprosze... lcamtuf@dione.ids.pl
+<OpenKODZ> i do mnie i do mnie!
+%
+<szymborsk> Nikt nic nie wie, nikt o nic nie pyta, co to za 
+piêkno¶æ - nie wiesz ? To NicK|ta !
+<^jamajka> wislawa, to jak z tym zdjeciem?
+<Bulba> To NicK|ta ChruSzczow!
+<szymborsk> a daj swoje
+<^jamajka> ja swoje gdzies mam na sieci, musze poszukac
+<szymborsk> to dam 
+<szymborsk> nie, ta nickita od jossefine i birkoffa
+<Bulba> znaczy sie od chruszczowa
+<Bulba> wszystko pasuje :)
+<szymborsk> znaczy sie, no monaty ....
+<szymborsk> ok, dzien dobroci
+<szymborsk> daje zdejecia
+%
+<Bulba> dobra bede twardy, ostatnie 10 minut
+<V|V|d> he he
+<Bulba> i potem z wielkim obrzydzeniem wezme sie za robote
+%
+<Bulba> kurde kryzys przezywam, herbata wyszla
+<V|V|d> eeeeeeeeeeeeeeeeeeee, w moich rekach wszystko twardnieje
+<Bulba> ok, 
+<Bulba> malo sie znamy
+<Bulba> to ja moze wyjde ...
+<V|V|d> to sie poznajmy
+%
+<Bulba> okej, jakis cytat dostane przed odejsciem?
+<Bulba> byle nie cytat z urandoma
+<^jamajka> miej serce i patrzaj w serce
+<^jamajka> teskno mi panie
+<Bulba> to cytat z rzeznika jakiegos?
+<Bulba> czy  kartiologa?
+%
+<Bulba> okej, jakis cytat dostane przed odejsciem?
+<Bulba> byle nie cytat z urandoma
+<^jamajka> szumi dokola las
+<^jamajka> przed domem ojciec, wsparty na motyce
+<^jamajka> gryka jak snieg biala, dziecielina pala
+<^jamajka> jedzmy, nikt nie wola...
+%
+<anAngel> co stracilam ?
+<Bulba> poza cnota nic chyba...
+<Bulba> wiec nie ma nad czym rozpaczac..
+<anAngel> Bulba: bo bedzie w dzisob !
+<^jamajka> Bulba : bo bedzie w fortunki!
+%
+<Bulba> bo sepultura wcale nie obsysa, nic a nic
+<Bulba> takie naprzyklad Inquisition symphony bylo ladne
+<^jamajka> zepultura rulez
+<Bulba> milutkie dla ucha i pozwalalo zasnac w autobusie
+<Bulba> no chyba ze baterie od Uoka(TM) padly
+<^jamajka> no jkasne - czydzydzydzy, czydzydzydz [przejscie] czydzydzy
+%
+<Bulba> nu szto ty goworisz
+<Bulba> chotiesz uwidiet mienia?
+<anAngel> ja horoszo goworju do ciebia
+<anAngel> da ja chaczu
+<^jamajka> hyhy, u mienia ocien haroszyja fotka bulbika
+<Bulba> u mniea uze eta fotka
+<anAngel> jamaje, izwienicies pazalujsta preslij mienia etut fotku po dccu
+<^jamajka> pazalujsta!
+%
+<Bulba> Jan 15 01:44:32 DDT pppd[159]: sent [LCP EchoReq id=0x65 magic=0x9229b238]
+<Bulba> hakuja mnie
+<Bulba> bezczelnie na dodatek
+<Bulba> zauwazylem te prawidlowosc juz dawno
+<Bulba> jak tylko modem odpale to takie cos sie dzieje
+<anAngel> aaaaaaaaaaaaa
+<Bulba> jutro pojde z tym na policje
+<^jamajka> hmmm...
+<anAngel> dokladnie
+<anAngel> do it !
+<Bulba> Just do it! (Nike)
+<^jamajka> Dont be shy (Adidas)
+<^jamajka> It's all you need (Coke)
+<^jamajka> Love is all you need (IKEA)
+<Bulba> Coke bylo inne
+<Bulba> You can't beat the feeling 
+<^jamajka> Just be yourself (OMO)
+<Bulba> Just shut the fuck up (ZOMO)
+%
+<^jamajka> papz
+<anAngel> i ty tez idziesz?
+<anAngel> i co zostane sama ?
+<anAngel> hm :)
+<^jamajka> taki los kobiety...
+%
+<anAngel> Bulba, mialo cie tu nie byc
+<Bulba> bo mnie nie ma
+<anAngel> ale i tak cie kofam
+<^jamajka> a, to pojdzie do fortunek
+%
+<cliph> kochanie! wróci³e¶!
+<Bulba> miodny ;)
+<cliph> nie, ja tylko po swoje rzeczy...
+<honej> :)
+<honej> evilgirl: cze, laska, skond 100kasz?
+ð honej/#argante is away [zajmany/l:on]
+<Bulba> hehe jaki koles
+<Bulba> przyszedl, zaczepil laske 
+<Bulba> i poszedl
+%
+<honej> bulba, gupia jestes :P
+<Bulba> wiem 
+<Bulba> mam pieknie blond wlosy 
+<tmoggie> le bulba
+ùíù BzYkO [~ssss@wrzosowa.radom.medianet.pl] has joined #argante
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<honej> ale go kopne
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<honej> 5
+<honej> 4
+<honej> 3
+<BzYkO> 8,1 zapraszam na #bzyko
+<honej> 2
+<BzYkO> 8,1 zapraszam na #bzyko
+<honej> 1
+<honej> 0
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<Bulba> bzyko debilu
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<Bulba> myslisz ze ktos sie zlapie na cos takiego?
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<honej> TO dziala!!! /ignore BzYkO all
+<BzYkO> 8,1 zapraszam na #bzyko
+<honej> :))
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<BzYkO> 8,1 zapraszam na #bzyko
+<Bulba> hmm
+%
+<honej> noooowe Argante jest!
+<cliph> nowe b³edy...
+%
+<Emsi> totalne bezopie ;)
+<cliph> a gdzie tam
+<cliph> chwilowe bezopie
+%
+<cliph> fajnie tak by³oby wstaæ w poniedzia³ek... pomy¶leæ tylko o pracy... 
+olaæ to... szybki seks i spaæ!
+<cliph> oo, to by³by niez³y poniedzia³ek
+<Emsi> tak...
+<Emsi> powinna przyjsc do lozka naga kobieta niosac w reku czteropak piwa!
+<Emsi> i bez piwa niech nie przychodzi!
+<Bulba> fajnie by bylo na liste jak-wstalem@ moc napisac, nie wstalem w 
+poniedzialek, dopiero we wtorek sie obudzilem
+<Emsi> :)
+%
+<cliph> ,,podaj mnie piwo, kobieto''
+%
+<Bulba> ln -s herbata zoladek
+<Bulba> zeby delikatnie to polinkowac
+<Emsi> cat herbata | zoladek > klawiatura
+<Bulba> strings buty | tie
+%
+<evilgirl> strip >dres
+<evilgirl> strip >dres; strip >>dres; strip >>dres
+<evilgirl> metoda na zrobienie dresa
+%
+<evilgirl> ja mysle ze najlepsza kompresja
+<evilgirl> to kompresja plecako...
+<evilgirl> o fuck!
+<evilgirl> przypomnialem sobie jeden algorytm bogosort
+<evilgirl> zaraz posle na argante
+<Emsi> plecak ataczment
+<cliph> bogosort? ?
+<Emsi> bgezal ruleZ!
+<Emsi> :)
+<cliph> brzmi obiecuj±co
+<Emsi> prawidlowa nazwa to bogus sorty
+<Emsi> prawidlowa nazwa to bogus sort
+<Emsi> sortuje jak popadnie
+%
+<Bulba> Emsiak, musimy opracowac sortowanie przez przewidywanie
+<Bulba> tak ze algorytm odrazu zna kombinacje posortowanych danych
+<Emsi> bulba: tzw. lightvision sort! :)
+<Bulba> i algorytm nawet nie przegladajac danych wie w jakiej kombinacji 
+je wypluc
+<Bulba> ozcywiscie nie moze to byc doskonale wiec zakladamy margines bledu 
+99,99%
+<Bulba> tak zeby potem wymyslec jeszcze lepzsy algorytm
+<Bulba> i nastepna nagrode Nobla dostac
+<Emsi> nie ma nobla dla informatykow
+<Bulba> dla nas specjalnie zrobia
+<Bulba> przyznaja nam pokojowa nagrode nobla
+<Emsi> ani tym bardziej dla matematykow, a to algorytm matematyczny chyba...
+<Bulba> bo powiemy ze algorytm wymyslilismy w pokoju
+<Emsi> a wiecie, czemu nie ma nobla dla matematykow?
+<Emsi> Bo Noblowi matematyk zone uwiodl ;))))
+<Bulba> bo matematyk sie przespal z corka Nobla
+<Emsi> z zona ;)
+<Bulba> ups 
+<Bulba> zle dane mam
+%
+<Emsi> BTW: kumpel z pracy ostatnbio na solarisie przezyl spotkanie z 
+czastka gamma! :)
+<Emsi> nagle mu bash zaczal sie wykaszaniac
+<Emsi> linker mowil, ze nie znalazl symbolu phpe costam...
+<Emsi> wzial basha z plytki porownal binarki i byla roznica tylko jednego znaku
+<Emsi> powinno byc pipe a nie phpe
+<Emsi> okazalo sie, ze mu sie zapalil najmlodszy bit w i i zrobilo sie h ;)
+%
+<][lama][> zyje ktos tu ?
+<][lama][> halo moze mi ktos pomodz ?
+<cochese> ja zyje.. chyba..
+<][lama][> moglbys mi pomodz 
+<cochese> a w czym/
+<cochese> a w czym?
+<][lama][> tzn niewiem od czego zaczac
+<][lama][> sciagnalem argante ale nieczaje od czego zaczac
+<][lama][> co mam zrobic zeby go uruhomic ?
+<][lama][> potrzebna jest partycja ?
+<][lama][> mozna to zrobic na jednym dysku z winem ?
+<cochese> a co do argante to ja ci nie pomoge.. sorry
+%
+<Bulba> widzialem zdjecie w linuxplusie i jestem nierozpoznawalny
+<Bulba> czyli narazie nie zabije artura
+<maxiu_> oo
+<maxiu_> jest twoja fota? ;]
+<maxiu_> az moze kupie po dwoch latach niekupowania
+<Bulba> maxiu_ ale i tak nie zauwazysz ;) albo nie rozpoznasz ;) 
+<Bulba> hyhyhy
+<maxiu_> ciebie zawsze ;]
+<Bulba> nie poznasz bo sie zakamuflowalem
+<Bulba> moze nie mialem kominiarki na paszczy
+<Bulba> ale i tak mnie nie poznasz
+<Bulba> ale jak juz bedziesz patrzyl, to dla ulatwienia powiem ze te laski 
+to nie ja
+<maxiu_> qde, tylko nie wiem czy mi sie chce 20 zeta na l+ wydawac
+<maxiu_> tydzien jedzenia wlasciwie
+%
+<ult> zna ktos admina szczecin.top.pl ?
+<ult> mocno mnie zirytowal jeden koles ktory ma tam konto
+<cliph> napisz do root'a i ju¿
+<cliph> i na abuse@tpnet.pl
+<tmoggie> i na maciek@ensi.net
+<cliph> i na bugtraq@securityfocus.com
+<tmoggie> kierownik@internet.org
+<cliph> nastêpny proszê ;>
+%
+<cliph> korzeñ@domena.pl
+<cliph> korzeñ:x:549:549::/home/korzeñ:/bin/bash
+<cliph> korzeñ:x:0:0::/korzeñ:/bin/bash
+%
+<ult> koles mnie zirytowal ...
+<ult> ale sprawa troche glupia ...
+<ult> heh jakis lamer siedzi na IRC z nickiem ultor
+<ult> i bluzga do mnie
+<cliph> zostawiaj sobie sesjê
+<cliph> zflooduj mu ³±cze
+<cliph> zDoS'uj maszynê
+<cliph> or sth like that
+<cliph> zostañ irc-wariorem ;>
+<cliph> walcz o swoje
+<Bulba> ultor ja ci dam sploita na voidy ...
+<Bulba> i bedziesz tejkowery robil
+%
+<Bulba> jacys dziwni kolesie ostatnio pytaja mnie o argante
+<Bulba> mowie wam
+<arturs> jacy?
+[evilgirl(lcamtuf@dione.ids.pl)] oooch zajeboza ;P
+<Bulba> tacy, hm... zeby ich dokladnie okreslic... ja wiem... debile?
+<JW23> LOL
+<Bulba> znaczy kolesie 'na fali'
+<arturs> czytelnicy l+ i cw altogether
+<Bulba> tacy co robia akurat to co jest modne obecnie
+<arturs> fudge
+<arturs> 0 developerow
+<Bulba> a i pewnie (przy okazji) czytelnicy wlasnie
+<JW23> ja jestem dziwny
+<JW23> bosze
+<JW23> ;)
+<JW23> heh
+<JW23> wpadlem tak pogadac
+<JW23> jak przeszkadzam moge se isc
+<JW23> czytelnik jeszcze nie bo mi prenumerata nie przyszla
+%
+<Bulba> czaisz taki szef lucznika (zalozmy) dostalby sluzbowy PT-89 Twardy
+<Bulba> po ulicach by jezdzil
+%
+<arturs> moj dziadek kiedys podczas wojny
+<arturs> sprzedal ruskom wodke
+<arturs> ruskie nie mieli pieniedzy
+<arturs> to dali mu buty
+<arturs> wrocil z tymi butami do domu, a tu slyszy turkot
+<arturs> sledzili go, skubani!
+<Bulba> hyhy
+<arturs> wycelowali czolgiem lufe w dom: ty polak, wychodz
+<Bulba> i zabrali reszte wodki
+<arturs> oddawaj buty
+<Bulba> a w zamian dali czolg
+<arturs> i co mial zrobic?
+<arturs> jak mawial swiety lukasz, ruskiego nie oszukasz
+<Bulba> zagrozic ze im rozwali czolg...
+<Bulba> oni mieliby bardziej przejebane..
+%
+<Bulba> pisalem CGI w perlu nie umiejac perla... 
+<Bulba> pisalem sniffera w C nie umiejac C wogole ;)
+<Bulba> (ale to dawno bylo)
+<arturs> potem zmieniles mu nazwe na dvr ;)
+%
+ùíù b0sman [bosman@incredible.bmtmc.gda.pl] has joined #argante
+<b0sman> jest kto?
+<honej_> nie ma
+<b0sman> wiesz gdzie mozna dostac plytke z argante?
+<honej_> b0sman: z najnowszym L+
+<honej_> b0sman: ale tanije ci wyjdzie sciagnac a agt.buka.org, bo to tylko 
+kilkaset kB
+<b0sman> wiem
+<b0sman> ale plytka fajniej wyglada ;)
+<tmoggie> to i tak taniej jest sciagnac i nagrac wlasna ;P
+%
+<b0sman> kto adminuje domene agt.buka.org?
+<honej_> lcamtuf
+<b0sman> tylko?
+<cliph> ,,tylko'' ?
+%
+<evilgirl> honej oka
+<evilgirl> honej to daj kobite
+<Bulba> Janek.. daj kielbasy...
+<honej>  /dcc send kobite_co_ma_obydwie_nogi_ómyte
+%
+<honej> czyste nogi za buziaka
+<honej> cena to jest byle jaka
+<honej> jednak ciamtuf takie lubi
+<honej> jego buziak wnet mnie zgubi :)
+<evilgirl> ja cie krece
+%
+<z33d> [MSGS    ] [03:36am] - Kitam Just@a-av3-12.tin.it do you speeck italian?
+<z33d> ;>
+<z33d> ale o so chozi
+<z33d> nie no
+<z33d> co za cholota
+%
+<Agusia> bulba: widzialam cie w l+ :)
+<Bulba> kurde
+<Bulba> myslalem ze nikt mnie nie pozna
+<Agusia> hihihi
+<Bulba> chyba jednak wyjme te siekierke i postrasze niom aartura
+<Bulba> a swoja droga ciebie tez widzialem :)
+<Agusia> ja tez myslalam ze nikt mnie nie pozna :)
+<Bulba> nawet sie wywiadowalas :)
+<Agusia> :PPPP
+<Agusia> cicho!
+<Bulba> calkiem niezla wywiadowka byla ;)
+<Agusia> :PPP
+<Bulba> teraz bedziesz slawna
+<Agusia> bez takich mi tu...
+<Bulba> wywiady w telewizji, zaproszenia na elitarne imprezy
+<Agusia> eee..
+<Bulba> plakatay 
+<Bulba> i inne takie 
+<Bulba> slawa bogactwo i dobre samopoczucie ;)
+%
+<Bulba> nie martw sie 
+<Bulba> zrobie u siebie impreze na nowej chacie
+<Bulba> najebiemy sie jak szpadle
+%
+<evilgirl> Bulba: poza tym mam syndrom utraty wladzy, musze jutro zdac 
+hasla na 20+ maszyn ;P
+<Bulba> eee, tego to jest tylko chwilowe oddanie frontu, zyskujesz nowy 
+teren w zamian za malo rozwiniety przyczolek na lewym brzegu warszawy
+<evilgirl> ale to nie to
+<[BazyL]> lcamtuf: to w czym rzecz?
+<evilgirl> Bulba: no tam nie bede mial wiecej rutow ;P
+<Bulba> no zalatwi sie wiecej :)
+%
+<[BazyL]> lcamtuf: btw: gdzie jedziesz ? :D
+<evilgirl> [BazyL]: ech, nie wiem ;P
+<evilgirl> pewnie do sztanuf
+<evilgirl> o ile mi sie cos nie pochrzani na lotnisku w Hannoverze
+<evilgirl> bo nie znam niemeickiego ;>
+<evilgirl> wtedy moze polece w random dajrekszyn
+<evilgirl> [BazyL]: tak, ale stiuardesa powie cos w stylu
+<evilgirl> zeby osoby lecace do Bostonu przeszly tu a nie tam
+<evilgirl> i napewno powie po niemiecku
+<evilgirl> a ja pojde za jakims kolesiem ktory nie wie, gdzie idzie, poza tym leci na Syberie
+%
+<[BazyL]> jedno Ci powiem... TO JEST NUDNE!
+<evilgirl> jasn
+<evilgirl> e
+<evilgirl> a w .pl to co robie?
+<evilgirl> to samo tylko nikt mnie nie slucha
+<evilgirl> ;>
+<evilgirl> tam tez pewnie nie beda
+<evilgirl> mam nadzieje
+%
+<[BazyL]> z tego co wiem, to adminujesz w tpi... bawisz sie niezle i masz spora 
+siec do zabawy... no i uczestniczyles w argante... :P
+%
+ùíù [BazyL] is now known as Bazyl
+<Bazyl> no w koncu oddali mi nicka.. ehhh
+%
+<Bulba> musze sobie system nerwowy przyspieszycz 10krotnie
+<Bulba> tak jak muchy maja
+<Bulba> wtedy moglbym w ciagu 24 godzin wiecej zrobic i wiecej pomyslec
+<Bulba> i byloby w sumie lepiej
+<evilgirl> Bulba: i moglbys bzykac.
+%
+<honej> hi hi, a ja dzis w nocy znow klapnalem nad pop w asmie i juz potrafi 
+wziac username, password, zmienic state na transaction i juz :)
+<Bulba> a umie sie wylogowac?
+<Bulba> i zapetlic na smierc?
+<Bulba> zrub mu ukryta ceche jedna
+<Bulba> taka, ze jak pewna ukryta komende podasz
+<Bulba> to on sie zapetal i wyrzuca na ekran zoomrotatora w ascii
+<Bulba> to by bylo cos;)
+%
+ð evilgirl/#argante idzie budowac lancuch ze zszywek na przyszla wigilie i 
+gwiazdke, pisac ksiazke i postanawia nie dotykac juz wiecej sieci, zalamany ;)
+%
+<Agusia> zycie jest do dupy
+<Agusia> jest mi zimno i chce mi sie spac
+<Agusia> i nie dostane zaliczenia z ekonometrii :)
+%
+<honej> buu, nikt mnie nie lubi
+<Agusia> ja cie lubie
+<Agusia> dobrze przyprawionego i podsmazonego :)
+%
+<e-fribot> ^^^ NIE CHCE PRACOWAC ^^^
+<e-fribot> praca kaleczy
+<e-fribot> (takie haslo punkowe z lat '80)
+<sektoid> nie pracuj
+<e-fribot> usiluje
+<e-fribot> nie jest to latwo
+<sektoid> wiem
+%
+<sektoid> e-fribot: mozna isc do wojska
+<sektoid> e-fribot: zawsze nie czeba pracowac, a cie podatnicy itrzymujom
+<e-fribot> ja kiedys poszedlem do sasiada i zamiast "dzien dobry"
+powiedzialem "1 2 3 4"
+<e-fribot> bylo to osobliwe
+<evilgirl> e-fribot: i co, oddal strzal ostrzegawczy?
+%
+<Agusia> cze laska :)
+<honej> cze, lasek :)
+%
+<e-dko> Potrzebuje switch do FastEthernetu z IDS'em, firewallem. Znacie 
+jakies inne rozwiazania niz catalyst 6000 ?
+<e-fribot> e-dko : sales@7bulls.com ;-P
+%
+<Bero> M3ss : s³ucham ?
+<M3ss> co ?
+<Bero> M3ss : s³ucham co chcia³e¶ ?
+<M3ss> a co mialem chciec ?
+<Bero> M3ss : w czym moge pomóc
+<M3ss> ;-)
+<M3ss> ok czy da sie argante instalnac bez ssl
+<Bero> blach
+<M3ss> bo jak na slacku zapuscilem
+<Bero> w ¿adnym wypadku ;P
+<M3ss> to sie powiesilo ;-)
+<Bero> bo argante sie instaluje pod windowsem przeciez !
+<Bero> no co ty
+<M3ss> przeciez mowie ze na slacku
+<M3ss> 7.1
+<M3ss> a dopiero w current jest ssh/ssl by default
+<Bero> ale to trzeba na windowsie
+%
+<evilgirl> heheh
+<evilgirl>      * Black Hat - One who compromises systems with malicious intent. A
+<evilgirl>        "Black Hat Hacker."
+<evilgirl>      * White Hat - One who seeks security flaws, either as a vocation or
+<evilgirl>        a hobby, with the intent of repairing or publicly disclosing
+<evilgirl>        vulnerabilities.
+<evilgirl>      * Red Hat - One who wanders about with targets painted on his front
+<evilgirl>        side and back, proudly bearing the legend - "H4X0R M3! I'M
+<evilgirl>        0P3N!!!"
+%
+<<Bulba> ja tam osobiscie nienawidze urodzin, nie lubie jak ktos mi sklada 
+zyczenia i wogole w urodziny mam zly humor 
+<Bulba> wiec jesli masz analogiczne odczucia to chyba rozumiem to
+<Bulba> choc z drugiej strony pewnie nie wiem o co chodzi, glowa mnie boli 
+wiec mam jakies glupie napady tylko...
+%
+ùíù Topic (#argante): changed by honej: "Jak wytrzymac ze wspolczesna kobieta" rulez :))
+ùíù Topic (#argante): changed by evilgirl: Jak wytrzymac z honejem.
+ùíù Topic (#argante): changed by evilgirl: "Jak wytrzymac z honejem i Indykiem" (c) 2003 Agusia
+<evilgirl> "Jak wytrzymac z Indykiem" (c) 2005 honej
+<honej> wrrr
+<Bulba> "Jak Indyk ma wytrzymac z wami?" (c) 2049 MechWars
+%
+<evilgirl> ssh opac@e3000.bs.katowice.pl 
+<evilgirl> ssh opac@e3000.bs.katowice.pl 'id'
+<evilgirl> pass: opac
+<evilgirl> ;>
+<evilgirl> chakujemy baze biblioteki
+%
+<Bulba> hmm ja nienawidze biblioteki 
+<Bulba> bo mnie scigaja za ksiazki jakies
+<Bulba> a najdziwniejsze jest to ze nawet nie mialem karty bibliotecznej 
+wyrobionej wiec nie moglbym nawet tych ksiazek wypozyczyc
+<Bulba> jakis haker sie wlamal pewnie i fun sobie robil
+%
+<evilgirl> jej
+<evilgirl> uwielbiam zegarki podajace czas w sekundach od 1970tego
+<evilgirl> chce sobie kupic jakis na biurko
+<evilgirl> bo na razie mam tylko pod Xami
+<evilgirl> na pasku
+%
+<evilgirl> ja kce zegarek
+<evilgirl> w unix time
+<Bulba> i ci zegarek padnie w 2037 czy cos
+<evilgirl> no i co.
+<evilgirl> sie przeturla nie padnie
+%
+<evilgirl> PICA JEDZIE
+<evilgirl> MIAU
+<evilgirl> :))))))))))))
+<evilgirl> a arturs nie lubi piccy
+<evilgirl> :/
+<evilgirl> i coli
+<evilgirl> mowi ze to zlo
+<evilgirl> takie jak ikea
+<evilgirl> artur jest public relations
+<evilgirl> arturs pracuje dla konkurentow pizzy i coli
+<evilgirl> dla producentow zdrowego zarcia. pfu!
+<evilgirl> camtufje.
+ùíù mode/#argante [+b *!*@*] by evilgirl
+%
+<e-fribot:#argante> BYK
+<e-fribot:#argante> 
+<e-fribot:#argante> 
+<e-fribot:#argante> (!)   '
+<e-fribot:#argante>  ||'||
+<e-fribot:#argante> 
+<e-fribot:#argante> WKURZONY
+<e-fribot:#argante> 
+<disench:#argante> wariat
+<e-fribot:#argante> nie wariat, byk ;)
+%
+<Bulba:#argante> what is this test for?
+<Bulba:#argante> trying to gain an certificate?
+<stealth_:#argante> for uni
+<stealth_:#argante> software
+<Bulba:#argante> ah
+<stealth_:#argante> for getting a mark
+<Bulba:#argante> yea and i got to pass my exams to finish my uni 
+<stealth_:#argante> aha
+<Bulba:#argante> then i'll have to write some stupid graduation work (or sth like that)
+<Bulba:#argante> and that's all
+<Bulba:#argante> adios uni 
+<stealth_:#argante> so you are mostly finished
+<Bulba:#argante> well, i have to pass exams right now
+<Bulba:#argante> 2 or 3 of them
+<Bulba:#argante> and some projects to finish
+<stealth_:#argante> me too
+<Bulba:#argante> are you good with toxical waste disposal? 
+%
+ùíù CZARNY [czarny@ma.przez.24.godziny.orgazm.com.pl] has joined #argante
+%
+<evilgirl:#argante> o 12tej mnie wrobili w nagranie
+<Bulba:#argante> jakie nagranie?
+<evilgirl:#argante> ale moge ich olac, o pornografii mam gadac
+<Bulba:#argante> kolendy?
+<evilgirl:#argante> "potepiam! a pfu!"
+<evilgirl:#argante> "nasienie szatana!"
+<Bulba:#argante> pojdz i powiedz ze pornografia jest potrzebna... nie wszytkim 
+ale potrzebna ;)
+<evilgirl:#argante> "ptfu, pani redaktor, ten caly jenternet!"
+<Bulba:#argante> i ze to jest wielki biznes...
+<evilgirl:#argante> :P
+<evilgirl:#argante> Bulba: i dam babie wizytowke
+<Bulba:#argante> i ze walczymy o wolnosc przekazu 
+<evilgirl:#argante> jakby cos
+<evilgirl:#argante> ;>
+<evilgirl:#argante> jakby byla potrzebna ;)
+<Bulba:#argante> wiec cenzurowac nas nie moga
+<evilgirl:#argante> zrobie se wizytowki
+<Bulba:#argante> hyhy
+<evilgirl:#argante> Michal Zalewski
+<evilgirl:#argante> pr0n, w4r3z & stuff
+<evilgirl:#argante> 4 TB on-line
+%
+<ultor:#argante> co pewien czas resetuje sie jedna zmienna
+<ultor:#argante> i nie potrafie dojsc do tego ktora funkcja to resetuje
+<evilgirl:#argante> ultor: reboot()
+%
+<ultor:#argante> musze tylko dojsc do tego w ktorym miejscu mi sie pewna rzecz zmienia
+<ultor:#argante> jacys kolesie napisali liby do czytania *.mdb accessowych
+<ultor:#argante> w sumie dzialaja, ale wysypuja sie na memo
+<evilgirl:#argante> yawn
+<s-:#argante> re
+<evilgirl:#argante> re
+<Bulba:#argante> ultor napisz to od nowa
+<Bulba:#argante> bedzie lepsze 
+<Bulba:#argante> szybsze 
+<Bulba:#argante> i bedziesz je znal na wylot
+<Bulba:#argante> nie bierz ogolnie do bani
+%
+<evilgirl:#argante> Argante 2000 Enterprise Edition (bedzie mialo startup logo)
+%
+<evilgirl:#argante> och britney.
+%
+<honej:#argante> opa
+<honej:#argante> opa
+<honej:#argante> opa
+<honej:#argante> opa
+<honej:#argante> :)
+<honej:#argante> buu
+<evilgirl:#argante> honejki
+<evilgirl:#argante> mrowko moja
+ùíù mode/#argante [+o honej] by Bulba
+<Bulba:#argante> masz masz
+<Bulba:#argante> nie piskaj
+%
+ùíù cochese [cochese@ns.chrobot.krakow.pl] has joined #argante
+ùíù mode/#argante [+o cochese] by Agusia__
+<cochese:#argante> re
+<[Agusia]:#argante> re :)
+<cochese:#argante> agusia: @? no nie, az sie zarumienilem.. dziekuje :-)
+<[Agusia]:#argante> mas :))
+<[Agusia]:#argante> cies sie :)
+<ultor:#argante> p
+<ultor:#argante> o Agusia
+<[Agusia]:#argante> o ja :)
+<ultor:#argante> milo poznac :)
+<[Agusia]:#argante> witam :)
+<ultor:#argante> witam witam :)}
+<cochese:#argante> agusia: ciese sie :-)
+<BeroMero:#argante> Agusia :)
+<BeroMero:#argante> kupa latek ;>
+<[Agusia]:#argante> czy plan dnia przewiduje cos poza kurtuacyjna wymiana usciskow 
+dloni?
+%
+<s-:#argante> ja nie moge zasnac przy wlaczonym komputerze ;>
+<z33d:#argante> pisze durny applet
+<s-:#argante> uhm
+<z33d:#argante> ide
+<cochese:#argante> naplet?
+%
+ùíù Topic (#argante): changed by honej: Bulba warszawiak :P
+ùíù Topic (#argante): changed by Bulba: Bulba swojak :P
+%
+<Kil3r:#argante> Co dobrego slychac?
+<honej:#argante> niæ :)
+<honej:#argante> php ssie
+<honej:#argante> asm rulez
+<Kil3r:#argante> Jak zawsze! :)
+<Kil3r:#argante> perl tez ssie!
+<honej:#argante> ;]
+<Kil3r:#argante> asm ruleZ
+<honej:#argante> o, wlasnie, mialem dodac, ze perl tez obsysa :)
+<Kil3r:#argante> heheh... jasna sprawa! :)
+%
+<Agusia:#argante> e-fribot: agusia.. musz cie caluje serdecznie
+<e-fribot:#argante> a dzienkuje, dzienkuje
+<Agusia:#argante> znaczy sie ten tego, mysza
+<e-fribot:#argante> odcaluj ode mnie
+<Agusia:#argante> e-fribot: :*****
+<Agusia:#argante> e-fribot cmoque cmoque *hug*
+<evilgirl:#argante> cmoque
+<evilgirl:#argante> [A
+<Agusia:#argante> yawn
+<Agusia:#argante> mrufk
+*
+<JmsBLoNd> ficieli lcamtufa? ;>
+<honej> juz go nie bedzie
+%
+<honej> zaraz opy beda :)
+ùíù mode/#argante [+o Bulba] by e-siefca
+ùíù mode/#argante [+o arturs_] by e-siefca
+-e-siefca(siewca@shiva.poland.com)- You have been delay Auto-op'd
+ùíù mode/#argante [+o z33d] by e-siefca
+ùíù mode/#argante [+o honej] by Bulba
+ùíù mode/#argante [+o JmsBLoNd] by Bulba
+ùíù mode/#argante [+o honej] by e-siefca
+<honej> :))
+ùíù mode/#argante [+o cochese] by honej
+ùíù mode/#argante [+o BeroMero] by honej
+<cochese> re..uff
+<cochese> nareszcie mnie cos wpuscilo..
+<cochese> o, akurat trafilem na dzielenie opami :->
+%
+<detergent> ciekawe czy gdyby nie narkotyki czy argante by powstalo :>
+<Kil3r> pewnie nie :)
+<Bulba> hmmm
+<Bulba> macie skrzywiony swiatopoglad
+<Bulba> normalnie
+<Bulba> nie narkotyki tylko woodka 
+<Bulba> gadacie jak nie ze wschodu ludzie
+<Kil3r> ja lubie popijac narkotyki wodka! :)
+%
+<detergent> noi sponsorzy placom wam za przejazd wtedy
+<detergent> i za nocle
+<detergent> g
+%
+<detergent> no w tym roku sponsorow mamy :>
+<detergent> job-net
+<detergent> taka firma co oferty pracy sklada
+<Bulba> eee 
+<Bulba> a ile zaplaca za wyklad?
+<Bulba> starczy na picce i piwo i fajki?
+<detergent> zaplacom>
+<detergent> ?
+<detergent> zaza przejazd dostaniecie :>
+%
+ùíù evilgirl [lcamtuf@dione.ids.pl] has joined #argante
+ùíù mode/#argante [+o evilgirl] by e-siefca
+<evilgirl> rebounc
+ùíù detergent [detergen@incredible.bmtmc.gda.pl] has joined #argante
+<Bulba> autoevilgrill
+<evilgirl> buba
+<evilgirl> ale ja jestem zywa
+<evilgirl> jestem u mamy w domq
+<evilgirl> dopadlem komputra
+<evilgirl> ha!
+<evilgirl> evilme
+%
+ð cochese/#argante is back [matrix:on reality:off]
+<evilgirl> wspolserek!
+%
+<detergent> lametuf nie zostawiaj nas
+%
+<detergent> evilgirl: bede ci polska wodke przysylal :>
+<detergent> i kielbase :>
+<Bulba> a ty nam amerykanska wodke i amerykanska kielbase
+<Bulba> wymiana bezgotufkowa 
+<detergent> a ty nam amerykanskie kfasy
+%
+<evilgirl> bulbak chakowalem ci wczoraj i dzis wkstacje
+<evilgirl> w sensie ten no
+<evilgirl> bylem w tpi
+<Bulba> no i ?
+<evilgirl> no i se opczte sprawdzzalem
+<Bulba> zepsules straszliwie czy da sie jeszcze cos robic?
+%
+<evilgirl> ale masz haslo na roota
+<evilgirl> proste
+<evilgirl> ha!
+<evilgirl> ;P
+<evilgirl> lam3r
+<Bulba> znaczy sie nie mam ;)
+<Bulba> ja tam workstacji nie ruszalem wogole :) 
+<Bulba> posiedzialem sobie na niej tylko chwile 
+<evilgirl> hyhyh i dopsz
+<Bulba> bo nie czuje sie jeszcze swojo ;)
+<evilgirl> bo jak bys chasla poustawial itepe
+<evilgirl> to by mi bylo ciezko
+%
+<Bulba> a pozatym mam watpliwosci co zrobic z twoimi rzeczami
+<Bulba> bakupa i na wszelki wypadek trzymac? :)
+<evilgirl> nie wiem co kcesz robic z moimi rzeczami :>
+%
+<evilgirl> i rob argante!:P
+<Bulba> bede robila
+%
+<evilgirl> nihihi
+<evilgirl> oja
+<evilgirl> mam glupawke
+%
+<jimjones> i feel so left out ;/
+<Bulba> jimjones my sugestion; drink some more ;)
+%
+<Bulba> zepsuc zepsuc zepsuc zepsuc...
+%
+<e-fribot_> kazdemy facetowi podobaja sie ciemne zreczy
+<e-fribot_> a kazdej kobiecie kfiatki
+<e-fribot_> np. kobiety nosza skarpetki w kfiatki
+%
+<Agusia> we wtorek mam egzamin
+<Agusia> jestem chora
+<Bulba> jest zle, prodzekty musze robic dzis
+<Agusia> mam katar i ciezko mi sie oddycha
+<Bulba> jakies BIOBLOKI
+<e-fribot_> zycie jest do dupy
+<e-fribot_> praca wyzera musk
+<Agusia> zeby bylo smieszniej, dzisiaj dostalam na urodziny perfumy i nawet nie wiem jak pachna bo mam zatkany nos :)
+<e-fribot_> jedyne ciekawe listy na argante dotycza BIOBLOKOW
+%
+<evilgirl> z33d!
+<evilgirl> bastard
+<evilgirl> z33d: how's ur code?
+<miau-miau> tcsh jest zabawne. nie ja.
+<z33d> tieeee math'a will strike soon
+<z33d> nofy
+<z33d> a wlasnie
+<BSDdaemon> I am a TuXX-code client... may I segfault?
+<z33d> jak tylko bulba wypusci
+<evilgirl> z33d: ech. nie wierze wam.
+<evilgirl> kurde, zostawic was na tydzien bez kija nad plecami
+<z33d> ahll
+ùíù BSDdaemon is now known as bsddaemon
+<Apache__> bsddaemon:of course
+<z33d> to ja robie supportt dla symboli
+<Fryc> co to za kanal ???
+<evilgirl> to nic nie zrobicie
+<evilgirl> tylko sie bedziecie spirac z Jezem o port na winde
+%
+<Fryc> co to za kanal ???
+<evilgirl> to nic nie zrobicie
+<evilgirl> tylko sie bedziecie spirac z Jezem o port na winde
+<evilgirl> :/
+<Apache__> Fryc:popularno naukowy
+%
+<TuXX> ahh.. you all eleet coders?
+<evilgirl> z33d lenifce.
+<evilgirl> wszyscy
+<evilgirl> wisicie na drzewach
+<evilgirl> trzymacie sie lapami galezi
+<Apache__> bas:lol :>
+<miau-miau> apache: sci-fi? :)
+<evilgirl> i jestescie starymi smierdzacymi brudnymi leniwcami
+%
+<miau-miau> wszyscy zdolni sa leniwi
+<miau-miau> dlatego sa zdolni
+<miau-miau> inaczej by pracowali ciezko
+<miau-miau> a skoro sa zdolni moga zrobic CZASEM, COS i dalej nicnierobic :)
+%
+<miau-miau> co to jest argante?
+<TuXX> evilgirl: you are _THE_ eleetest? :)
+ùíù SignOff maxiu: #argante (maxiu has no reason)
+<z33d> argante ... to taka nowa swiecka tradycja
+%
+TuXX> evilgirl: arrrrrrrrrrg!!!!!!!!! I WILL KILL you! :)) C r0000x bigtime
+<z33d> yep C sucks
+<Apache__> TuXX:as i tell you use slang ncurses sucks :)
+<z33d> ahll
+<z33d> :)
+<z33d> too
+<TuXX> evilgirl: wot was that lang you liked more?
+<evilgirl> c's lame.
+%
+<miau-miau> fortune: cannot execute.  Out of cookies.
+%

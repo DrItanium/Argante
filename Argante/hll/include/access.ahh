@@ -1,0 +1,43 @@
+/*
+
+   Argante HLL
+   -----------
+
+   Access Control Interface
+
+   Status: done
+
+   Author:     Michal Zalewski <lcamtuf@ids.pl>
+   Maintainer: Michal Zalewski <lcamtuf@ids.pl>
+
+*/
+
+
+type Domain_Number is unsigned;
+type UID_Number is unsigned;
+
+
+procedure SetDomain ( d : Domain_Number ) {
+  if not d {
+    raise ERROR_BADID;
+  }
+  syscall(SYSCALL_ACCESS_SETDOMAIN, u0 := d);
+}
+
+
+procedure SetUID ( d : UID_Number ) {
+  if not d {
+    raise ERROR_BADID;
+  }
+  syscall(SYSCALL_ACCESS_SETUID, u0 := d);
+}
+
+
+procedure DropDomain () {
+  syscall(SYSCALL_ACCESS_SETUID, u0 := 0);
+}
+
+
+procedure DropUID () {
+  syscall(SYSCALL_ACCESS_SETUID, u0 := 0);
+}

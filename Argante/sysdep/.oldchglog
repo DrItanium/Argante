@@ -1,0 +1,606 @@
+
+  Argante OS: ChangeLog
+  ---------------------
+
+Version 1.001.1380:
+
+- major changess: call stack, exception stack and memory allocation
+  tables are now dynamically allocated and resized; this drastically
+  reduces per-VCPU memory usage; limits raised: stack: 256 -> 16384,
+  memory blocks: 64 -> 16386; max vcpus: 60 -> 128. New code *SEEMS*
+  to be stable...
+- noone expect... kil3r patches
+  
+Version 1.001.1344:
+
+- almost finished GGI module now in untested/GGI. Whoa!:)
+- mapped memory chunks support (not to be free()d / realloc()ed) - just
+  create new chunk and set MEM_FLAG_MAPPED.
+- ALLOC - you can set MEM_FLAG_STRICT to disallow futher access mode
+  changes; it's like securelevel - cannot be unset.
+- REALLOC - memory flag changing (if newsize==0, u0 is used to set flags;
+  otherwise, memory is resized, flags are not affected)
+- moved old agtman to obsolete/ directory
+- moved old binedit to obsolete/ directory
+- moved old documentation to obsolete/ directory
+- added new X and ncurses management interfaces: tools/GMI
+- ADAM: what about GGI module?
+- predoc is now done and moved from untested/ to tools/
+- support/ renamed to contrib/
+- added blinkenlight module, excluded from default build, now in contrib/
+- TO DO: symbols, dynamic loading support - have nice relocation concept :)
+- documentation really has to be updated :///
+- minor bug in predoc fixed
+ 
+Version 1.001.1329:
+  
+- updated gtkagt utility by James Kehl (looks impressive), moved it to tools/.
+  Check it out!:)
+- more docbuilder work follows; it is finished, documentation needs to be
+  splitted and reviewed.
+- lcamtuf's todo: agtses, AHLL ;)
+- "sorry, poprawiam"
+
+Version 1.001.1322:
+
+- removed Documentation/ANNOUNCE, added support/  
+- fixed dir.ahl - dunno if it ever worked ;)
+- documentation builder - untested/predoc, under development...
+- todo for lcamtuf: predoc, vcpucons, AHLLv2 (in this order ;)
+- kil3r is in Documentation/People ;)
+- updated fortunes
+  
+Version 1.001.1314:
+
+- more really kil3r fixes ;)  
+- added GGI grap.so replacement to untested/ directory
+- added and *FIXED* kil3r's JIT
+- added GTK GUI beta to untested/ directory
+- gfx now works fine.
+- applied z33d's math fixes
+- TODO list updated: auth, fs proxy, command interpreter and network
+  listener functional bloks to do (assigned person: lcamtuf). We still
+  do not have usable AHLL / Modula-3 interpreters. Do I have to do it
+  on my own?
+- ...please come to Boston...
+- added our new developers to README:
+  Adam Chodorowski (adam.chodorowski@bigfoot.com)
+  James Kehl (ecks@optusnet.com.au)    
+
+Version 1.000.1298:
+
+- we're back after christmas ;)
+- z33d's math updates
+- kil3r: more and more JIT work... :P
+
+Version 1.000.1290:
+
+- kil3r's massive diffs applied
+- change=0 on CPCNT/CMPCNT ptrs removed
+- alone "thing" thing fixed in bcode.c (LDB from sregs was broken ;)
+- final solution on MOVB problems; LDB (get byte) and STOB (put byte)
+- documentation and Examples/RSIS/movb.ahl updated, MOVB is no longer
+  supported... kil3r, you can resume optimizations right now :)
+  CHECK OUT THIS EXAMPLE !:)
+
+Version 1.000.1261:
+
+- SIGPIPE is ignored at all... might help, some problems were reported
+- changed Artur's e-mail address
+- updated DVR
+- Examples/RSIS/movb.ahl
+- IO_PutHex
+- back to 35 opcodes...
+- no more MOVB0, 1, 2, 3... all functionality (MOVB, STOSB) joined 
+  within MOVB instruction.
+- another kil3r-based patch
+- metastack functionality - SETSTACK, POPS, PUSHS, see documentation
+- Examples/RSIS/mstack.agt
+- minor agtc bugfix
+- and more... and more... cmd.c is almost done...
+- mov u0,1 == mov u0 , 1 == mov u0, 1 ;) minor agtc fix
+
+Version 1.000.1241:
+
+- aaah.... more e-kil3r.... 
+- more... and more... you know what... 
+- more kil3r-derived optimizations ;) to do: JIT, CHECK_EXCEPT only
+  if needed in cmd.c, syscall lookup optimizations?
+- /root/lcamtuf/fcale/nie/jest/gupi/Argante/kernel/cmd.c :)
+- bytecode on-load validation complete; removing register
+  range checks in bcode.c and cmd.c (sorry kil3r, couldn't wait ;).
+- all register range checks removed
+- AIX port added; in AIX and Solaris makefiles, ripcd is commented out for
+  now
+
+Version 1.000.1188:
+
+- Bulba: something fixed ;)
+- kil3r: removed everything...
+- more optimizations by kil3r.
+- memory.c removed from kernel!
+- final preparations for on-load register validation
+- minor set_mem_* fix
+- emsi: do not overwrite ip + other fixes / opts...
+- eru: .code .code fix
+- everything except packet.c works on IRIX, everything except packet.c and
+  ripcd works on Solaris... good. :)
+- another exception handling bugfix to avoid multiple exceptions in
+  single cpu cycle
+- for kil3r: move CHECK_EXCEPTs in cmd.c and CHECK_EXCEPT_INSWITCH in bcode.c
+  in apropriate places (only for immptr / uptrs)
+- tools/agtman - partially done dialog/ncurses frontend
+- MEM_ENDIAN syscall
+- PUTFLOAT syscall
+- honey: "no syscall handler found" includes syscall number as well
+- minor makefile addons
+- working on dialog-based manager...
+- added vim highlight files, minor documentation changes (two new
+  developers).
+- bcode optimizations moved to mainstream code. 50% faster.
+- CMD_LOOP bug fixed in kil3r's code
+
+Version 1.000.1179:
+
+- minor exception handler fuckup fixed, thanks to r00 and Bulba
+- untested/modula - unfinished version of Modula-3 compiler by r00;
+  waiting for better version soon
+- untested/bcode - kil3r's bytecode improvements (30% faster)
+- Documentation/highlight - RSIS code highlighting for vi and mcedit
+- compiler/language.h lang spec fixed (kil3r)
+
+Version 1.000.1175:
+
+- Documentation/MIRRORS; we're looking for US-based mirrors, non-TPNET
+  mirrors in Poland and so on...
+- Documentation/TODO rewritten, minor README cleanups...
+
+Version 1.000.1171:
+
+- agtexe utility introduced
+- some minor fixes -- again
+- Pingwinaria 2000 - Documentation/pingwinaria
+
+Version 1.000.1166:
+
+- final release of Argante v1.000.
+- documentation reviewed
+- minor improvements
+- ripcd tested
+- webpage updates
+- renice +20
+
+Version 0.009.1123:
+
+- rIPC HAC
+- rIPC HAC documentation
+- DVR and rIPC fixes by Bulba
+- One Thing To Go: FINAL PERFORMANCE TESTS /and docs review/ :)
+- added Documentation/BUGS
+- Solaris 7 compatibility check - inet_aton() in ripcd causes problems.
+- Solaris 7.0 and older glibc - should work right now...
+- glibc compatibility!
+- new DVR with echo cancellation. Seems to be stable. Still working on lags.
+  Tests, anyone?
+- fioasync support in ipc.c, but no changes
+
+Version 0.009.1101:
+
+- reconnect and accept counters fixed (ripc_network_handler modified)
+- packet.c get hwaddr functionality.
+- patched DVR and rIPC, new bcode.c etc; working, but slow, optimizations
+  in progress.
+- According to Bulba, DVR should work. Most of the rIPC and DVR bugs were
+  killed to death. Some nasty bug is still alive, and rIPC session seems
+  to be unstable (infinite error loops ;). But it is almost done. Hurray!:P
+
+Version 0.009.1087:
+
+- config.h, ipc.c and dvr - updates, bugfixes, from Russia with love
+- rIPC documentation primer - draft by lcamtuf
+- HAC hierarchy tree done (and in documentation); rIPC HAC required.
+- Documentation/Advocacy added - some intellectual ammo ;)
+- some lcamtufized HAC wildcards fixes. '*' means 'any', not 'all'!
+  Use "all" keyword if you mean all possibilities.
+- some documentation updates for HAC
+- ehem, HAC query wildcards were removed; Bulba - do it in other way.
+- fs.so update to discard wildcards in path
+- Bulba: HAC wildcards; I implemented them in actest as well
+- Bulba: numerous rIPC fixes
+- Bulba: dir.agt bugfix (minor :)
+
+Version 0.009.1044:
+
+- rIPC neighbourhood guard ;)
+- rIPC reconnect added
+- minor ripc.so unload bug fixed; Bulba - check for memleaks.
+- subtle #include and symlinks changes, thanks to Jaroslaw Pyszny...
+- RELEASE DATE: Saturday. DVR tests, DVR HAC and DVR/ripcd doc needed!
+  Please do not miss the thing ;)
+- more manpages.
+- PROCESS CONSOLES SUPPORT! See README, section 17. vcpucons utility
+  added.
+- hll/examples/console.ahl - simple console I/O demo. Compile and run it,
+  then use vcpucons fs/unix-sock/0-123 to go.
+
+Version 0.009.1021:
+
+- elim manpage added; to go: agtc, agtproj, rIPC reconnect, rIPC HAC,
+  DVR testing, some minor writing.
+- svgalib compatibility check added
+- two new manpages added
+- added ripcd rehash functionality - lcamtuf
+- Bulba's DVR is BETA and now in Examples/DVR; while ripcd howto is still
+  missing, I've provided sample Examples/DVR/README, it should be easy.
+  PLEASE TEST IT RIGHT NOW!!!
+- To go: a few manpages, DVR description by Bulba, ripcd description,
+  probably several minor fixes etc.
+
+Version 0.009.1014:
+
+- we've got our first user! BarD (+http___st@pe32.gdansk.cvx.ppp.tpnet.pl)
+  ircname  : BarD, channels : #linux4u #argante #hackpl #sesja... Whatever.
+- alpha version of DVR in untested/DVR
+- fortunes updated.
+- './build install' should install all necessary files in /usr/lib/argante,
+  /usr/bin and /usr/doc/Argante. These locations are not coded inside VOS.
+  (REINTRODUCED)
+- automated 'agtproj' utility to set up default project workspace has been
+  added (honey: manpage ;); run it - it is cool! (REINTRODUCED)
+- Documentation/man == manpages; agtc, ahlt and acc should have their
+  manpages soon. (REINTRODUCED)
+- aah, I fucked up this endian thingy, fixed
+- endian detection example (Examples/RSIS/endian.agt)
+- glibc 2.2 autodetection works fine
+
+Version 0.009.1003:
+
+- removed trailing-space "feature"
+- fixed opcode numbers for MOVB/MOVW
+- opcodes stored as unsigned char, bug fixed
+- WE ARE AS GOOD AS WINDOWS NT! Build 1003! LOUDER THAN BILL!!! ;)
+- added movbs and movws to language.h, fixed MOV specification
+- fixed conf/scripts/vga.scr to load math.so
+
+Version 0.009.996:
+
+- added MOVB0, MOVB1, MOVB2, MOVB3, MOVW0, MOVW1 and MOVWM endian-idependent
+  functions
+- advmem one-byte fencepost bugs fixed
+- HP/UX support patches added to untested/
+- IPC module bugfixes added
+- packet.so patched (packet sending)
+- TO DO: RedHat 7.0 svgalib - what's the problem?
+- TO DO: readline + svgalib lockup
+- TO DO: Solaris 8 ripcd?
+- ripcd and Argante tested on Solaris 7.
+
+Version 0.009.990:
+
+- Bulba's agtc patch (large ints)
+- rIPC documentation almost done (still no ripcd docs, but who cares)
+- some minor bugfixes included, no dvr yet
+
+Version 0.009.978:
+
+- bikappa's lowlevel networking updated; vulunteers needed for testing
+- WOW! Bulba's premilinary rIPC support now in ipc/; removed old
+  IPC files and Makefile, awaiting finished code, new documentation and
+  DVR stuff... Wish him luck :P
+- rIPC support moved to modules/, etc etc... libc->glibc "reverse backport",
+  new docs and module added.
+
+Version 0.009.967:
+
+- added bikappa's packet.c in untested/, will review the code soon - basically
+  it is BPF-enabled, revised low-level network module
+- bulba promised ripc today... waiting patiently :P
+- re-introduced obsolete polish README... still waiting for bulba's ripcd!
+- added z33d math patches
+- added gfx.c read_key feature!:) gonna write game ;) note: libreadline
+  and svgalib are not compatible; either libreadline dies or svgalib is
+  not able to read keyboard. Ugh.
+- documentation debugged
+- added command-line support to ripcd, moved sources to tools/
+- aah, FIXED LOCAL POINTERS... The problem was an attempt to initialize
+  not pointer but dest object...
+- added SVGA example to welcome scripts...
+- global pointers are now working, gfx.ahl migrated to pointers, bytecode
+  has now <3 kB! [./acc -e gfx.ahl]
+- added hll/examples/ptrs.ahl - dynamic objects howto (should appear in README)
+- applied z33d's patches
+
+Version 0.009.951:
+
+- fixed juicy dest_size defined as char bug in AHLL.
+- AHLL floating point arithmetics is broken. To be fixed... one day...
+- fixed honey's bug - well, a+3/4 isn't extactly the same as (a+3)/4
+- fixed another brain-damaging honey's bug
+- added simple gfx demo and fixed ahll - >modules/gfx.so, $hll/gfx.img
+- added z33d's math - new version, documentation changes, .ahh.
+  no stepping, some warnings - z33d should fix it _today_ ;)
+- TO FIX: vga_setpalvec not working properly or I am stupid.
+- TO FIX: uhm, something is wrong with AHLL pointers
+
+Version 0.009.907:
+
+- added updated gfx manual and several other honey things ;>
+- honey, be so nice and add gfx exceptions documentation to README
+- debugged crappy gfx.ahh code - never seen something like that!:>
+- added ripcd 0.5 (wow, finished). No documentation yet.
+- changed logo for Mini-HTTP, etc, etc...
+- another changes at www, making it ready for final release
+- added Documentation/fortunes - Artur, notify me on any updates
+- fixed Mini-HTTP "Server:" line destroy bug
+- added preventional bzero() in bcode.c when mallocing memory...
+- switched to release 0.009; gfx finished, gfx.agt now works fine; waiting
+  for finished z33d's math.c to write zoom-rotator ;)
+
+Version 0.008.899:
+
+- gfx bugs fixed; will compile, but won't be loaded by default on Linuxes.
+  Sample code: compiler/examples/gfx.agt
+- added gfx module by honey, waiting for ahh entries... IT IS STILL BUGGY,
+  BE CAREFUL!
+
+Version 0.008.892:
+
+- introduced new webpage contents
+- added Documentation/COPYING - LGPL license text
+- added compiler/examples/mem.agt example
+- fixed bcode.c <-> README inconsistency
+- added /ANNOUNCE - beta version of texts...
+- added z33ds math.ahh
+- added svgalib support by honey, UNTESTED/ for now.
+
+Version 0.008.868:
+
+- because we want to be portable, getchar function has been implemented
+  as a syscall - ahh implementation is endian-dependent; one day, this should
+  be available on AHLL-level (normal array access to bytechunks)
+- Mini-HTTP now supports content-type text/plain, text/html, and 
+  application/octet-stream using simple "file magic" alrgorithm
+- minor fs.c fix when seeking the file (!FLAG_APPEND -> FLAG_APPEND)
+- updated ripcd version (0.4 shipped in ripcd/)
+- another minoor chaaaangees *yawn*
+
+Version 0.008.846:
+
+- note: packet.c is not portable to Solaris, thus removed from Makefile.sol;
+  BSD as well - removed.
+- Solaris -ldl added by default (necessary on some boxes)
+- another scrippie patches added
+- put scrippie in the ADT
+- incorporated z33d's advmem.ahh, introduced get_character function...
+
+Version 0.008.824:
+
+- added scrippie's patch
+- "./build test" tutorial has been revised, some minor documentation changes
+- added packet.ahh functions
+- added honey to ADT (development team), introduced Documentation/People
+  file and so on...
+- Solaris port ACKed :)
+- added Examples/RSIS/sniffer.agt to demonstrate packet.so functioality :)
+- added Bulba's IPC in ipc/ directory (not built by default, use
+  'cd ipc;make ipc' after issuing './build' in order to use it)
+- _not_ added recent z33d patches due to some problems :)
+- added .define support in agt files (by Bulba)
+- adapted and added packet.c low-level network support (no BPF for now :/)
+- written documentation entry for packet.c
+
+Version 0.008.800:
+
+- s0/f0 := in syscall fixed
+- obsolete polish documentation removed,
+- CMPCNT used u0 for result code, but documentation mentioned s0, fixed
+- OpenBSD port fixed; math module won't work on OBSD for now, will be ported
+  after finishing.
+- I'm proud ;>
+- several changes; added Wait_Net_Event and Send_File routines make
+  Mini-HTTP faster than Apache when serving huge files and as fast as
+  Apache when serving numerous small requests (ApacheBench tests).
+
+Version 0.008.766:
+
+- AGHRR :) Fixed really brain-damaging bug in network.c (or, undesirable
+  feature, as you wish)... Now Mini-HTTP with huge data portions will work
+  fine!
+
+Version 0.008.693:
+
+- changed default Mini-HTTP webpage :)
+- strange non-blocking send() behaviour workaround for Linux
+- minor Mini-HTTP bugfixes related to broken async_accept() in network.ahh
+- yes, stack-shrinking was fucked up, code fixed (and now, finally, I'm
+  sure exception handling is working fine :)
+- stack-shrinking is broken???
+- Mini-HTTP server is FINISHED! See Examples/Mini-HTTP :)
+- several AHLL fixes introduced
+
+Version 0.008.684:
+
+- strange .field bug fixed; yup, AHLL has to be completely rewritten for 
+  AOSr2.
+- Mini-HTTP server is done; advmem.ahh to go :) advmem is somewhat
+  broken, btw, z33d should fix it after coming back from holidays ;>
+
+Version 0.008.659:
+
+- some Mini-HTTP things done
+- AHLL documentation finished
+
+Version 0.008.647:
+
+- added switch {} and case nn / case default; exception {} works like switch,
+  immediate values might be passed as non-writable parameters; more other
+  things done, fs.ahh include file is now usable. created Examples/AHLL
+  directory, added dir.ahl example :) YOU HAVE TO SEE.
+
+- written some of the AHLL documentation in README.
+
+Version 0.008.642:
+
+- several z33ds patches, math module (under development - no table-crossing
+  functions), examples, documentation changes, enhancements - he's great ;>
+
+- added Marcin's ripc connections daemon (pre-beta-demo) in UNTESTED/ 
+  directory
+
+- no information on IPC / rIPC from Bulba :( No AHLL advances, I'm pretty
+  busy now.
+
+Version 0.008.622:
+
+- almost 02:00 am; AHLL: almost everything done; to go: better exception {}
+  block; one day, other improvements: sth.sth[swhr], flexible arithmetic,
+  flexible array/structure access, else + case/switch, imm values as function 
+  parameters - BUT NOT NOW, someone else will do it ;) added hll/BIG_FAT_*,
+  fixed some bugs, created an example - hll/t2.ahl
+
+
+Version 0.008.599:
+
+- hours spent with AHLL: fully functional if / while / loop, working
+  assignments and arithmetics, finished syscall(); local {}, exception {},
+  fn calls to go :)
+- introduced hll/elim - dead code elimination tool (bash only, slow as hell)
+
+Version 0.008.562:
+
+- z33d's patches included, documentation updated
+- minor kernel CMD_IFBEL / CMD_IFABO bug fixed
+- AHLL - several bugfixes and code improvements; arrays / structures fully
+  supported, README updates, and so on - enjoy your stay.
+
+Version 0.008.525:
+
+- AHLL: syscall(); to go: assignments (including memcpy), []., better
+  comparsion (including memcmp), local {}, exception {}, fn calls.
+
+Version 0.008.497:
+
+- AHLL: simple conditional execution / loops; no complex comparsion
+  for now; execution control code complete; to go: syscall(), pointer
+  operations, assignments / complex comparsion / function calls
+  / exception block / local declarations. ETA: 2 days
+
+Version 0.008.452:
+
+- documentation updated
+- network.c and tcp.agt updated
+- Solaris scandir() problem solved
+- AHLL - function structure (conditional execution, loops, program
+  control) under development; function calls and assignments to go
+  when finished; local variables w/initializers and exception {} block
+  then; dead code ellimination will be really easy; ETA: 3 days
+- more compatible Makefiles
+- AHLL: procedure parameters parsing done; to go: local variables,
+  function contents.
+
+Version 0.008.420:
+
+- parsing of globals completed; to go: local variables, function params,
+  function contents (execution and assignments).
+- AHLL: still undone ;> But I'm working hardly.
+- compiler: Bulba's patch added
+- some minor thingies
+
+Version 0.008.382:
+
+- seriously PISSED and TIRED, I started wrtiting AHLL translator
+  from scratch, with nice state machine.
+- serveral advmem improvements by z33d; hey, what about doing RST|ACK
+  network mapping software using rIPC?;>
+- Marcin is unable to prepare usable diff, trying to undo my changes ;)
+- added z33d's debugger bugfixes
+- AHLL function parser is under construction now :) 1/2 done, 1/2 to go.
+
+Version 0.008.367:
+
+- advmem added
+- network ported to Solaris as well
+- network now ported to IRIX64
+- minor and major bug-fixes in unix sockets ;)
+
+Version 0.008.365:
+
+- completely revised README.en and renamed it to README.
+- written huge parts of Part II of README
+- README.pol moved to Documentation/PL.Obsolete and will be removed.
+
+Version 0.008.360:
+
+- fixed "text is zero" bug in manager
+- added tcp.agt to './build test' demonstration
+- network module moved to modules/
+- added unix sockets support
+- fixed interactive ':' bug in readline version
+- fixed blocking send/recv bug in network (server-side)
+- added tcp.agt privledges to hac configuration files (dumb!)
+
+Version 0.008.339:
+
+- netmod "educational beta" put in UNTESTED directory (not build automatically)
+- z33d's debugger patch added
+- fixed whitespace-after-symbol-name problem
+- introduced hll/include with header files for AHLL (module syscall decls)
+- README.pol AHLL fixes
+- some AHLL compiler code added
+
+Version 0.008.335:
+
+- ported to IRIX64
+
+Version 0.008.333:
+
+- added ChangeLog monitoring ;)
+
+Version 0.008.327:
+
+- added maintainer information to files
+- completely revised exception codes and README
+- fixed another exception handling bug
+- some AHLL coding, not much :>
+
+Version 0.007.312:
+
+- libreadline support fixed, some console code cleanup
+- added dirty clone() hack, readline won't work on libc5
+- some AHLL work follows; should be finished soon
+
+Version 0.007.277:
+
+- libreadline support
+
+Version 0.007.270:
+
+- introduced *BSD and Solaris support
+- fixed several endian bugs
+- fixed debugger code
+
+Version 0.007.267:
+
+- filesystem completed
+- introduced LIST_DIR example
+- fixed bug in (currently unused) code in memory.c
+
+Version 0.007.241:
+
+- README.pol updates (troubleshooting, config.h, deassembler introduced)
+- more HLL work follows
+- fs module finished (well, not really, add scandir to collect data)
+- better exceptions (BUGFIXED and enhanced)
+- several bcode interpreter bugs fixed
+
+Version 0.007.204:
+
+- Introduced z33d's disassembler utility
+- finished HLL type analyzer
+- added bytechunk description to readme, replacing 'bytes'
+
+Version 0.007.202:
+
+- Added ChangeLog ;)
+- Added background session support tools
+- Fixed some bugs in still unfinished hll translator

@@ -1,0 +1,47 @@
+#
+# Hierarchical Access Control rules for Argante OS
+# (C) 2000 Michal Zalewski <lcamtuf@tpi.pl>
+#
+# See README for details
+#
+
+# For general tests - these rules are not good :)
+
+0:0	none			display/output			allow
+0:0	none			local/sys/real/time/get		allow
+1:0	fs/ftp			fs/fops/open/file		allow
+1:0	fs/ftp			fs/fops/create			allow
+1:0	fs/ftp			fs/fops/list/directory		allow
+10:0    net			net/sock			allow
+
+# Wildcard test for actest
+
+1:0     fs/*/test1              fs/fops/test_operation          allow
+
+# For mini-http server - these rules are not good, as well, but who
+# cares - it's only an example. Specific access types should be
+# separated, and more specific access to some resounrces (eg. for
+# net/sock/listen) should be defined, but for now, we're not going to
+# hardcode port number here :)
+
+20:0    fs/http                 fs/fops/open/file/read          allow
+20:0    fs/http                 fs/fops/stat                    allow
+
+20:0    net/address/source/tcp  net/sock/listen                 allow
+20:0    none			local/sys/real/time/get		allow
+
+# for a moment... by Bulba
+
+0:0	none			ipc				allow
+21:0    net/dev/phys/eth0       net/raw/open/listener		allow
+
+# for gfx module
+
+0:0	none             	   gfx/init			allow
+0:0	none			   gfx/vlock			allow
+
+0:0     gfx/output                 gfx/setmode      		allow
+
+# for general purporses...
+
+0:0     net/address                net/sock/listen              allow

@@ -1,0 +1,32 @@
+
+ Mini-HTTP
+ ---------
+
+ * bardzo wysoka wydajno¶æ jako serwer statycznego contentu
+
+ * bezawaryjno¶æ
+
+ * marginalne zu¿ycie pamiêci i procesora
+
+ * trywialne w implementacji (AHLL) - poni¿ej 200 linii kodu
+
+ Argante:
+ Requests per second:    10.48
+ Transfer rate:          43169.52 kb/s received
+
+ Apache: 
+ Requests per second:    8.94
+ Transfer rate:          36805.81 kb/s received
+
+ * brak jakiegokolwiek zagro¿enia dla rzeczywistego systemu
+
+
+
+
+
+
+
+
+
+
+-----

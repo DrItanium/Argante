@@ -1,0 +1,27 @@
+.TH agtproj 1 "23 November 2000"
+.SH NAME
+agtproj - default project environment builder
+.SH DESCRIPTION
+Agtproj builds default project envirionment that would be used by
+Argante.
+
+To use it type
+.B agtproj project_directory
+
+It will create a directory called
+.B project_directory
+and copies some files - modules and config files - from /usr/lib/argante/
+to the new one. It also creates the new "filesystem" in a directory
+.B project_directory/fs/
+
+This is a part of 
+.B Argante
+project -
+more information on it is avaiable at http://www.argante.org/
+
+.SH SEE ALSO
+.BR argante (1)
+
+.SH AUTHOR
+Michal Zalewski <lcamtuf@tpi.pl>,
+manuals: honey@linuxnews.pl

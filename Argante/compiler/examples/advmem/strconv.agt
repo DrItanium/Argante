@@ -1,0 +1,63 @@
+#
+# Example of advmem
+#
+
+!SIGNATURE	"program testowy lcamtufa"
+
+.DATA
+
+:Enter
+
+	"\n"
+
+:Tekst
+
+	"123\n"
+
+:Tekst2
+
+	"bfffffff"
+	
+:Tekst3
+
+	"0.666"
+	
+.CODE
+  
+  mov u0,0x68
+  syscall $MEM_TOUPPER
+# u0 should be 0x48 :)
+
+  mov u0,:Tekst
+  mov u1,0
+  mov u2,^Tekst
+  syscall $MEM_STRTOINT
+  
+  mov u0,:Tekst2
+  mov u1,0
+  mov u2,^Tekst2
+  syscall $MEM_STRTOHEX
+  
+  mov u0,:Tekst3
+  mov u1,0
+  mov u2,^Tekst3
+  syscall $MEM_STRTOFLOAT
+  
+  
+  alloc 100,3
+  mov u1,0
+  mov u2,2
+  mov s0,0xefffffff
+  syscall $MEM_HEXTOSTR
+  
+  mov u1,9
+  syscall $IO_PUTSTRING
+  
+  mov u0,:Tekst2
+  mov u1,0
+  mov u2,^Tekst2
+  syscall $MEM_STRTOINT
+
+  halt
+
+.END

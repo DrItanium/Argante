@@ -1,0 +1,19 @@
+#
+# Example rules for DVR...
+# 
+ 
+# dvr log and time functions
+0:0	none			display/output			allow
+0:0	none			local/sys/real/time/get		allow
+
+# dvr FS domain
+1:0	fs/dvr			fs/fops				allow
+
+# dvr IPC domain
+2:0	none			ipc				allow
+2:0	ipc			ipc				allow
+
+# dvr lowlevel network domain
+3:0	net			net/raw				allow
+3:0	none			net/raw				allow
+

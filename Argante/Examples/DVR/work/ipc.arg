@@ -1,0 +1,85 @@
+# DONE
+
+.DATA
+:sa_1
+    "--- Sent stream ack\n"
+:isrh_1
+    "--- in stream requests handler\n"
+.CODE
+
+:ipc_init
+    mov u0,DVR_IPCREG
+    syscall $IPC_REGISTER
+    ret 1
+
+:ipc_stream_requests_handler
+    mov u0,IPC_FLAG_NONBLOCK
+    syscall $IPC_STREAM_QUEUE		# die on any errors
+    ifneq s0,IPC_EOK
+    jmp :ipc_stream_requests_handler_done
+# debug
+#    mov s15,:isrh_1
+#    mov s14,^isrh_1
+#    call :debug
+# eod
+    mov u15,u0
+    mov u14,u1
+    mov u12,u3
+    ifneq u2,DVR_IPCREG			# bad peer
+    jmp :ipc_stream_requests_handler_nack
+    mov u0,u15
+    mov u1,u14
+    call :route_find_target
+    ifneq u0,0				# we alredy got this route entry..
+    jmp :ipc_stream_requests_handler_nack
+
+    mov u0,IPC_FLAG_NONBLOCK
+    mov u1,u12
+    onfail :ignore
+    syscall $IPC_STREAM_ACK
+    nofail
+    ifneq s0,IPC_EOK
+    jmp :ipc_stream_requests_handler
+    mov u12,u0
+
+#debug stuff
+#    mov s15,:sa_1
+#    mov s14,^sa_1
+#    call :debug
+#end debug stuff
+
+    call :route_new
+    call :route_link
+    call :touch_structure
+    mov u1,u0
+    add u1,4
+    mov *u1,0				# netaddr 0
+    add u1,1
+    mov *u1,0				# netmask 0
+    add u1,1
+    mov *u1,u15				# vcpu
+    add u1,1
+    mov *u1,u14				# vs
+    add u1,1
+    mov *u1,ROUTE_FLAG_STREAM		# flags
+    add u1,2
+    mov *u1,u12				# stream id
+    add u1,1
+    mov *u1,0				# in packet
+    add u1,3
+    mov *u1,0				# out packet
+    jmp :ipc_stream_requests_handler
+:ipc_stream_requests_handler_nack
+    mov u0,u12
+    onfail :ignore
+    syscall $IPC_STREAM_NACK
+    nofail
+    jmp :ipc_stream_requests_handler
+:ipc_stream_requests_handler_done
+    ret 1
+
+
+
+:ignore
+    mov s0,-1
+    ret 1

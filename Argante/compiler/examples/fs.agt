@@ -1,0 +1,103 @@
+#
+# Argante OS - sample RSIS/agtc code
+# (C) 2000 Michal Zalewski <lcamtuf@ids.pl>
+#
+# Append current date (converted to readable form) to file
+#
+
+!DOMAINS	1
+!INITDOMAIN	1
+!SIGNATURE	"filesystem and locallib example"
+!PRIORITY 	100
+
+.DATA
+
+:Plik
+
+	"/fs/ftp/AddDateHere"
+
+:NumerPliku
+
+	0
+
+:DzisMamy
+
+	"\nToday's "
+
+:WpiszeDo
+
+	"I'm writting this note to "
+
+:DlugoscDaty
+	0
+
+:Data
+
+	0x0a0a0a0a repeat 100
+
+.CODE
+
+  mov u0,:Plik
+  mov u1,^Plik
+  mov u2,8
+
+  onfail :Sprobuj_Otworzyc
+  syscall $FS_CREATE_FILE
+  nofail
+
+  mov *:NumerPliku,s0
+
+  syscall $LOCAL_GETTIME
+  mov u1,:Data
+  mov u2,^Data
+  syscall $LOCAL_TIMETOSTR
+  mov *:DlugoscDaty,s0
+
+
+
+  mov u0,:DzisMamy
+  mov u1,^DzisMamy
+  syscall $IO_PUTSTRING
+
+  mov u0,:Data
+  mov u1,*:DlugoscDaty
+  syscall $IO_PUTSTRING
+
+  mov u0,10
+  syscall $IO_PUTCHAR
+
+  mov u0,:WpiszeDo
+  mov u1,^WpiszeDo
+  syscall $IO_PUTSTRING
+
+  mov u0,:Plik
+  mov u1,^Plik
+  syscall $IO_PUTSTRING
+
+  mov u0,10
+  syscall $IO_PUTCHAR
+  mov u0,10
+  syscall $IO_PUTCHAR
+
+  mov u0,*:NumerPliku
+  mov u1,:Data
+  mov u2,*:DlugoscDaty
+  add u2,1
+  syscall $FS_WRITE_FILE
+
+  twait 10000000
+
+  mov u0,*:NumerPliku
+  syscall $FS_CLOSE_FILE
+
+  halt
+
+:Sprobuj_Otworzyc
+
+  mov u0,:Plik
+  mov u1,^Plik
+  mov u2,8
+  syscall $FS_OPEN_FILE
+  ret 1
+
+.END

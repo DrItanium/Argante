@@ -1,0 +1,25 @@
+
+ Co Argante ma wspólnego z Linuxem?
+ ----------------------------------
+ 
+ * Argante to system wirtualny - nie jest rozwi±zaniem konkurencyjnym
+   wobec Linuxa, lecz z nim wspó³pracuj±cym.
+
+ * Argante stworzona zosta³a w duchu open source i dostêpna jest pod licencj±
+   LGPL za darmo.
+
+ Nie oznacza to jednak, ¿e Argante jest rozwi±zaniem wspó³pracuj±cym tylko
+ z t± platform±. Dbamy tak¿e o zgodno¶æ z nastêpuj±cymi systemami:
+
+ * FreeBSD, NetBSD, OpenBSD
+
+ * Solaris
+
+ * IRIX
+
+ * w trakcie przygotowañ: HP/UX, AIX
+
+ ...i byæ mo¿e (pewnego dnia) tak¿e Windows.
+
+
+-----

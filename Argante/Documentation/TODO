@@ -1,0 +1,59 @@
+
+Official TODO list for Argante 2.0:
+-----------------------------------
+
+This list is open, no single line of code was written, assignments are
+subject to futher agreements :> Feel free to comment this list, tell me if
+you are interested in specific subject:
+
+1) Endian block translation (in advmem). Assigned person: lcamtuf
+   Status: DONE
+
+2) Solaris/BSD portability for low-level networking (packet.c); well, in
+   fact, someone should write #ifdef code for every platform when it
+   comes to packet sniffing. BPF support would be nice. Assigned
+   person: bikappa (as long as he will found some free time to write AND
+   TEST his code on a few platforms ;)
+   Status: CONCEPT
+
+3) Solaris, BSD, IRIX: ripcd portability; some minor fixes are required
+   to make it portable accross these platforms. Assigned person: (???)
+   Status: CONCEPT
+
+4) Mainstream Argante: HP/UX, AIX ports. Assigned person: (???)
+   Status: PARTIALLY DONE
+
+5) Bytecode interpreter JITs (jumps in table) instead of multiple ifs.
+   Mariusz Woloszyn.
+   Status: NEEDS REFINING
+
+6) X Window: GTK-based GUI (agtses, agtback functionality; basic
+   console commands as menu items / buttons; vcpucons / agtexe
+   in xterm window). Assigned person: (???)
+   Status: UNDER DEVELOPMENT
+
+7) AHLL should be rewritten using some flex/bison-alike stuff.
+   Assigned person: Bulba or lcamtuf (???)
+   Status: IN THE MIDDLE OF THE NIGHT...
+
+9) Math module should be optimized (floating point arrays -> fixed
+   point or int arrays, etc). Assigned person: z33d
+   Status: ALMOST DONE
+
+10) Some examples - SMTP, POP3 functionality should be good.
+    Assigned person: (???) - after AHLL rewriting!
+    Status: CONCEPT
+
+11) PDF/sgml/html documentation, completely revised and clean.
+    Assigned person: lcamtuf
+    Status: CONCEPT
+
+12) Modula-3 compiler. Assigned person: Marcin Zukowski
+    Status: STALLED
+        
+13) Functional blocks: command interpreter, fs proxy, authorization
+    module, network listener... Assigned person: lcamtuf
+    Status: CONCEPT
+
+Release date: one day in the future ;)
+

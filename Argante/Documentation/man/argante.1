@@ -1,0 +1,49 @@
+.TH argante 1 "23 November 2000"
+.SH NAME
+Argante virtual OS
+.SH DESCRIPTION
+Argante is a virtual operating system - it means that it works
+under control of another OS. This could be Linux, Solaris or 
+FreeBSD. It doesn't matter - the thing that does matter is that
+software written for 
+.B Argante
+is
+.B platform independent
+- it can be running on any hardware 
+. without modyfying neither the sources nor binaries.
+
+It's homepage is
+.RI < http://www.argante.org/ >
+and that's the place you should look for more information on
+this software. The other place is your 
+.RI /usr/share/doc/argante/
+directory - the 
+.B README 
+file explains (almost) everything...
+
+.B To run
+Argante, just type
+.B argante SCRIPTNAME ROOTDIR
+where
+.B SCRIPTNAME
+is an absolute path to bootscripts and the
+.B ROOTDIR
+is a project directory (aka Argante's working directory).
+
+The
+.B list of available commands
+is shown after executing an
+.B ?
+command...
+
+.SH SEE ALSO
+.BR acc (1),
+.BR agtback (1),
+.BR agtc (1),
+.BR agtses (1),
+.BR ahlt (1),
+.BR elim (1)
+
+.SH AUTHOR
+Michal Zalewski <lcamtuf@ids.pl>,
+manuals: honey@linuxnews.pl

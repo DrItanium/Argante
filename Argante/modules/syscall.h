@@ -1,0 +1,134 @@
+/*
+
+   Argante virtual OS
+   ------------------
+
+   Syscalls names and corresponding numbers.
+
+   Status: add your favourite syscall here
+
+   Author:     Michal Zalewski <lcamtuf@ids.pl>
+   Maintainer: (public domain)
+
+*/
+
+#define SYSCALL_ENDLIST		-1
+#define SYSCALL_IO_PUTSTRING	0x1
+#define SYSCALL_IO_PUTINT	0x2
+#define SYSCALL_IO_PUTFLOAT	0x4
+#define SYSCALL_IO_PUTCHAR	0x3
+#define SYSCALL_IO_PUTHEX	0x5
+
+#define SYSCALL_ACCESS_SETDOMAIN	100
+#define SYSCALL_ACCESS_SETUID		101
+
+#define SYSCALL_FS_OPEN_FILE		201
+#define SYSCALL_FS_CREATE_FILE		202
+#define SYSCALL_FS_WRITE_FILE		203
+#define SYSCALL_FS_READ_FILE		204
+#define SYSCALL_FS_CLOSE_FILE		205
+#define SYSCALL_FS_LIST_DIR		206
+#define SYSCALL_FS_STAT			207
+#define SYSCALL_FS_MAKE_DIR		208
+#define SYSCALL_FS_RENAME		209
+#define SYSCALL_FS_DELETE		210
+#define SYSCALL_FS_ERRORMODE		211
+#define SYSCALL_FS_CWD			212
+#define SYSCALL_FS_PWD			213
+#define SYSCALL_FS_SEEK_FILE		214
+#define SYSCALL_FS_END_DIR		215
+
+#define SYSCALL_LOCAL_GETTIME		301
+#define SYSCALL_LOCAL_TIMETOSTR		302
+#define SYSCALL_LOCAL_GETHOSTNAME	303
+#define SYSCALL_LOCAL_VS_STAT		304
+#define SYSCALL_LOCAL_RS_STAT		305
+#define SYSCALL_LOCAL_GETRANDOM		306
+
+#define SYSCALL_NET_CONNECT             601
+#define SYSCALL_NET_LISTEN              602
+#define SYSCALL_NET_SUN_CONNECT         620
+#define SYSCALL_NET_SUN_LISTEN          621
+#define SYSCALL_NET_ACCEPT              605
+#define SYSCALL_NET_RECV                606
+#define SYSCALL_NET_SEND                607
+#define SYSCALL_NET_SHUTDOWN            608
+#define SYSCALL_NET_ISWAITING		609
+#define SYSCALL_NET_EVENT		630
+#define SYSCALL_NET_SENDFILE		631
+
+#define SYSCALL_MEM_STRCPY              401
+#define SYSCALL_MEM_BZERO               402
+#define SYSCALL_MEM_MEMSET              403
+#define SYSCALL_MEM_STRCHR              404
+#define SYSCALL_MEM_STRCMP              405
+#define SYSCALL_MEM_STRSTR              406
+#define SYSCALL_MEM_STRCASECMP          407
+#define SYSCALL_MEM_TOUPPER             408
+#define SYSCALL_MEM_TOLOWER             409
+#define SYSCALL_MEM_STRTOINT            410
+#define SYSCALL_MEM_STRTOHEX            411
+#define SYSCALL_MEM_STRTOFLOAT          412
+#define SYSCALL_MEM_STRHEXINT           413
+#define SYSCALL_MEM_HEXTOSTR            414
+#define SYSCALL_MEM_INTTOSTR            415
+#define SYSCALL_MEM_FLOATTOSTR          416
+#define SYSCALL_MEM_STRRCHR		417
+#define SYSCALL_MEM_STRRSTR		418
+#define SYSCALL_MEM_GETCHAR		452
+#define SYSCALL_MEM_ENDIAN		453
+
+#define SYSCALL_MATH_SIN		501
+#define SYSCALL_MATH_COS		502
+#define SYSCALL_MATH_TAN		503
+#define SYSCALL_MATH_ASIN		504
+#define SYSCALL_MATH_ACOS		505
+#define SYSCALL_MATH_ATAN		506
+#define SYSCALL_MATH_FILLSIN		507
+#define SYSCALL_MATH_FILLCOS		508
+#define SYSCALL_MATH_FILLTAN		509
+#define SYSCALL_MATH_TABLE_MUL		510
+#define SYSCALL_MATH_TABLE_DIV		511
+#define SYSCALL_MATH_TABLE_ADD		512
+#define SYSCALL_MATH_TABLE_SUB		513
+
+#define SYSCALL_LOW_NET_INITDEV                 701
+#define SYSCALL_LOW_NET_RAW                     702
+#define SYSCALL_LOW_NET_BPF                     703
+#define SYSCALL_LOW_NET_SEND                    704
+#define SYSCALL_LOW_NET_RECV                    705
+#define SYSCALL_LOW_NET_CLOSE                   706
+#define SYSCALL_LOW_NET_GETHWADDR               711
+
+#define SYSCALL_IPC_REGISTER          0x1400 // by bulba
+#define SYSCALL_IPC_MSG_SEND          0x1401
+#define SYSCALL_IPC_MSG_RECV          0x1402
+#define SYSCALL_IPC_MSG_STAT          0x1403
+#define SYSCALL_IPC_STREAM_REQ        0x1405
+#define SYSCALL_IPC_STREAM_QUEUE      0x1406
+#define SYSCALL_IPC_STREAM_NACK       0x1407
+#define SYSCALL_IPC_STREAM_ACK        0x1408
+#define SYSCALL_IPC_STREAM_WRITE      0x1409
+#define SYSCALL_IPC_STREAM_READ       0x140a
+#define SYSCALL_IPC_STREAM_CLOSE      0x140b
+#define SYSCALL_IPC_STREAM_INFO       0x140c
+#define SYSCALL_IPC_STREAM_STAT       0x140d
+#define SYSCALL_IPC_BLOCK_CREATE        0x140e
+#define SYSCALL_IPC_BLOCK_DESTROY       0x140f
+#define SYSCALL_IPC_BLOCK_READ          0x1410
+#define SYSCALL_IPC_BLOCK_WRITE         0x1411
+#define SYSCALL_IPC_BLOCK_QUEUE         0x1412
+#define SYSCALL_IPC_BLOCK_ACK           0x1413
+#define SYSCALL_IPC_BLOCK_NACK          0x1414
+#define SYSCALL_IPC_BLOCK_STAT          0x1415
+#define SYSCALL_IPC_BLOCK_IS_READY	0x1416
+
+#define SYSCALL_GFX_SETMODE		801
+#define SYSCALL_GFX_CHECKMODE		802
+#define SYSCALL_GFX_CLEARSCREEN		803
+#define SYSCALL_GFX_MEMCOPY		804
+#define SYSCALL_GFX_VC			805
+#define SYSCALL_GFX_SETCLUT8		806
+#define SYSCALL_GFX_SETPALETTE		807
+#define SYSCALL_GFX_SETPALETTESNGL	808
+#define SYSCALL_GFX_GETCHAR             820

@@ -1,0 +1,47 @@
+#!/bin/sh
+
+#
+# Argante Virtual OS
+# (C) 2000 Michal Zalewski <lcamtuf@ids.pl>
+#
+# Internal announce-bot. Not to be used ;)
+#
+# Status: done
+#
+# Author:     Michal Zalewski <lcamtuf@ids.pl>
+# Maintainer: Michal Zalewski <lcamtuf@ids.pl>
+#
+
+
+HN=`echo $HOSTNAME|grep -E 'nimue|squirrel'`
+
+MYDATE="`date +'%A, %d %B %Y, %H:%M'`"
+
+
+if [ "$HN" = "" ]; then
+  echo "Incorrect location."
+  echo 1
+fi
+
+if [ ! -f sysdep/.oldchglog ]; then
+  echo "No oldchglog."
+  exit 1
+fi
+
+if [ ! -f Documentation/ChangeLog ]; then
+  echo "No ChangeLog."
+  exit 1
+fi
+
+diff sysdep/.oldchglog Documentation/ChangeLog | awk -F'>' '{print $2}' >>.diff
+
+if [ -s .diff ]; then
+  echo "ChangeLog modified, announcing changes."
+  ( /usr/games/fortune -s; echo ;echo "Uncompressed snapshot size: $[`tar cf - . | wc -c`/1024] kB";echo;cat .diff;echo ) | mail -s "Argante ChangeLog (`cat kernel/.argbuild`) - $MYDATE" argante@cgs.pl
+else
+  echo "No changes in ChangeLog, ignore it..."
+fi
+
+cat Documentation/ChangeLog >sysdep/.oldchglog
+
+rm -f .diff

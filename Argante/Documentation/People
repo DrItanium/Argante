@@ -1,0 +1,58 @@
+
+Argante Development Team for AOSr1.1
+------------------------------------
+
+This is a list of people involved in Argante project in some way,
+and responsible for some parts of the package you downloaded:
+                                      
+* Michal Zalewski (lcamtuf@ids.pl)
+  Project coordinator. Original concept, design and, mostly, kernel
+  implementation + documentation, basic modules, bugfixes, examples,
+  AHLL translator, agtc compiler etc.
+
+* Bulba (bulba@intelcom.pl)
+  Numerous bugfixes and suggestions; C version of binary headers editor.
+  Developing IPC/rIPC subsystem.
+
+* Maurycy Prodeus (z33d@eth-security.net)
+  Author of real-time debugging + deassemblation support and other
+  enhancements / ideas; advmem / math development
+                                      
+* Artur Skura (arturs@people.pl)
+  Translating the documentation; some ideas and tips, python version of
+  binary headers editor; readline support for Linux version,
+  announcements, contacts etc :)
+                                      
+* Marcin Dawcewicz (miv@interia.pl)
+  Network support, testing, ripcd daemon, criticism ;)
+
+* bikappa (bikappa@itapac.net)
+  Low-level network access module.
+
+* Lukasz Jachowicz (honey@linuxnews.pl)
+  svgalib console support
+                                      
+* ArtGabi (www.artgabi.com.pl)
+  Webpage design, Argante logo and so on :P
+                                      
+* Adam Podstawczyñski (adam@english.w3.pl)
+  Documentation review and cleanup
+
+* scrippie (ronald@grafix.nl)
+  Documentation cleanups, numerous bugfixes and code cleanups :>
+
+* Marcin Zukowski (eru@ibbrain.ibb.waw.pl)
+  Modula-3 translator, bugfixes, Midnight Commander highlight files
+
+* Jaroslaw J. Pyszny (arghil@zeisk.tech.us.edu.pl)
+  Numerous suggestions, vim RSIS highlight files...
+
+* Adam Chodorowski (adam.chodorowski@bigfoot.com)
+  Suggestions, GGI support etc.
+  
+* James Kehl <ecks@optusnet.com.au>
+  GTK management console
+
+* Mariusz Woloszyn <woloszyn@ipartners.pl>
+  JIT, lam3r, pijaq =P
+        

@@ -1,0 +1,13 @@
+!SIGNATURE "Booby trap"
+!PRIORITY 100
+!IPCREG	100
+
+.DATA
+
+.CODE
+
+:loopa
+    jmp :loopa
+
+    halt
+.END

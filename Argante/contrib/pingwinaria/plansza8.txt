@@ -1,0 +1,25 @@
+
+ Hierarchiczna Kontrola Uprawnieñ
+ --------------------------------
+
+ * domena - aktualny zestaw uprawnieñ wykonywania danego procesu
+
+ * uid - identyfikator w obrêbie domeny
+
+ * ka¿da operacja jest weryfikowana na podstawie uprawnieñ do tej¿e
+   operacji oraz do konkretnego obiektu
+
+ * hierarchiczna struktura z mo¿liwo¶cia okre¶lania poziomu szczegó³owo¶ci,
+
+ 12345:00000     fs/ftp/users          fs/fops/new/dir         allow
+ 21:0            net/dev/phys/eth0     net/raw/open/listener   allow
+
+ * globalny zakres obowi±zywania
+
+
+
+
+
+
+
+-----

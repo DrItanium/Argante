@@ -1,0 +1,46 @@
+#!/bin/sh
+
+#
+#  Argante virtual OS
+#  ------------------
+#
+#  Background session resume
+#
+#  Status: done
+#
+#  Author:     Michal Zalewski <lcamtuf@ids.pl>
+#  Maintainer: Michal Zalewski <lcamtuf@ids.pl>
+#
+
+echo "Argante OS - background session manager"
+
+if [ "$1" = "" ]; then
+  echo "Usage: $0 session-pid"
+  exit 1
+fi
+
+if [ ! -d /proc/$1 ]; then
+  echo "<-> No active session at PID $1."
+fi
+
+ARG="`cat /proc/$1/cmdline|grep -c argante`"
+
+if [ "$ARG" = "0" ]; then
+  echo "<-> Session at PID $1 does not look like Argante process."
+  exit 1
+fi
+
+if [ -c /proc/$1/fd/0 ]; then
+  echo "<-> Session at PID $1 is running on the terminal, cannot attach."
+  exit 1
+fi
+
+echo "<+> Attaching to PID $1 (Ctrl+C to exit)..."
+
+( tail -f /proc/$1/fd/1 & )
+
+trap 'echo' 2
+
+cat >>/proc/$1/fd/0
+
+echo "<+> Detaching from session $1..."

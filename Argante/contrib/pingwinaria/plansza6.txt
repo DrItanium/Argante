@@ -1,0 +1,36 @@
+
+ Virtual Machine w Argante
+ -------------------------
+
+ * ca³kowite przeciwieñstwo Javy
+
+ * pewne podobieñstwo do komercyjnego Inferno firmy Lucent
+
+ * 32-bitowe adresowanie
+
+ * sta³y rozmiar s³owa maszynowego
+
+ * architektura RSIS (minimalistyczna)
+
+ * trzy pary po 16 rejestrów (unsigned, signed, float)
+
+ Mnemoniki: NOP, JMP, IFEQ, IFNEQ, IFABO, IFBEL, CALL, RET, HALT,
+ SYSCALL, ADD, SUB, DIV, MUL, MOV, MOVB, MOVW, MOD, XOR, REV, AND, OR,
+ CWAIT, TWAIT, ALLOC, REALLOC, DEALLOC, CMPCNT, CPCNT, ONFAIL, NOFAIL,
+ LOOP, RAISE. 
+
+ Do zrobienia JIT.
+
+
+
+
+
+
+
+
+
+
+
+
+
+-----

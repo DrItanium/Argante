@@ -1,0 +1,47 @@
+
+#include "include/stdinc.ahh"
+#include "include/gfx.ahh"
+#include "include/math.ahh"
+
+#define SCREEN_SIZE 64000
+
+type buf is bytechunk 0 .. SCREEN_SIZE;
+
+  b : pointer to buf;
+
+procedure Main ( ) {
+  local { 
+    screen : Bounded_Chunk;
+    i      : unsigned; 
+    phase  : unsigned; 
+    t      : unsigned; 
+  }
+
+  Create b;
+
+  Attach_Bounded ( screen, address b, SCREEN_SIZE );
+  GFX_SetMode ( G320x200x256 ); GFX_SetClut8 ( 1 );
+
+  Fill_Sin ( screen.data, SCREEN_SIZE, 0.0 , 0.0002, TRUE, MATH_TYPE_BYTE, 50, 1);
+  GFX_Memcopy ( screen );
+
+  while 1 {
+
+    i := 0 ; phase += 1;
+
+    while i < 256 {
+
+      t := i; t += phase;
+
+      GFX_SetPaletteSngl ( i, 0, 0, t );
+
+      i += 1;
+
+    }
+
+    GFX_GetChar ( i );
+    if i { halt; }
+
+  }
+
+}

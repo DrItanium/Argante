@@ -1,0 +1,20 @@
+
+Argante Operating System - new project checklist:
+-------------------------------------------------
+
+How to build a project:
+
+0. Read the documentation. Do it. Without it, you won't be able to
+   do anything.
+
+1. Edit conf/scripts/argboot.scr to load all the modules you want 
+   to use in the project and to add any other functionality you'd like
+   to have.
+
+2. Edit conf/ files according to the guidelines you can find in the
+   documentation to set up access control, filesystem etc.
+
+3. Create your code in work/ directory. Use acc to compile AHLL files
+   and agtc to compile RSIS assembly files.
+
+4. Run ./argante and check your settings.

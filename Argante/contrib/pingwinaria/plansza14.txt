@@ -1,0 +1,25 @@
+
+ Budujemy clustry
+ ----------------
+
+ * heterogeniczna chmura urz±dzeñ (ró¿ne systemy i us³ugi + Argante)
+
+ * propagacja zapytañ i kierowanie ich do zasadniczych serwisów
+
+ * redundantna sieæ-pajêczyna rIPC odporna na awarie
+
+ * brak kosztownego "w±skiego gard³a"
+
+ * mo¿liwo¶æ w pe³ni automatycznej konfiguracji i dowolnej
+   lokalizacji w strukturze clustra
+
+ * znikomy nak³ad programistyczny
+
+
+
+
+
+
+
+
+-----

@@ -1,0 +1,36 @@
+/*
+
+   Argante HLL
+   -----------
+
+   Sample Console Display Interface
+
+   Status: done
+
+   Author:     Michal Zalewski <lcamtuf@ids.pl>
+   Maintainer: Michal Zalewski <lcamtuf@ids.pl>
+
+*/
+
+procedure Console_PutString ( str2 : Bounded_Chunk ) {
+  syscall(SYSCALL_IO_PUTSTRING, u0 := str2.data, u1 := str2.len );
+}
+
+
+procedure Console_PutChar ( x : Character ) {
+  if x > 255 {
+    raise ERROR_BADCHAR;
+  }
+  syscall(SYSCALL_IO_PUTCHAR, u0 := x );
+}
+
+
+procedure Console_PutInt ( x : unsigned ) {
+  syscall(SYSCALL_IO_PUTINT, u0 := x );
+}
+
+procedure Console_PutFloat ( x : float ) {
+  syscall(SYSCALL_IO_PUTINT, f0 := x );
+}
+
+

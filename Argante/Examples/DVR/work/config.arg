@@ -1,0 +1,211 @@
+# config parser...
+# DONE
+
+
+.DATA
+:config_error
+    "Error while processing config file: "
+:config_fd
+    0
+:config_buffer
+    0
+:config_file_len
+    0
+:config_memblock
+    0
+:ptr
+    0
+:offset
+    0
+
+    
+.CODE
+
+:onerror_config
+    mov u0,:config_error
+    mov u1,^config_error
+    syscall $IO_PUTSTRING
+    mov u0,:config_filename
+    mov u1,^config_filename
+    syscall $IO_PUTSTRING
+    mov u0,10
+    syscall $IO_PUTCHAR
+    halt     
+
+:read_config
+    onfail :onerror_config
+    mov u0,:config_filename
+    mov u1,^config_filename
+    syscall $FS_STAT
+    ifneq u1,1
+    raise CONFIG_ERROR_EXCEPTION
+    ifabo u1,1024		# too large file ... 
+    raise CONFIG_ERROR_EXCEPTION
+    mov *:config_file_len,u2
+    add u2,3
+    div u2,4
+    alloc u2,3			# read and write access  
+    mov *:config_memblock,u0
+    mov *:ptr,u1
+    mov *:config_buffer,u1
+    mov u0,:config_filename
+    mov u1,^config_filename
+    mov u2,FS_FLAG_READ
+    syscall $FS_OPEN_FILE
+    mov *:config_fd,s0
+    mov u0,*:config_fd
+    mov u1,*:config_buffer
+    mov u2,*:config_file_len
+    syscall $FS_READ_FILE
+    mov u15,*:config_file_len
+
+    mov u0,*:ptr
+    mov u1,*:offset
+    mov u2,32
+    mov u3,u15
+    syscall $MEM_STRCHR
+    ifeq u2,0
+    raise 1
+    sub u0,*:ptr
+    mul u0,4
+    add u0,u1
+    sub u0,*:offset
+    ifeq u0,0
+    raise 1
+    ifabo u0,12
+    raise 1
+    mov u10,u0
+    mov u0,:interface_name
+    mov u1,0
+    mov u2,*:ptr
+    mov u3,0
+    mov u4,u10
+    syscall $MEM_STRCPY
+    add u10,1
+    sub u15,u10      
+    add *:offset,u10
+
+
+    mov u0,*:ptr
+    mov u1,*:offset
+    mov u2,u15
+    syscall $MEM_STRTOINT
+    mov u1,1
+    mov u14,u0
+    ifabo u0,9
+    add u1,1
+    ifabo u0,99
+    add u1,1
+    ifabo u0,255
+    raise CONFIG_ERROR_EXCEPTION
+    add *:offset,u1
+    sub u15,u1
+    mov u0,*:ptr
+    mov u1,*:offset
+    mov u2,0x2e
+    mov u3,1
+    syscall $MEM_STRCHR
+    ifeq u2,0
+    raise CONFIG_ERROR_EXCEPTION
+    add *:offset,1
+    sub u15,1
+    mov u0,*:ptr
+    mov u1,*:offset
+    mov u2,u15
+    syscall $MEM_STRTOINT
+    mov u1,1
+    mul u14,256
+    add u14,u0
+    ifabo u0,9
+    add u1,1
+    ifabo u0,99
+    add u1,1
+    ifabo u0,255
+    raise CONFIG_ERROR_EXCEPTION
+    add *:offset,u1
+    sub u15,u1
+    mov u0,*:ptr
+    mov u1,*:offset
+    mov u2,0x2e
+    mov u3,1
+    syscall $MEM_STRCHR
+    ifeq u2,0
+    raise CONFIG_ERROR_EXCEPTION
+    add *:offset,1
+    sub u15,1
+    mov u0,*:ptr
+    mov u1,*:offset
+    mov u2,u15
+    syscall $MEM_STRTOINT
+    mov u1,1
+    mul u14,256
+    add u14,u0
+    ifabo u0,9
+    add u1,1
+    ifabo u0,99
+    add u1,1
+    ifabo u0,255
+    raise CONFIG_ERROR_EXCEPTION
+    add *:offset,u1
+    sub u15,u1
+    mov u0,*:ptr
+    mov u1,*:offset
+    mov u2,0x2e
+    mov u3,1
+    syscall $MEM_STRCHR
+    ifeq u2,0
+    raise CONFIG_ERROR_EXCEPTION
+    add *:offset,1
+    sub u15,1
+    mov u0,*:ptr
+    mov u1,*:offset
+    mov u2,u15
+    syscall $MEM_STRTOINT
+    mov u1,1
+    mul u14,256
+    add u14,u0
+    ifabo u0,9
+    add u1,1
+    ifabo u0,99
+    add u1,1
+    ifabo u0,255
+    raise CONFIG_ERROR_EXCEPTION
+    add *:offset,u1
+    sub u15,u1
+    mov u0,*:ptr
+    mov u1,*:offset
+    mov u2,0x2f
+    mov u3,1
+    syscall $MEM_STRCHR
+    ifeq u2,0
+    raise CONFIG_ERROR_EXCEPTION
+    add *:offset,1
+    sub u15,1
+    mov u0,*:ptr
+    mov u1,*:offset
+    mov u2,u15
+    syscall $MEM_STRTOINT
+    mov u13,u0
+    ifabo u0,32
+    raise CONFIG_ERROR_EXCEPTION
+    mov u0,0xffffffff
+    mov u1,32
+    sub u1,u13
+:mask_loop
+    ifeq u1,0
+    jmp :mask_out_loop
+    mul u0,2
+    sub u1,1
+    jmp :mask_loop
+:mask_out_loop
+    mov *:my_netmask,u0
+    mov *:my_ip,u14
+    and u14,u0
+    mov *:my_netaddr,u14
+    dealloc *:config_memblock
+    mov u0,*:config_fd
+    syscall $FS_CLOSE_FILE
+    nofail
+    ret 1
+
+    

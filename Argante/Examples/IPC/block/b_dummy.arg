@@ -1,0 +1,128 @@
+!SIGNATURE "Test blokow"
+!IPCREG		101
+!PRIORITY	100
+
+.DATA
+
+:o_adresie
+    "Block ma adres: "
+:o_id
+    "Za³o¿y³em blok o id: "
+:spie
+    "Zaczynam s³uchaæ requestów.\n"
+:req
+    "Dosta³em request (vcpu, vs, ipc_reg, type, block, off, len)\n"
+:id
+    0
+:adr
+    0
+:vcpu
+    0
+:vs
+    0
+:ipc_reg
+    0
+:type
+    0
+:block
+    0
+:off
+    0
+:len
+    0
+:req_id
+    0
+
+.CODE
+    mov u0,1024
+    syscall $IPC_BLOCK_CREATE
+
+    mov *:id,u0
+    mov *:adr,u1
+
+    mov *u1,0x33333333
+    add u1,1
+    mov *u1,0x34343434
+    add u1,1
+    mov *u1,0x35353535
+
+    mov u0,:o_id
+    mov u1,^o_id
+    syscall $IO_PUTSTRING
+    mov u0,*:id
+    syscall $IO_PUTINT
+    mov u0,10
+    syscall $IO_PUTCHAR
+    mov u0,:o_adresie
+    mov u1,^o_adresie
+    syscall $IO_PUTSTRING
+    mov u0,*:adr
+    syscall $IO_PUTINT
+    mov u0,10
+    syscall $IO_PUTCHAR
+    
+    mov u0,:spie
+    mov u1,^spie
+    syscall $IO_PUTSTRING
+    mov u0,0
+    syscall $IPC_BLOCK_QUEUE
+    mov *:type,s1
+    mov *:vcpu,u0
+    mov *:vs,u1
+    mov *:ipc_reg,u2
+    mov *:req_id,u3
+    mov *:block,u4
+    mov	*:off,u5
+    mov *:len,u6
+    mov u0,:req
+    mov u1,^req
+    syscall $IO_PUTSTRING
+    mov u0,32
+    syscall $IO_PUTCHAR
+    mov u0,*:vcpu
+    syscall $IO_PUTINT
+    mov u0,32
+    syscall $IO_PUTCHAR
+    mov u0,*:vs
+    syscall $IO_PUTINT
+    mov u0,32
+    syscall $IO_PUTCHAR
+    mov u0,*:ipc_reg
+    syscall $IO_PUTINT
+    mov u0,32
+    syscall $IO_PUTCHAR
+    mov u0,*:type
+    syscall $IO_PUTINT
+    mov u0,32
+    syscall $IO_PUTCHAR
+    mov u0,*:block
+    syscall $IO_PUTINT
+    mov u0,32
+    syscall $IO_PUTCHAR
+    mov u0,*:off
+    syscall $IO_PUTINT
+    mov u0,32
+    syscall $IO_PUTCHAR
+    mov u0,*:len
+    syscall $IO_PUTINT
+    mov u0,10
+    syscall $IO_PUTCHAR
+
+    mov u0,*:adr
+    mov u1,*:len
+    mul u1,4
+    syscall $IO_PUTSTRING
+    mov u0,10
+    syscall $IO_PUTCHAR
+
+    
+    twait 10000000
+
+    mov u0,*:req_id
+    syscall $IPC_BLOCK_NACK
+
+    mov u0,*:id
+    syscall $IPC_BLOCK_DESTROY    
+
+    halt
+.END

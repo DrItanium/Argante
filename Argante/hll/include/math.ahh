@@ -1,0 +1,94 @@
+/*
+
+   Argante HLL
+   -----------
+
+   Math Interface
+
+   Status: almost done
+   
+   Author:     Maurycy Prodeus <z33d@eth-security.net>
+   Maintainer: Maurycy Prodeus <z33d@eth-security.net>
+
+*/
+
+// #include "include/stdinc.ahh"
+
+procedure Sin( a : float, c : boolean, writable b : float ) {
+  syscall( SYSCALL_MATH_SIN, f0 := a, u0 := c, b := f0 );
+}
+
+procedure Cos( a : float, c : boolean, writable b : float ) {
+  syscall( SYSCALL_MATH_COS, f0 := a, u0 := c, b := f0 ); 
+}
+
+procedure Tan( a : float, c : boolean, writable b : float ) {
+  syscall( SYSCALL_MATH_TAN, f0 := a, u0 := c, b := f0 );
+}
+
+procedure ASin( a : float, c : boolean, writable b : float ) {
+  syscall( SYSCALL_MATH_ASIN, f0 := a, u0 := c, b := f0 );
+}
+
+procedure ACos( a : float, c : boolean, writable b : float ) {
+  syscall( SYSCALL_MATH_ACOS, f0 := a, u0 := c, b := f0 ); 
+}
+
+procedure ATan( a : float, c : boolean, writable b : float ) {
+  syscall( SYSCALL_MATH_ATAN, f0 := a, u0 := c, b := f0 );
+}
+
+procedure Fill_Sin( writable dane : unsigned, c : unsigned, f : float, s : float,
+		cache : boolean, t : unsigned, m : signed, istep : unsigned ){
+  syscall( SYSCALL_MATH_FILLSIN, u0 := dane, s0 := c, f0 := f, f1 := s,
+                                 u1 := cache, u2 := t, u3 := m, s1 := istep);
+}
+
+procedure Fill_Cos( writable dane : unsigned, c : unsigned, f : float, s : float,
+		cache : boolean, t : unsigned, m : signed, istep : unsigned ){
+  syscall( SYSCALL_MATH_FILLCOS, u0 := dane, s0 := c, f0 := f, f1 := s,
+                                 u1 := cache, u2 := t, u3 := m, s1 := istep);
+// aircrash ;>
+}
+
+procedure Fill_Tan( writable dane : unsigned, c : unsigned, f : float, s : float,
+		cache : boolean, t : unsigned, m : signed, istep : unsigned ){
+  syscall( SYSCALL_MATH_FILLTAN, u0 := dane, s0 := c, f0 := f, f1 := s,
+                                 u1 := cache, u2 := t, u3 := m, s1 := istep);
+}
+
+#define MATH_TYPE_BYTE		2
+#define MATH_TYPE_FLOAT		1
+#define MATH_TYPE_INT  		0
+
+procedure Table_Mul(writable a : unsigned, size_a : unsigned, type_a : unsigned,
+		    writable b : unsigned, size_b : unsigned, type_b : unsigned,
+		    type_r : unsigned, m : signed){
+  syscall( SYSCALL_MATH_TABLE_MUL, u0 := a, u1 := size_a, u2 := type_a,
+                                   u3 := b, u4 := size_b, u5 := type_b,
+				   u6 := type_r, u7 := m );
+}
+
+procedure Table_Div(writable a : unsigned, size_a : unsigned, type_a : unsigned,
+		    writable b : unsigned, size_b : unsigned, type_b : unsigned,
+		    type_r : unsigned, m : signed){
+  syscall( SYSCALL_MATH_TABLE_DIV, u0 := a, u1 := size_a, u2 := type_a,
+                                   u3 := b, u4 := size_b, u5 := type_b,
+				   u6 := type_r, u7 := m );
+}
+
+procedure Table_Add(writable a : unsigned, size_a : unsigned, type_a : unsigned,
+		    writable b : unsigned, size_b : unsigned, type_b : unsigned,
+		    type_r : unsigned, m : signed){
+  syscall( SYSCALL_MATH_TABLE_ADD, u0 := a, u1 := size_a, u2 := type_a,
+                                   u3 := b, u4 := size_b, u5 := type_b,
+				   u6 := type_r, u7 := m );
+}
+
+procedure Table_Sub(writable a : unsigned, size_a : unsigned, type_a : unsigned,
+		    writable b : unsigned, size_b : unsigned, type_b : unsigned,
+		    type_r : unsigned, m : signed){
+  syscall( SYSCALL_MATH_TABLE_SUB, u0 := a, u1 := size_a, u2 := type_a,
+                                   u3 := b, u4 := size_b, u5 := type_b,
+				   u6 := type_r, u7 := m );
+}

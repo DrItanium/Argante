@@ -1,0 +1,39 @@
+#!/bin/sh
+
+#
+#  Argante virtual OS
+#  ------------------
+#
+#  Background session support
+#
+#  Status: done
+#
+#  Author:     Michal Zalewski <lcamtuf@ids.pl>
+#  Maintainer: Michal Zalewski <lcamtuf@ids.pl>
+#
+
+
+echo "Argante OS - background session initialization"
+
+if [ "$1" = "" ]; then
+  echo "Usage: $0 path-to-argante [ script-to-execute ]"
+  exit 1
+fi
+
+trap "" 1
+
+mkdir /var/argante &>/dev/null
+echo >/var/argante/ses-$$.in
+
+$1 $2 $3 $4 </var/argante/ses-$$.in >/var/argante/ses-$$.log 2>&1 &
+
+echo "<=> Please wait..."
+
+sleep 2
+
+if [ -d /proc/$! ]; then
+  echo "<+> Argante session launched. Use 'agtses $!' to re-attach it."
+else
+  echo "<-> Argante session failed. Logfile:"
+  tail /var/argante/ses-$$.log
+fi

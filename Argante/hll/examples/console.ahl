@@ -1,0 +1,35 @@
+// Very simple console application - for use with vcpucons
+
+#define MYID   123
+#define MAXBUF 100
+
+#include "include/stdinc.ahh"
+#include "include/fs.ahh"
+#include "include/network.ahh"
+#include "include/advmem.ahh"
+
+#cstring hit "Hi there. Hit uppercase 'A' to continue.\n"
+#cstring thk "Thank you :)\n"
+
+type bufor is bytechunk 1 .. MAXBUF;
+
+listen : Socket;
+client : Socket;
+b      : Bounded_Chunk;
+ibuf   : bufor;
+dummy  : unsigned;
+s      : unsigned;
+
+procedure Main ( ) {
+  Attach_Bounded ( b, address hit, hit_bytelength ); 
+  Listen_Unix    ( MYID , 1, NET_SOCK_STREAM, listen );
+  Sync_Accept    ( listen, client );
+  Sync_Send      ( client, b );
+  Attach_Bounded ( b, address ibuf, MAXBUF );
+  loop not s {
+    Sync_Recv      ( client, b );
+    Char_Position  ( b, 65, dummy, s );
+  }
+  Attach_Bounded ( b, address thk, thk_bytelength ); 
+  Sync_Send      ( client, b );
+}

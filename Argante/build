@@ -1,0 +1,116 @@
+#!/bin/sh
+
+SYS=`uname -s`
+
+echo "Building Argante for $SYS platform..."
+unset CFLAGS LIBS
+
+echo
+echo " **********************************************************************"
+echo " * PLEASE READ Documentation/Portability REGARDING YOUR OPERATING     *"
+echo " * SYSTEM IF YOU NOTICE ANY COMPILATION TIME OR RUNTIME PROBLEMS      *"
+echo " **********************************************************************"
+echo 
+
+X=`cat kernel/.argbuild 2>/dev/null`
+let X=X+1 
+echo $X >kernel/.argbuild
+ADDFLAGS=" -DBUILD=$X"
+
+if [ "$SYS" = "Linux" ]; then
+  if [ -f /usr/include/readline/readline.h ]; then
+    CFLAGS="-DHAVE_READLINE -D__USE_TERMCAP"
+    LIBS="-lreadline"
+    if [ -f /usr/lib/libtinfo.so ]; then
+    	LIBS="$LIBS -ltinfo"
+    else
+    	LIBS="$LIBS -ltermcap"
+    fi
+    echo "NOTE: libreadline detected, using it."
+  else
+    echo "NOTE: libreadline *NOT* detected, using old-style compilation."
+  fi
+  LIBC6="`ls -l /lib/libc*|grep -F -- -2.1`"
+  LIBC6="$LIBC6`ls -l /lib/libc*|grep -F -- -2.2`"
+  if [ "$LIBC6" = "" ]; then
+    echo "WARNING: your libc subsystem is too old, reverting to old-style version."
+    unset CFLAGS LIBS
+  fi
+  test "$NOREADLINE" = "" || unset CFLAGS LIBS
+  CFLAGS="$CFLAGS $ADDFLAGS $OPT"
+  export CFLAGS LIBS
+
+  echo ">>> Performing svgalib compatibility test..."
+
+  cat >.ctest.c <<_EOF_
+#include <vga.h>
+main() { vga_setmode(1); vga_ext_set(1,1); vga_hasmode(1); vga_setpalette(1,1,1,1);
+         vga_setpalvec(1,1,1); vga_getch(); vga_getgraphmem(); graph_mem=1; 
+         vga_lockvc(); vga_unlockvc(); vga_getkey(); }
+_EOF_
+
+  rm -f .ctest
+  gcc -fomit-frame-pointer -O9 -ffast-math -Wall -fforce-mem -fforce-addr \
+      -fcaller-saves -fstrength-reduce -fthread-jumps -funroll-loops \
+      -fcse-follow-jumps -fcse-skip-blocks -frerun-cse-after-loop \
+      -fexpensive-optimizations -fschedule-insns2 -m486 -ldl -rdynamic -lm \
+      -lvga .ctest.c -o .ctest >/dev/null 2>&1
+
+  if [ ! -x .ctest ]; then
+    echo ">>> Test failed, compiling without gfx module."
+    rm -f .ctest .ctest.c
+    make -f sysdep/Makefile.lnt "$@"
+  else
+    echo ">>> Test successful, compiling with gfx module."
+    rm -f .ctest .ctest.c
+    make -f sysdep/Makefile.lnx "$@"
+  fi
+  exit $?
+fi
+
+ISSOL=`echo $SYS|egrep -e 'Sun|Sola|Nis'`
+
+if [ ! "$ISSOL" = "" ]; then
+  echo
+  PATH="/usr/local/gnu/bin/:/usr/local/bin:$PATH"
+  CFLAGS="$CFLAGS $ADDFLAGS"
+  export CFLAGS
+  make -f sysdep/Makefile.sol "$@"
+  exit $?
+fi
+
+ISBSD=`echo $SYS|grep 'BSD'`
+
+if [ ! "$ISBSD" = "" ]; then
+  test "$SYS" = "OpenBSD" || LIBS="-Xlinker -export-dynamic"
+  CFLAGS="$CFLAGS $ADDFLAGS"
+  export CFLAGS LIBS
+  gmake -f sysdep/Makefile.bsd "$@"
+  exit $?
+fi
+
+ISIRX=`echo $SYS|grep 'IRIX'`
+
+if [ ! "$ISIRX" = "" ]; then
+  CFLAGS="$CFLAGS $ADDFLAGS"
+  export CFLAGS
+  gmake -f sysdep/Makefile.irx "$@"
+  exit $?
+fi
+
+ISAIX=`echo $SYS| grep 'AIX'`
+
+if [ ! "$ISAIX" = "" ]; then
+   CFLAGS="$CFLAGS $ADDFLAGS"
+  export CFLAGS
+  make -f sysdep/Makefile.aix "$@"
+  exit $?
+fi
+
+echo 
+echo "ERROR:"
+echo "  Argante has not been tested with your system (`uname -s`)."
+echo "  You could try specific makefiles:"
+echo "    [g]make -f sysdep/Makefile.{sol|lnx|bsd|irx} [...parameters...]"
+echo
+exit 1

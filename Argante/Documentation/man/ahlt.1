@@ -1,0 +1,30 @@
+.TH ahlt 1 "23 November 2000"
+.IX ahlt
+.SH NAME
+ahlt - Argante High Level Language Translator
+.SH SYNOPSIS
+.B ahlt
+.I file
+.SH DESCRIPTION
+Takes
+.I file
+as an argument translating it to .agt RSIS format. The binary
+can then be created by using 
+.I agtc
+.. 
+The whole proces can be automatised by the
+.I acc
+script which handles translation, compilation and elimination
+of dead code.
+.PP
+It is a part of the 
+.B Argante
+project. More information on 
+.B Argante 
+can be found at http://www.argante.org
+.SH "SEE ALSO"
+acc(1), elim(1), agtc(1)
+.SH BUGS
+Many. Next release should fix most.
+.SH AUTHOR
+Michal Zalewski <lcamtuf@ids.pl>

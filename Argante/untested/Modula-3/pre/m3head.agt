@@ -1,0 +1,20 @@
+#M3 Header BEGIN
+
+!SIGNATURE "--- M3 Compiled Program ---"
+
+.DATA
+
+#emulates stack for M3
+:M3Stack
+	0
+#Place for allocated segment id
+:M3SId
+	0
+:M3STop
+	0
+:M3SMax
+	384
+
+.CODE
+#M3 Header END
+

@@ -1,0 +1,53 @@
+#
+# Argante OS - sample RSIS/agtc code
+# (C) 2000 Michal Zalewski <lcamtuf@ids.pl>
+#
+# "Hello world!" loop
+#
+
+!SIGNATURE	"hello world example"
+
+.DATA
+
+:Enter
+
+	"\n"
+
+:Tekst
+
+	" Hello world\n"
+
+:Umieraj
+
+	"That's all, time to die.\n\n"
+
+.CODE
+
+  mov u0,:Enter
+  mov u1,^Enter
+  syscall $IO_PUTSTRING
+
+  mov s0,9
+
+:Dalej
+
+  mov u0,s0
+  syscall $IO_PUTINT
+
+  mov u0,:Tekst
+  mov u1,^Tekst
+  syscall $IO_PUTSTRING
+
+  twait 500000
+
+  loop :Dalej
+
+  mov u0,:Umieraj
+  mov u1,^Umieraj
+  syscall $IO_PUTSTRING
+
+  twait 2000000
+
+  halt
+
+.END

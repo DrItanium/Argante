@@ -1,0 +1,167 @@
+#!/bin/bash
+
+echo "Argante Session Manager for Linux (dialog/ncurses)"
+echo "(C) 2000 Michal Zalewski <lcamtuf@ids.pl>"
+echo
+
+AGTSES="`which agtses 2>/dev/null`"
+test "$AGTSES" = "" && test -x tools/agtses && AGTSES=tools/agtses
+test "$AGTSES" = "" && test -x ./agtses && AGTSES=$PWD/agtses
+
+if [ "$AGTSES" = "" ]; then
+  echo 'Cannot find agtses utility.'
+  exit 1
+fi
+
+AGTBACK="`which agtback 2>/dev/null`"
+test "$AGTBACK" = "" && test -x tools/agtback && AGTBACK=tools/agtback
+test "$AGTBACK" = "" && test -x ./agtback && AGTBACK=$PWD/agtback
+
+if [ "$AGTBACK" = "" ]; then
+  echo 'Cannot find agtback utility.'
+  exit 1
+fi
+
+VCPUCONS="`which vcpucons 2>/dev/null`"
+test "$VCPUCONS" = "" && test -x tools/vcpucons && VCPUCONS=tools/vcpucons
+test "$VCPUCONS" = "" && test -x ./vcpucons && VCPUCONS=$PWD/vcpucons
+
+if [ "$VCPUCONS" = "" ]; then
+  echo 'Cannot find vcpucons utility.'
+  exit 1
+fi
+
+AGTEXE="`which vcpucons 2>/dev/null`"
+test "$AGTEXE" = "" && test -x tools/agtexe && AGTEXE=tools/agtexe
+test "$AGTEXE" = "" && test -x ./agtexe && AGTEXE=$PWD/agtexe
+
+if [ "$AGTEXE" = "" ]; then
+  echo 'Cannot find agtexe utility.'
+  exit 1
+fi
+
+if [ "`which dialog 2>/dev/null`" = "" ]; then
+  echo 'Cannot find dialog utility.'
+  exit 1
+fi
+
+
+TMP=.tmp-ses.$$-$RANDOM
+
+if [ "$1" = "" ]; then
+
+  ps xh|grep '.:.. .*argante'|grep -v grep|awk '{print $1 " " $5}' >$TMP
+  echo "(new) start€new€session" >>$TMP
+  ILE=`grep -c . $TMP`
+  N=$[ILE+7]
+  test "$N" -gt "20" && N=20
+  dialog --backtitle "Argante Session Manager" --title "attach to session" --menu 'Please choose session id' $N 60 $ILE `cat $TMP` 2>$TMP.2
+  test "$?" = "1" && exit 1
+  RES="`cat $TMP.2`"
+  rm -f $TMP $TMP.*
+
+  if [ "$RES" = "(new)" ]; then
+    dialog --backtitle "Argante Session Manager" --title "new session" --inputbox 'Please enter Argante project directory' 9 60 2>$TMP.2
+    test "$?" = "1" && exit 1
+    clear
+    if [ -f "`cat $TMP.2`"/argante ]; then
+      cd "`cat $TMP.2`"
+      rm -f $TMP.2
+      $AGTBACK ./argante
+      cd -
+      echo "Press return to continue..."
+      read x
+      echo "Restarting..."
+      exec $0
+      echo "Cannot restart!"
+      exit 1
+    else
+      echo "`cat $TMP.2` - no such directory or no Argante executable found..."
+      rm -f $TMP.2
+      echo "Press return to continue (Ctrl+C = exit)..."
+      read x
+      echo "Restarting..."
+      exec $0
+      echo "Cannot restart!"
+      exit 1
+    fi
+  fi
+
+  APID=$RES
+
+else
+
+  APID=$1
+
+fi
+
+dialog --backtitle "Argante Session Manager (session $APID)" --title "action" --menu 'Please choose an operation' 21 55 14 \
+  change 'Attach to another session' \
+  console 'Open session console (raw)' \
+  lproc 'List running tasks <TODO>' \
+  nproc 'Load new task <TODO>' \
+  kproc 'Kill running task <TODO>' \
+  aproc 'Attach to task console <TODO>' \
+  lmod 'List loaded modules <TODO>' \
+  amod 'Load new module <TODO>' \
+  rmod 'Remove module <TODO>' \
+  close 'Terminate this session' \
+  rh 'Reload HAC ruleset <TODO>' \
+  conf 'Edit configuration files <TODO>' \
+  kill 'Kill this session' \
+  quit 'Quit to operating system' 2>$TMP
+
+test "$?" = "1" && exit 1
+
+RES="`cat $TMP`"
+
+rm -f $TMP
+
+if [ "$RES" = "quit" ]; then
+  clear
+  echo "Quitting..."
+  exit 0
+fi
+
+if [ "$RES" = "change" ]; then
+  clear
+  echo "Restarting..."
+  exec $0
+  echo "Cannot restart!"
+  exit 1
+fi
+
+if [ "$RES" = "console" ]; then
+  clear
+  $AGTSES $APID
+  echo "Hit return to continue..."
+  read x
+  echo "Restarting..."
+  exec $0 $APID
+  echo "Cannot restart!"
+  exit 1
+fi
+
+if [ "$RES" = "kill" ]; then
+  clear
+  kill -9 $APID
+  echo "Restarting..."
+  exec $0
+  echo "Cannot restart!"
+  exit 1
+fi
+
+if [ "$RES" = "close" ]; then
+  clear
+  echo '.' >>/proc/$APID/fd/0
+  sleep 1
+  echo "Restarting..."
+  exec $0
+  echo "Cannot restart!"
+  exit 1
+fi
+
+$0 $APID
+
+echo "Cannot restart!"
+exit 1

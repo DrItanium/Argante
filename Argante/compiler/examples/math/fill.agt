@@ -1,0 +1,8 @@
+.CODE
+  alloc 100,3
+  mov s0,100
+  mov f0,-3.14
+  mov f1,0.01
+  syscall $MATH_FILLSIN
+  halt
+.END

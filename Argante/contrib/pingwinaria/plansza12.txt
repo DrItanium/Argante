@@ -1,0 +1,27 @@
+
+ Developer: debugging, modu³y itp.
+ ---------------------------------
+
+ * interaktywny debugger
+
+ * deassembler
+
+ * pe³na dokumentacja tworzenia modu³ów kernela. Obecne:
+
+ access       - umo¿liwia wybór domen i uid'ów
+ advmem       - szybkie, z³o¿one operacje na pamiêci, konwersje
+ display      - podstawowe wyj¶cie do potrzeb debuggingu (obsolete)
+ fs           - implementacja SVFS
+ gfx          - zabawka - obs³uga grafiki svgalib
+ ipc          - komunikacja miêdzyprocesowa
+ locallib     - lokalne funkcje (statystyki systemu itp)
+ math         - z³o¿one funkcje matematyczne
+ network      - funkcjonalno¶æ sieciowa oraz unix sockets
+ packet       - niskopoziomowa sieæ (Linux)
+ 
+
+
+
+
+
+-----

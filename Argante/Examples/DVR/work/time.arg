@@ -1,0 +1,89 @@
+# timestamp functions
+# DONE
+
+.DATA
+:time_temp
+    0
+:time_temp2
+    0
+:time_temp3
+    0
+.CODE
+
+###########################################################################
+# touch_packet in (u0) out () change ()
+
+:touch_structure
+    mov *:time_temp,u0
+    mov *:time_temp2,u1
+    mov *:time_temp3,u2
+    mov u2,u0
+    syscall $LOCAL_GETTIME
+    add u2,2
+    mov *u2,u0
+    add u2,1
+    mov *u2,u1
+    mov u0,*:time_temp
+    mov u1,*:time_temp2
+    mov u2,*:time_temp3
+    ret 1
+    
+###########################################################################
+# count_age in (u0) out (u1) change ()
+
+:count_age
+    mov *:time_temp,u0
+    mov *:time_temp2,u2
+    mov u2,u0
+    add u2,2
+    syscall $LOCAL_GETTIME
+    sub u0,*u2
+    add u2,1
+    sub u1,*u2
+    mul u0,1000000
+    add u1,u0
+    mov u0,*:time_temp
+    mov u2,*:time_temp2
+    ret 1
+
+
+:debug
+    mov *:debug_t1,u0
+    mov *:debug_t2,u1
+    syscall $LOCAL_GETTIME
+    syscall $IO_PUTINT
+    mov u0,32
+    syscall $IO_PUTCHAR
+    mov u0,u1
+    syscall $IO_PUTINT
+    mov u0,32
+    syscall $IO_PUTCHAR
+    mov u0,s15
+    mov u1,s14
+    syscall $IO_PUTSTRING
+    mov u0,*:debug_t1
+    mov u1,*:debug_t2
+    ret 1
+
+:debug_int
+    mov *:debug_t1,u0
+    mov *:debug_t2,u1
+    syscall $LOCAL_GETTIME
+    syscall $IO_PUTINT
+    mov u0,32
+    syscall $IO_PUTCHAR
+    mov u0,u1
+    syscall $IO_PUTINT
+    mov u0,32
+    syscall $IO_PUTCHAR
+    mov u0,s15
+    mov u1,s14
+    syscall $IO_PUTSTRING
+    mov u0,s13
+    syscall $IO_PUTINT
+    mov u0,10
+    syscall $IO_PUTCHAR
+    mov u0,*:debug_t1
+    mov u1,*:debug_t2
+    ret 1
+        

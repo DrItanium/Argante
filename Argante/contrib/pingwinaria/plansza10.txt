@@ -1,0 +1,26 @@
+
+ Zarz±dzanie - konsole procesów vs. konsola administracyjna
+ ----------------------------------------------------------
+
+ * konsola bootuj±ca to NIE konsola procesów
+
+ * w Argante nie istnieje pojêcie administratora
+
+ * mo¿liwe jest budowanie okre¶lonych ¶cie¿ek interakcji
+
+ * konsola to interpreter skryptów bootuj±cych oraz ewentualnie
+   innych poleceñ
+
+ * w za³o¿eniu proces Argante w RS jest demonem
+
+
+
+
+
+
+
+
+
+
+
+-----

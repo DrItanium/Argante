@@ -1,0 +1,152 @@
+~
+~ ***********************
+~ * Hello World Argante *
+~ ***********************
+~
+~ Script (C) 2000 Michal Zalewski <lcamtuf@tpi.pl>
+~
+~
+~ Welcome to Argante! What you're now seeing is the default text console
+~ for AOSr1. In real-life applications, when Argante is providing only an
+~ underlying layer for network services or other solutions, you're not 
+~ supposed to see it very often, because this is NOT the console for
+~ applications. But for now, we'll run our sample demonstration on the
+~ system console, running AOS in the foreground. So don't be surprised :) In
+~ the future, you shouldn't call Argante directly (maybe except debugging) but
+~ use session-management tools instead. With these tools, you can always attach
+~ to the console of running AOS session, and then, safely detach from it.
+~
+~ Well, main system is booted up. What now? First of all, we have to load 
+~ system modules, which are, obviously, responsible for all I/O operations
+~ available for Argante programs.
+~
+~ Hit RETURN when you're ready to proceed.
+:read x
+>modules/display.so
+>modules/fs.so
+>modules/locallib.so
+>modules/network.so
+>modules/advmem.so
+~
+~ That's it, modules are (hopefully :) loaded. Now, I'll try to
+~ execute our sample "hello world" application. It should display
+~ this string ten times, in constant time periods, then simply exit.
+~ In fact, that was one of the first AOS programs ;) I was pretty happy
+~ when it worked.
+~
+~ We will wait for the task to exit, and then continue this tutorial.
+~
+~ Hit RETURN when you're ready.
+:read x
+$compiler/examples/hello.img
+w0 100
+~
+~ Apparently, it worked :) Now, I'll show you something more advanced.
+~ Using fs module, we will try to open file for writing and put current
+~ date there. If it have permission to these operations (open for writing,
+~ get system date) defined using HAC, it will work.
+~
+~ To learn more about HAC - unified, global, hierarchical access control
+~ subsystem - please read the documentation.
+~
+~ We designed our example program to keep this file open for writing 10
+~ seconds after finishing it's work. In the meantime, we will load it again
+~ - on another virtual CPU. Our goal is to show you that this second process
+~ won't write anything to this file before first process will finish it's
+~ work with this resource. It will enter IOWAIT state instead, sleeping in
+~ the background :) Safe data sharing and avoiding races is one of the
+~ most important features of Argante.
+~
+~ Hit RETURN when ready
+:read xyz
+$compiler/examples/fs.img
+*100
+:sleep 1
+~ 
+~ Ok, executing second process...
+~
+:sleep 1
+$compiler/examples/fs.img
+*100
+~
+~ Yup, that's it. Now, I'll simply wait for these processes. You'll notice
+~ that seconds process will complete it's writing just after first process
+~ exits.
+~
+w1 30
+~
+~ Hit RETURN to continue
+:read x
+~
+~ Ok, done. Now, we'll proceed with simple network functionality
+~ demonstration done by Marcin Dawcewicz. You'll need 'netcat' utility.
+~
+~ Marcin is the developer of high-level network layer access module. This
+~ simple server application has been written in RSIS assembler.
+~
+~ Hit RETURN to continue
+:read x
+$compiler/examples/tcp.img
+w0 360
+~
+~ Now, something slightly more advanced, and somewhat closer to the
+~ Argante concepts. I will launch sample Mini-HTTP server, based on Argante
+~ OS and written in AHLL language, especially for you. You might want to know
+~ this application, which is really effective, has been written in approx.
+~ 200 lines of code, uses about 30 kB of overall memory, and is as fast
+~ as leading webservers, with ability to serve thousands clients in one
+~ thread / process. Effective, secure, small... Yup :)
+~
+~ Hit RETURN to continue
+:read x
+$hll/examples/http/httpd.img
+~
+~ Now, it's running! Just type http://127.0.0.1:1234 in your favourite
+~ browser (graphic browser will be helpful :)!
+~
+~ Hit RETURN to continue
+w0 400
+-0
+~
+~ Hmm, perfect. You might be interested in our humble demonstration of
+~ SVGA connectivity library - if so, please follow this demo, and, when
+~ done, type "@conf/scripts/vga.scr" :) Note - this example is not portable,
+~ only Linux is supported right now. We provided numerous other examples,
+~ as well, so don't be affraid to browse Examples/ directory!
+~
+~ Hit RETURN to continue
+:read x
+~
+~ That's it :) Now, play a little with our command line. It's quite
+~ easy, you can always get help with '?' command. Remember: the console, in
+~ fact, is an unified "boot script interpreter" and debugger. It is not
+~ intended to be process working console. AOSr1 does not provide built-in
+~ text console support for applications for now, because we don't think
+~ it's really necessary for the AOS primary appliances (virtual
+~ distributed routing, cluster management, request propagation, commercial
+~ quality - or better - fault-tolerant solutions with simple, clean
+~ and maintainable architecture and so on). To prove Argante isn't only the 
+~ cluster development environment, we decided to put svgalib console graphics
+~ support in the AOSr1... Well, it appear here quite soon :)
+~
+~ Hit RETURN to continue...
+:read x
+:clear
+~
+~ Thank you for choosing Argante :)
+~
+~ We have included even more examples regarding different AOS subsystems.
+~ Please browse Examples/ directory for high-level language programming
+~ samples, inter-process communication examples, memory / string
+~ operations, math operations, exception handling, or low-level network
+~ layer access (well, sniffing) and many others. Also, we strongly suggest
+~ you reading the documentation for better understanding the system.
+~
+~ Good luck and please tell us what you think!
+~
+~                                                                  Yours,
+~                                                Argante Development Team
+~                                                        <argante@cgs.pl>
+~
+~ Hit RETURN to finish and go to the console...
+:read x

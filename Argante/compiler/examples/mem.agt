@@ -1,0 +1,37 @@
+#
+# Argante OS - sample RSIS/agtc code
+# (C) 2000 Michal Zalewski <lcamtuf@ids.pl>
+#
+# ALLOC / DEALLOC functionality
+#
+
+.DATA
+
+:Adres
+    0
+:NumerBloku
+    0
+
+.CODE
+
+  ALLOC 100,3
+  MOV *:NumerBloku,u0
+  MOV *:Adres,u1
+
+  MOV u0,*:Adres
+  ADD u0,90
+  MOV *u0,10
+
+#  DEALLOC *:NumerBloku
+
+  MOV u0,*:Adres
+  ADD u0,90
+  MOV *u0,10
+
+  MOV u0,*:Adres
+  ADD u0,100
+  MOV *u0,10
+
+  HALT
+
+.END

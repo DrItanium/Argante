@@ -1,0 +1,50 @@
+
+#compiler !INITDOMAIN 1
+
+#include "include/stdinc.ahh"
+#include "include/display.ahh"
+#include "include/fs.ahh"
+
+#define MAXBUF 100
+
+#CString katalog "/fs/ftp/"
+#CString str1 "Directory /fs/ftp/ has "
+#CString str2 " entries:"
+
+dir : Bounded_Chunk;
+
+type bufor is bytechunk 1 .. MAXBUF;
+
+procedure Main () {
+
+  local { 
+    out : Bounded_Chunk; 
+    buf : bufor; 
+    ent : unsigned; 
+    cnt : unsigned := 0;
+  }  
+
+  Attach_Bounded ( dir, address katalog, katalog_bytelength );  
+ 
+  Dir_Open ( dir, ent );
+
+  Attach_Bounded ( dir, address str1, str1_bytelength );
+  Console_PutString ( dir );
+  Console_PutInt ( ent );
+
+  Attach_Bounded ( dir, address str2, str2_bytelength );
+  Console_PutString ( dir );
+  Console_PutChar ( 10 );
+  
+  Attach_Bounded ( out, address buf, MAXBUF);
+
+  while cnt < ent {
+    Dir_Get ( cnt, out );
+    Console_PutInt ( cnt );
+    Console_PutChar ( 32 );
+    Console_Putstring ( out );
+    Console_PutChar ( 10 );
+    cnt += 1;
+  }
+
+}

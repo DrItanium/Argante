@@ -1,0 +1,22 @@
+|
+| Argente system startup script
+| (C) 2000 Michal Zalewski
+|
+
+>modules/display.so
+>modules/access.so
+>modules/fs.so
+>modules/locallib.so
+>modules/network.so
+>modules/advmem.so
+>modules/packet.so
+>modules/math.so
+|>modules/gfx.so
+|>modules/ipc.so
+~
+~  ************************************
+~  * Argante Virtual Operating System *
+~  *         (C) 2000 Michal Zalewski *
+~  ************************************
+~
+*10

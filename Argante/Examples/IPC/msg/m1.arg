@@ -1,0 +1,49 @@
+!SIGNATURE "MSG RECV blocking"
+!IPCREG		100
+!PRIORITY	100
+
+.DATA
+
+:nazwa
+    "Dosta³em mesga (vcpu vs ipc_reg data1 data2)\n"
+:id
+    0
+
+.CODE
+    mov u0,0
+    syscall $IPC_MSG_RECV
+
+    mov u10,u0
+    mov u11,u1
+    
+    mov u0,:nazwa
+    mov u1,^nazwa
+    syscall $IO_PUTSTRING    
+
+    mov u0,u10
+    syscall $IO_PUTINT
+    mov u0,32
+    syscall $IO_PUTCHAR
+
+    mov u0,u11
+    syscall $IO_PUTINT
+    mov u0,32
+    syscall $IO_PUTCHAR
+
+    mov u0,u2
+    syscall $IO_PUTINT
+    mov u0,32
+    syscall $IO_PUTCHAR
+
+    mov u0,u3
+    syscall $IO_PUTINT
+    mov u0,32
+    syscall $IO_PUTCHAR
+
+    mov u0,u4
+    syscall $IO_PUTINT
+    mov u0,10
+    syscall $IO_PUTCHAR
+    
+    halt
+.END

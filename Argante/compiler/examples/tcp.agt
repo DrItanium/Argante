@@ -1,0 +1,456 @@
+#
+# Argante OS
+# TCP testing program 
+#
+# note: netcat will be very helpful 
+#
+# (C) 2000 Marcin Dawcewicz
+#
+
+!INITDOMAIN 10
+
+.DATA
+
+:msg1
+	"\n\nPART 1.\nFirst, we'll try connecting to 127.0.0.1:2222 using NET_CONNECT syscall.\nYou have 10 secs to fire up /usr/bin/nc -l -p 2222 \n\n"
+:msg11
+	"Connecting ...\n"
+:msg12
+	"Connected.\n\n"
+:msg13
+	"< hello >\n"
+:msg14
+        "Now, we'll send some crap (5 times) with blocking NET_SEND:\n"
+:msg15
+	"\nConnection refused. Jumping to PART 3 ..."
+:msg21
+	"\n\nPART 2.\nLet's switch the roles. Send something through netcat (5 times). This part calls NET_RECV.\n"
+:msg31
+	"\n\nPART 3.\nWe'll establish TCP server at 127.0.0.1:3333 (NET_LISTEN in cooperation with blocking NET_ACCEPT). Just telnet in and play some time.\n"
+:msg32
+	"Listening.\n\n"
+:msg33
+	"Client connected.\n\n"
+:msg41
+	"\n\nPART 4.\nTime has come for some non-blocking exercises.\nYou'll be disconnected now. Just wait some time looking, how does NET_ISWAITING syscall work. Then telnet in again - we'll test some functionality of non-blocking NET_RECV and NET_SEND.\n\n"
+:msg42
+	"Is client waiting ? "
+
+:msg43
+	"\nIs it really so difficult to telnet in ? ;) Halting ...\n\n"
+:msg44
+	"Is there something to receive ? "
+:msg45
+	"Can we send something ? "
+:msg46
+	"\nClient accepted.\n\n"
+:msg47
+	"\nWould you mind sending some crap next time ? Halting ...\n\n"
+:msg48
+	"\nCan't send - something fucked up. Halting ...\n\n"
+:msg91
+	"\n\nFINITO.\nMmkey, it's all for now. Goodbyte.\n\n"
+:err
+	"\nException caught ! Halting.\n\n"
+:buf
+        0x0 repeat 1024
+:sent
+        "bytes sent: "
+:rcvd
+        "bytes rcvd: "
+:wait
+        "Now blocked in recv() ...\n"
+:wait1
+        "Now blocked in send() ...\n"
+:yes
+	"YES\n\n"
+:no
+	"NO\n"
+:failure
+	"\nClient disconnected suddenly.\n"
+
+
+.CODE
+
+## INTRO
+
+onfail :fail_handler
+
+mov u0,:msg1
+mov u1,^msg1
+syscall $IO_PUTSTRING
+
+twait 10000000
+
+mov u0,:msg11
+mov u1,^msg11
+syscall $IO_PUTSTRING
+
+onfail :conn_handler
+
+# u0 - dstaddr, u1 - dstport, u2 - srcaddr, u3 - srcport, u4 - timeo
+# u5 - tcp/udp
+# s0 - descriptor
+mov u0,0x7f000001	
+mov u1,2222
+mov u2,0
+mov u3,0
+mov u4,0
+mov u5,0
+syscall $NET_CONNECT
+
+mov u6,s0	   # save the descriptor
+
+onfail :fail_handler
+
+mov u0,:msg12
+mov u1,^msg12
+syscall $IO_PUTSTRING
+
+mov u0,:msg14
+mov u1,^msg14
+syscall $IO_PUTSTRING
+
+## PART 1 - SEND
+
+mov s0,4	   # set the loop counter
+
+:l00p
+twait 500000
+
+mov u0,:wait1
+mov u1,^wait1
+syscall $IO_PUTSTRING
+
+mov s5,s0		# save the loop counter
+
+# u0 - descriptor, u1 - buf addr, u2 - buf len, u4 - blocking/nonblocking
+# s0 - bytes sent
+mov u0,u6
+mov u1,:msg13
+mov u2,^msg13
+mov u4,1
+syscall $NET_SEND   
+
+mov u0,:sent
+mov u1,^sent
+call :debug
+
+mov s0,s5		# restore the loop counter
+loop :l00p
+
+mov u0,:msg21
+mov u1,^msg21
+syscall $IO_PUTSTRING
+
+## PART 2 - RECV
+
+mov s0,4		# loop counter
+
+:l00p1
+mov u0,:wait
+mov u1,^wait
+syscall $IO_PUTSTRING
+
+mov s5,s0               # save the loop counter
+
+# u0 - descriptor, u1 - buf addr, u2 - buf len, u4 - blocking/nonblocking
+# s0 - bytes read
+mov u0,u6
+mov u1,:buf
+mov u2,^buf
+mov u4,1
+syscall $NET_RECV
+
+mov u0,:rcvd
+mov u1,^rcvd
+call :debug
+
+mov u0,:buf
+mov u1,s0
+syscall $IO_PUTSTRING
+
+mov s0,s5               # restore the loop counter
+loop :l00p1
+
+# u0 - descriptor, u1 - how
+mov u0,u6
+mov u1,2
+syscall $NET_SHUTDOWN
+
+## PART 3 - combo
+:part3
+mov u0,:msg31
+mov u1,^msg31
+syscall $IO_PUTSTRING
+
+# u0 - locaddr, u1 - locport, u2 - backlog, u3 - tcp/udp
+# s0 - descriptor
+mov u0,0x7f000001
+mov u1,3333
+mov u2,5
+mov u3,0
+syscall $NET_LISTEN
+
+mov u6,s0
+
+mov u0,:msg32
+mov u1,^msg32
+syscall $IO_PUTSTRING
+
+
+# u0 - descriptor, u4 - blocking/non-blocking
+# s0 - new descriptor, s1 - ret code
+mov u0,u6
+mov u4,1
+syscall $NET_ACCEPT
+
+mov u7,s0		# save new descriptor
+
+mov u0,:msg33
+mov u1,^msg33
+syscall $IO_PUTSTRING
+
+mov s0,4		# set up the loop
+
+:l00p2
+mov u0,:wait
+mov u1,^wait
+syscall $IO_PUTSTRING
+
+mov s5,s0               # save the loop counter
+
+mov u0,u7
+mov u1,:buf
+mov u2,^buf
+mov u4,1
+syscall $NET_RECV
+
+mov u0,:rcvd
+mov u1,^rcvd
+call :debug
+
+mov u0,:buf
+mov u1,s0
+syscall $IO_PUTSTRING
+
+mov u0,:wait1
+mov u1,^wait1
+syscall $IO_PUTSTRING
+
+mov u0,u7
+mov u1,:msg13
+mov u2,^msg13
+mov u4,1
+syscall $NET_SEND
+
+mov u0,:sent
+mov u1,^sent
+call :debug
+
+mov s0,s5
+loop :l00p2
+
+mov u0,u7
+mov u1,2
+syscall $NET_SHUTDOWN
+
+
+## PART 4
+mov u0,:msg41
+mov u1,^msg41
+syscall $IO_PUTSTRING
+
+:fail1
+mov s0,99		# set loop
+
+:l00p3
+mov s5,s0
+
+mov u0,:msg42
+mov u1,^msg42
+syscall $IO_PUTSTRING
+
+twait 1000000
+
+# I: u0 - descriptor (listening socket)
+# O: s0 - client/no_clients (1/0)
+mov u0,u6
+syscall $NET_ISWAITING
+
+ifeq s0,1		# client is waiting
+jmp :client
+
+mov u0,:no
+mov u1,^no
+syscall $IO_PUTSTRING
+
+mov s0,s5
+loop :l00p3
+
+mov u0,:msg43
+mov u1,^msg43
+syscall $IO_PUTSTRING
+
+halt
+
+:client
+mov u0,:yes
+mov u1,^yes
+syscall $IO_PUTSTRING
+
+mov u0,u6
+mov u4,0		# non-blocking
+syscall $NET_ACCEPT
+
+ifneq s1,1		# shouldn't happen
+jmp :failure
+
+mov u7,s0		# new descriptor
+
+mov u0,:msg46
+mov u1,^msg46
+syscall $IO_PUTSTRING
+
+mov s0,99
+
+:l00p4
+mov s5,s0
+
+mov u0,:msg44
+mov u1,^msg44
+syscall $IO_PUTSTRING
+
+twait 1000000
+
+# I: u0 - descriptor, u1 - buffer address, u2 - buffer length
+#    u4 - blocking/non-blocking (1/0)
+# O: s0 - bytes received , s1 - ret code (1 == OK, 0 == wouldblock)
+mov u0,u7
+mov u1,:buf
+mov u2,^buf
+mov u4,0
+syscall $NET_RECV
+
+ifeq s1,1               # some data received 
+jmp :rcvd1
+
+mov u0,:no
+mov u1,^no
+syscall $IO_PUTSTRING
+
+mov s0,s5
+loop :l00p4
+
+mov u0,:msg47
+mov u1,^msg47
+syscall $IO_PUTSTRING
+
+halt
+
+:rcvd1
+mov u0,:yes
+mov u1,^yes
+syscall $IO_PUTSTRING
+
+mov u0,:rcvd
+mov u1,^rcvd
+call :debug
+
+mov u0,:buf
+mov u1,s0
+syscall $IO_PUTSTRING
+
+mov s0,99
+
+:l00p5
+mov s5,s0
+
+mov u0,10
+syscall $IO_PUTCHAR
+
+mov u0,:msg45
+mov u1,^msg45
+syscall $IO_PUTSTRING
+
+twait 1000000
+
+# I: u0 - descriptor, u1 - buffer address, u2 - buffer length
+#    u4 - blocking/non-blocking (1/0)
+# O: s0 - bytes sent, s1 - ret code (1 == OK, 0 == wouldblock)
+mov u0,u7
+mov u1,:msg13
+mov u2,^msg13
+mov u4,0
+syscall $NET_SEND
+
+ifeq s1,1             	# we can send some data
+jmp :sent1
+
+mov u0,:no
+mov u1,^no
+syscall $IO_PUTSTRING
+
+mov s0,s5
+loop :l00p5
+
+mov u0,:msg48
+mov u1,^msg48
+syscall $IO_PUTSTRING
+
+halt
+
+:sent1
+mov u0,:yes
+mov u1,^yes
+syscall $IO_PUTSTRING
+
+mov u0,:sent
+mov u1,^sent
+call :debug
+
+mov u0,u7
+mov u1,2
+syscall $NET_SHUTDOWN
+
+mov u0,u6
+mov u1,2
+syscall $NET_SHUTDOWN
+
+## FINITO
+
+mov u0,:msg91
+mov u1,^msg91
+syscall $IO_PUTSTRING
+
+halt
+
+## some procedures
+
+:debug
+syscall $IO_PUTSTRING
+mov u0,s0
+syscall $IO_PUTINT
+mov u0,10
+syscall $IO_PUTCHAR
+ret 1
+
+:fail_handler
+mov u0,:err
+mov u1,^err
+syscall $IO_PUTSTRING
+halt
+
+:conn_handler
+ifneq u0,$NET_CONN_REFUSED
+jmp :fail_handler
+mov u0,:msg15
+mov u1,^msg15
+syscall $IO_PUTSTRING
+jmp :part3
+
+:failure
+mov u0,:failure
+mov u1,^failure
+syscall $IO_PUTSTRING
+jmp :fail1
