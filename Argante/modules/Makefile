@@ -10,6 +10,10 @@ ifdef USE_SVGALIB
 MODULES+= gfx.so
 endif
 
+ifdef USE_GGI
+MODULES+= ggi.so
+endif
+
 all: $(MODULES)
 
 %.so: %.c
@@ -19,6 +23,10 @@ all: $(MODULES)
 gfx.so: gfx.c
 	@echo "Compiling module" $@ "..."
 	@$(CC) $(CFLAGS) $(LDLIBS) -lvga $(SHROPTS) $^ -o $@
+
+ggi.so: ggi.c
+	@echo "Compiling module" $@ "..."
+	@$(CC) $(CFLAGS) $(LDLIBS) -lggi $(SHROPTS) $^ -o $@
 
 clean:
 	rm -f $(MODULES)
