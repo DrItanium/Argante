@@ -22,171 +22,58 @@
 #       there: to keep agtc happy. Ugly, yes.
 
 :bigA
-     0
-:__bA1
-    30
-:__bA2
-    10
-:__bA3
-    -30
-:__bA4
-    10
-:__bA5
-    30
-:__bA6
-    -10
-:__bA7
-    0
-:__bA8
-    0
-:__bA9
-    -10
-:__bA10
-    0
-:__bA11
-    10
-:__bA12
-    -10
-:__bA13
-    0
+      0  30	 # Initial offset
+     10 -30  # Coordinates
+     10  30
+    -10   0
+      0 -10
+      0  10
+    -10   0
 
 :smallR
-    0
-:__sR01
-    20
-:__sR02
-    0
-:__sR03
-    10
-:__sR04
-    0
-:__sR05
-    -5
-:__sR06
-    5
-:__sR07
-    -5
-:__sR08
-    5
-:__sR09
-    0
+      0  20  # Initial offset
+      0  10  # Coordinates
+      0  -5
+      5  -5
+      5   0
 
 :smallG
-    10
-:__sG01
-    30
-:__sG02
-    -10
-:__sG03
-    0
-:__sG04
-    0
-:__sG05
-    -10
-:__sG06
-    10
-:__sG07
-    0
-:__sG08
-    0
-:__sG09
-    15
-:__sG10
-    -10
-:__sG11
-     0
+     10  30  # Initial offset
+    -10   0  # Coordinates
+      0 -10
+     10   0
+      0  15
+    -10   0
 
 :smallA
-    10
-:__sA01
-    25
-:__sA02
-    -5
-:__sA03
-    5
-:__sA04
-    -5
-:__sA05
-    0
-:__sA06
-    0
-:__sA07
-    -10
-:__sA08
-    10
-:__sA09
-    0
-:__sA10
-    0
-:__sA11
-    10
+     10  25  # Initial offset
+     -5   5  # Coordinates
+     -5   0
+      0 -10
+     10   0
+      0  10
 
 :smallN
-    0
-:__sN01
-    30
-:__sN02
-    0
-:__sN03
-    -10
-:__sN04
-    10
-:__sN05
-    0
-:__sN06
-    0
-:__sN07
-    10
+      0  30  # Initial offset
+      0 -10  # Coordinates
+     10   0
+      0  10
 
 :smallT
-    0
-:__sT01
-    20
-:__sT02
-    10
-:__sT03
-    0
-:__sT04
-    -5
-:__sT05
-    0
-:__sT06
-    0
-:__sT07
-    -5
-:__sT08
-    0
-:__sT09
-    15
-:__sT10
-    5
-:__sT11
-    0
+      0  20  # Initial offset
+     10   0  # Coordinates
+     -5   0
+      0  -5
+      0  15
+      5   0
 
 :smallE
-    10
-:__sE01
-    30
-:__sE02
-    -10
-:__sE03
-    0
-:__sE04
-    0
-:__sE05
-    -10
-:__sE06
-    10
-:__sE07
-    0
-:__sE08
-    0
-:__sE09
-    5
-:__sE10
-    -5
-:__sE11
-    0
+     10  30  # Initial offset
+    -10   0  # Coordinates
+      0 -10
+     10   0
+      0   5
+     -5   0
 
 .CODE
         # Setup the visual and stuff.
@@ -202,49 +89,49 @@
 
         # Draw "A"
         mov     u1,:bigA
-        mov     u2,14
+        mov     u2,%bigA
         mov     s1,100
         mov     s2,100
         call    :DrawVector
 
         # Draw "r"
         mov     u1,:smallR
-        mov     u2,10
+        mov     u2,%smallR
         mov     s1,125
         mov     s2,100
         call    :DrawVector
 
         # Draw "g"
         mov     u1,:smallG
-        mov     u2,12
+        mov     u2,%smallG
         mov     s1,140
         mov     s2,100
         call    :DrawVector
 
         # Draw "a"
         mov     u1,:smallA
-        mov     u2,12
+        mov     u2,%smallA
         mov     s1,155
         mov     s2,100
         call    :DrawVector
 
         # Draw "n"
         mov     u1,:smallN
-        mov     u2,8
+        mov     u2,%smallN
         mov     s1,170
         mov     s2,100
 
         # Draw "t"
         call    :DrawVector
         mov     u1,:smallT
-        mov     u2,12
+        mov     u2,%smallT
         mov     s1,185
         mov     s2,100
 
         # Draw "e"
         call    :DrawVector
         mov     u1,:smallE
-        mov     u2,12
+        mov     u2,%smallE
         mov     s1,200
         mov     s2,100
         call    :DrawVector
@@ -323,7 +210,7 @@
         syscall $GGI_SETSIMPLEMODE
 
         # Make sure we have a usable palette if in CLUT mode. Since this
-        # will fail (throw ERROR_GGI_CONTROL), we need to have an exception
+        # may fail (throw ERROR_GGI_CONTROL), we need to have an exception
         # handler installed.
         onfail  :Except
         syscall $GGI_SETCOLORFULPALETTE
@@ -344,3 +231,4 @@
 
 :Except
         ret     0
+        
