@@ -557,18 +557,19 @@ void do_cycles(int cnt) {
     if ((curr_cpu_p->state & (VCPU_STATE_SLEEPFOR | VCPU_STATE_SLEEPUNTIL
         | VCPU_STATE_IOWAIT | VCPU_STATE_IPCWAIT))) return;
 
-    if (curr_cpu_p->IP>=curr_cpu_p->bytecode_size) {
-      non_fatal(ERROR_OUTSIDE_CODE,"IP beyond code segment",curr_cpu);
-      continue;
-    }
-
     // z33d's changes
     if (curr_cpu_p->state & VCPU_STATE_STOPPED) continue;
     if (curr_cpu_p->flags & VCPU_FLAG_DEBUG)
       if(main_debug(curr_cpu)) // go to debugger
         continue;
     // end of z33d's changes
- 
+
+    /* This must come after debugger or hell results in stepping out of a program */
+    if (curr_cpu_p->IP>=curr_cpu_p->bytecode_size) {
+      non_fatal(ERROR_OUTSIDE_CODE,"IP beyond code segment",curr_cpu);
+      continue;
+    }
+
     change=1;
     bytecode_p=&(curr_cpu_p->bytecode[curr_cpu_p->IP*12]);
 
