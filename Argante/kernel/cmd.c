@@ -24,8 +24,22 @@
 #include "evaluate.h"
 #include "cmd.h"
 
+/* bytecode_p = &curr_cpu_p->bytecode[curr_cpu_p->IP*12]. */
+extern char *bytecode_p;
 #define CHECK_EXCEPT	if (got_nonfatal_round) return;
 
+#define EVAL_A2_T2	t2=bytecode_p[2]; \
+			a2=*((int *) (&bytecode_p[8]))
+
+#define EVAL_T2		t2=bytecode_p[2]
+
+#define	EVAL_A1		a1=*((int *) (&bytecode_p[4]))
+
+#define	A1		*((int *) (&bytecode_p[4]))
+	
+#define	A2		*((int *) (&bytecode_p[8]))
+
+/*
 #define EVAL_A2_T2	t2=curr_cpu_p->bytecode[curr_cpu_p->IP*12+2]; \
 			a2=*(((int*)&curr_cpu_p->bytecode[curr_cpu_p->IP*12+4])+1)
 
@@ -36,7 +50,7 @@
 #define	A1		*((int*)&curr_cpu_p->bytecode[curr_cpu_p->IP*12+4])
 
 #define A2		*(((int*)&curr_cpu_p->bytecode[curr_cpu_p->IP*12+4])+1)
-
+*/
 extern int change;
 extern int got_nonfatal_round;
 

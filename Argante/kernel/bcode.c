@@ -32,8 +32,11 @@
 #include "debugger.h"
 #include "cmd.h"
 
+/* Is defined task.c */
 extern int curr_cpu;
 extern struct vcpu_struct *curr_cpu_p;
+/* Is defined here */
+char *bytecode_p;
 
 void * JIT [(1+CMD_INVALID)*36];
 
@@ -476,7 +479,6 @@ extern struct vcpu_struct *curr_cpu_p;
 
 void do_cycles(int cnt) {
   int L;
-  unsigned int reality;
   if (cnt==0) cnt=1;
   for (L=0;L<cnt;L++) {
 
@@ -500,12 +502,12 @@ void do_cycles(int cnt) {
     // end of z33d's changes
  
     change=1;
-    reality=curr_cpu_p->IP*12;
+    bytecode_p=&(curr_cpu_p->bytecode[curr_cpu_p->IP*12]);
 
     got_nonfatal_round=0;
     but_in_fact_it_was_fatal=0;
 
-    ((void (*)()) JIT [curr_cpu_p->bytecode[reality]*36+(curr_cpu_p->bytecode[reality+1]+1)+6*(curr_cpu_p->bytecode[reality+2])]) ();
+    ((void (*)()) JIT [bytecode_p[0]*36+(bytecode_p[1]+1)+6*bytecode_p[2]]) ();
 
     curr_cpu_p->IP=curr_cpu_p->IP+change;
   }
