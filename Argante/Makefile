@@ -86,8 +86,13 @@ export CFLAGS LDLIBS SHROPTS CC IDSTR
 DIRS=compiler/ kernel/ modules/ hll/ tools/
 
 all: $(DIRS)
-	for I in $(DIRS); do { (cd $$I; $(MAKE)) || exit 1 }; done
-	let X=$X+1; echo $$X >$E
+	cd compiler/; ${MAKE}
+	cd kernel/ ; ${MAKE}
+	cd modules/ ; ${MAKE}
+	cd hll/ ; ${MAKE}
+	cd tools/ ; ${MAKE}
+#	for I in $(DIRS); do { (cd $$I; $(MAKE)) || exit 1 }; done
+#	let X=$X+1; echo $$X >$E
 
 clean: $(DIRS)
 	for I in $(DIRS); do { (cd $$I; $(MAKE) clean) || exit 1 }; done
