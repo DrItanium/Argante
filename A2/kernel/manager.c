@@ -1,42 +1,20 @@
 /*
- * A2 Virtual Machine - manager thread & console
- * Copyright (c) 2001	James Kehl <ecks@optusnet.com.au>
- * 
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Library General Public License as published
- * by the Free Software Foundation; version 2 of the License, with the
- * added restriction that it may only be converted to the version 2 of the
- * GNU General Public License.
- * 
- * This library is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Library General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+ * 'new' Argante2 manager core
+ *
+ * Spin the wheel round and round:
+ * shadows crawl along the ground;
+ * sun comes up and sun goes down;
+ * spin the wheel round and round.
  */
-
 #include "autocfg.h"
 #include "compat/alloca.h"
 #include "compat/bzero.h"
-#include "compat/strtok_r.h"
+// #include "compat/strtok_r.h"
 #include "compat/usleep.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-/* for chdir */
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#else
-#ifdef HAVE_DIR_H
-#include <dir.h>
-#endif
-#endif
-
 #include <string.h>
-#include <signal.h>
 #include <errno.h>
 
 #ifndef NO_THREADS
@@ -50,12 +28,6 @@
 #include <readline/history.h>
 #endif
 
-/* mallinfo() */
-#ifdef HAVE_MALLINFO
-#include <malloc.h>
-#endif
-
-
 #include "config.h"
 #include "taskman.h"
 #include "printk.h"
@@ -67,52 +39,144 @@
 #include "hhac.h"
 #include "cmd.h"
 #include "cfdop.h"
+#include "file.h"
 
 #include "imageman.h"
+#include "manager.h"
 
-static char *default_hac=NULL;
+#include <assert.h>
 
 /*
-key: - - RSN, x - never, * - done, ~ - a bit different from A1
-	  ? - under consideration
-?               * help
-!               ? system statistics
-$fn             * load binary image from file fn and run it on the first
-                  VCPU available
-%fn		? as above, loads a task in RESPAWN mode (it will be run
-		  again if the process will be terminated by any command 
-	          different than HALT)
->fn             * load library from file fn to a free slot
-<id             * remove library in slot 'id'
-#               ? list libraries with statistics
-                  (supported syscalls, number of calls)
-@fn             * run a console script
--nn             * kill a process on VCPU number nn
-=nn             ? display statistics for a process on VCPU number nn
-.               * system halt 
-*nn             x execute nn system ticks without checking input
-                  on management console; useful in scripts
-:xx             ? subshell exit and execution of "xx"
-|xx             * "nothing" - comment in scripts
-^               ~ reread HAC table
-~		* echo (for scripts)
-w nn tmout      * wait for process nn termination fot tmout seconds
-*/
+ * Here's the plan:
+ * you first 'lock' a cpu, meaning nobody else can mess with it.
+ * then you mess with it - load bcode etc.
+ * then you run it
+ * then if it dies, you can debug it
+ * finally you unlock it
+ * then the system does away with the memory.
+ */
 
-void do_cycle(struct vcpu *curr_cpu) {
+#define ORPHANED_ID ((unsigned short) -1)
+
+/* XXX: should go in (auto)config.h */
+#define A2_MODULE_DIR "modules/"
+
+struct pending_sock {
+	char socktype[A2_CFDDESC_LEN];
+	char *extradesc;
+	flexlisock sock;
+	struct pending_sock *next;
+};
+
+/* NOTE:
+ * There's no multithread locking here. There's only one manager thread.
+ * If you want to (ugh) use a thread per connection you will have to throw
+ * all this out.
+ */
+
+struct metacpu {
+	unsigned short ownerid; /* -1 = orphaned */
+	unsigned short status;
+	struct vcpu *cpu;
+	struct pending_sock *li_first;
+	struct pending_sock *li_last;
+	pthread_t thread;
+	/* This would be mutexed, if it wasn't an atomic type. */
+	unsigned exit_type;
+};
+
+/* if cpu==NULL, ownerid=ORPHANED_ID, status=STATUS_STOPPED. */
+
+static struct metacpu cpu_array[A2_MAX_VCPUS];
+
+static int flexsock_available=0;
+
+/* Yuck. Should go in agents (but then they'd be sys-dependant!?) */
+#ifndef NO_XLIST
+struct sdes {
+  char* name;
+  unsigned num;
+  int type;
+};
+
+struct sdes xlist[]={
+#include "xlist.h"
+};
+#define SCNUM (sizeof(xlist)/sizeof(struct sdes))
+#endif
+
+/*********************
+ * UTILITY FUNCTIONS *
+ *********************/
+
+static const char *human_exception_name(unsigned xid) {
+#ifndef NO_XLIST
+	size_t i;
+	for(i=0;i<SCNUM;i++) {
+		if (xlist[i].num == xid) return xlist[i].name;
+	}
+#endif
+	return NULL;
+}
+
+static void drop_pending_socks(unsigned cpuid) {
+	struct pending_sock *s, *tmp;
+	s=cpu_array[cpuid].li_first;
+	while(s) {
+		FXS_CloseListener(s->sock);
+		if (s->extradesc) free(s->extradesc);
+		tmp=s->next;
+		free(s);
+		s=tmp;
+	}
+	cpu_array[cpuid].li_first=cpu_array[cpuid].li_last=NULL;
+}
+
+static void free_cpu(unsigned cpuid) {
+	/* Dumb internal consistency things (should be redundant) */
+	assert(cpu_array[cpuid].status==STATUS_STOPPED);
+	assert(cpu_array[cpuid].ownerid==ORPHANED_ID);
+	/* Someone trying to leak our memory? */
+	drop_pending_socks(cpuid);
+	/* Run destroy sc handlers */
+	vcpu_modules_stop(cpu_array[cpuid].cpu);
+	imageman_unload(cpu_array[cpuid].cpu);
+	/* Free cpu struct */
+	free(cpu_array[cpuid].cpu);
+	cpu_array[cpuid].cpu=NULL;
+}
+
+static void modstart_all_vcpus(unsigned moduleid) {
+	int i;
+	for(i=0;i<A2_MAX_VCPUS;i++) {
+		/* Fix all cpus, even stopped ones. */
+		if (!cpu_array[i].cpu) continue;
+		vcpu_module_start(cpu_array[i].cpu, moduleid);
+	}
+}
+
+static void modstop_all_vcpus(unsigned moduleid) {
+	int i;
+	for(i=0;i<A2_MAX_VCPUS;i++) {
+		if (!cpu_array[i].cpu) continue;
+		vcpu_module_stop(cpu_array[i].cpu, moduleid);
+	}
+}
+
+/*************************** grunt cpu stuff **/
+
+static void do_cycle(struct vcpu *curr_cpu, unsigned prio) {
 	anyval *a1, *a2;
 	struct bcode_op *bop;
-	unsigned z, z2, i;
-	z2=z=0;
+	unsigned i, z=0, z2=0;
+
 hi:
 	/* don't test cancel so often... for speed */
-	if (++z > curr_cpu->priority) {
+	if (z++ > prio) {
+		/* with single-stepping, prio=0 */
+		if (z2++ > 100 || !prio) return;
 		CANCEL;
 		z=0;
-		if (++z2 > 100) {
-			IDLE;
-			z2=0;
-		}
 	}
 
 	/* Change pages? This is the place it counts most (imageman.c is the only other)*/
@@ -159,692 +223,670 @@ hi:
 			a2=(anyval *) mem_ro(curr_cpu, a2->val.u);
 	}
 	
-/*	i=(bop->type & TYPE_A1(TYPE_VALMASK)) + ((bop->type & TYPE_A2(TYPE_VALMASK)) >> 4) * 3;
-	i=i + (unsigned) bop->bcode * 9; */
-
 	/* Now, run JIT */
-	i=curr_cpu->ip;
+	i=curr_cpu->prev_ip=curr_cpu->ip;
 	curr_cpu->next_ip=i + 1;
 	(jit_calls[curr_cpu->cp_curr.jitoffs[CP_DATA_OF(i)]])(curr_cpu, a1, a2);
-	/* When exceptions are thrown and cancellation occurs
-	 * we want IP to be correct, right? */
+	/* When exceptions are thrown and cancellation
+	 * occurs we want IP to be correct, right? */
 	curr_cpu->ip=curr_cpu->next_ip;
 	goto hi;
 }
 
-#ifndef NO_XLIST
+static unsigned vcpu_do_run(struct vcpu *curr_cpu) {
+	/* xp changed after call to setjmp. */
+	volatile unsigned xp;
+	jmp_buf ex_curr;
 
-struct sdes {
-  char* name;
-  unsigned num;
-  int type;
-};
-
-struct sdes xlist[]={
-#include "xlist.h"
-};
-#define SCNUM (sizeof(xlist)/sizeof(struct sdes))
-
-#endif
-
-static int vcpu_do_code(struct vcpu *curr_cpu) {
-	unsigned xp;
-	int origip;
-	xp=(int) &xp; /* Volatile blocker */
-	origip=(int) &origip;
+	/* Don't use EXCEPT_CATCH, it could allocate too often. */
+	curr_cpu->onexcept=&ex_curr;
 	
 	while(1) {
-	/* How To Handle Exceptions(tm):
+	/*
+	 * How To Handle Exceptions(tm):
 	 * 1. throw_except returns here.
 	 * 2. No xip for this level? Pop the stack until one appears.
 	 * 3. If we have an xip, set new IP there, and zero old xip.
 	 * 4. Out of stack? It didn't handle it, then.
 	 */
-		if((xp=setjmp(curr_cpu->onexcept))) {
-			if (xp==X_CPUSHUTDOWN) {
-				printk2(PRINTK_WARN, "Task committed suicide (HALT or RAISE -1).\n");
-				return 0;
-			}
-			origip=curr_cpu->ip;
-			while (!curr_cpu->xip) {
-				if(setjmp(curr_cpu->onexcept))
-				{
-#ifndef NO_XLIST
-					size_t i;
-					for(i=0;i<SCNUM;i++) {
-						if (xlist[i].num == xp) {
-							printk2(PRINTK_ERR, "Unhandled exception %d (%s), origin 0x%x. Murdered.\n", xp, xlist[i].name, origip);
-							return 1;
-						}
-					}
-#endif
-					printk2(PRINTK_ERR, "Unhandled exception %d, origin 0x%x. Murdered.\n", xp, origip);
-					return 1;
+		if ((xp=setjmp(ex_curr)) == 0) {
+			do_cycle(curr_cpu, curr_cpu->priority);
+		} else {
+			if (xp == X_CPUSHUTDOWN) return EXITTYPE_HALT;
+			/* Set r31 to error no. */
+			curr_cpu->reg[A2_REGISTERS - 1].val.u=xp;
+			if (setjmp(ex_curr) == 0) {
+				while (!curr_cpu->xip) {
+					pop_ip_from_stack(curr_cpu, 1);
 				}
+				curr_cpu->ip=curr_cpu->xip;
+				curr_cpu->xip=0;
+			} else return EXITTYPE_FAIL;
+		}
+		/* Either the requisite number of cycles completed successfully
+		 * or an exception was thrown. In any case, realize the 'priority'. */
+		IDLE;
+	}
+}
+
+static unsigned vcpu_do_step(struct vcpu *curr_cpu) {
+	/* xp changed after call to setjmp. */
+	volatile unsigned xp;
+	jmp_buf ex_curr;
+
+	/* Don't use EXCEPT_CATCH, it could allocate too often. */
+	curr_cpu->onexcept=&ex_curr;
+	
+	if ((xp=setjmp(ex_curr)) == 0) {
+		do_cycle(curr_cpu, 0);
+	} else {
+		if (xp == X_CPUSHUTDOWN) return EXITTYPE_HALT;
+		/* Set r31 to error no. */
+		curr_cpu->reg[A2_REGISTERS - 1].val.u=xp;
+		if (setjmp(ex_curr) == 0) {
+			while (!curr_cpu->xip) {
 				pop_ip_from_stack(curr_cpu, 1);
 			}
 			curr_cpu->ip=curr_cpu->xip;
-			/* Set r31 to error no. */
-			curr_cpu->reg[A2_REGISTERS - 1].val.u=xp;
 			curr_cpu->xip=0;
-		}
-		do_cycle(curr_cpu);
-	}
-}
-
-#ifndef NO_THREADS
-
-/* Waitfor - a bit of fun 'mahgick' */
-static pthread_mutex_t waitmutex=PTHREAD_MUTEX_INITIALIZER; 
-static pthread_cond_t waitcond=PTHREAD_COND_INITIALIZER;
-
-static void *vcpu_waitfor(void *v) {
-	pthread_t *t=v;
-
-	/* If there's a timeout, we can't hold the lock!
-	 * Ugly! */
-	pthread_mutex_lock(&waitmutex);
-	pthread_mutex_unlock(&waitmutex);
-	/* Admittedly, it detaches on termination.
-	 * But that's good enough... EINVAL will do! */
-	pthread_join(*t, NULL);
-	pthread_cond_broadcast(&waitcond);
-	return NULL;
-}
-
-static void waitforthread(pthread_t *t, int tmout) {
-	pthread_t newthread;
-	struct timespec tspec;
-	int e;
-
-	pthread_mutex_lock(&waitmutex);
-	if (pthread_create(&newthread, NULL, &vcpu_waitfor, t)) {
-		pthread_mutex_unlock(&waitmutex);
-		printk2(PRINTK_ERR, "pthread_create failed\n");
-		return;
+			return EXITTYPE_EXCEPT;
+		} else return EXITTYPE_FAIL;
 	}
 
-	tspec.tv_sec=time(NULL) + tmout;
-	tspec.tv_nsec=0;
-	if ((e=pthread_cond_timedwait(&waitcond, &waitmutex, &tspec))) {
-		if (e==ETIMEDOUT) printk2(PRINTK_WARN, "timed out.\n");
-		else printk2(PRINTK_WARN, "signal interrupt?\n");
-		pthread_cancel(newthread);
-	}
-	pthread_join(newthread, NULL);
-	pthread_mutex_unlock(&waitmutex);
+	/* I don't think we need bother calling IDLE. I/O and thread
+	 * latencies should provide more than enough slowdown... */
+	return EXITTYPE_STEP;
 }
 
-static struct vcpu cpus[A2_MAX_VCPUS];
-/* Racy pacy. But it's atomic at least...? */
-static pthread_t cpu_thread[A2_MAX_VCPUS];
 
 static void *vcpu_run(void *v) {
-	struct vcpu *curr_cpu=v;
-	vcpu_do_code(curr_cpu);
-	/* Everything after this has to be prepared to
-	 * be cancelled halfway and restarted... */
-	vcpu_modules_stop(curr_cpu);
-	imageman_unload(curr_cpu);
-	/* Don't waste stack */
-	curr_cpu->status=STATUS_UNUSED;
+	struct metacpu *mcpu=v;
+	unsigned u;
+	u=vcpu_do_run(mcpu->cpu);
+	mcpu->exit_type=u;
 	pthread_detach(pthread_self());
 	return NULL;
 }
 
-/* The Global Lock :) */
-static void cancel_all_vcpus() {
-	int i, err;
-/* printk("<.> acquiring 'global lock'...\n"); */
-	for(i=0;i<A2_MAX_VCPUS;i++) {
-		if (cpus[i].status==STATUS_UNUSED) continue;
-		err=pthread_cancel(cpu_thread[i]);
-		if (err)
-			printk2(PRINTK_ERR, "thread cancel failed\n");
-		else {
-			err=pthread_join(cpu_thread[i], NULL);
-			if (err)
-			printk2(PRINTK_ERR, "thread join failed for global lock: %s\n",
-				(err==ESRCH) ? "no such thread" : (err==EDEADLK) ?
-				"deadlock" : (err==EINVAL) ? "invalid" : "other");
-		}
-	}
+static void *vcpu_step(void *v) {
+	struct metacpu *mcpu=v;
+	unsigned u;
+	u=vcpu_do_step(mcpu->cpu);
+	mcpu->exit_type=u;
+	pthread_detach(pthread_self());
+	return NULL;
 }
 
-static void continue_all_vcpus() {
-	int i;
-/* printk("<.> releasing 'global lock'...\n"); */
-	for(i=0;i<A2_MAX_VCPUS;i++) {
-		if (cpus[i].status==STATUS_UNUSED) continue;
-		if (pthread_create(&cpu_thread[i], NULL, &vcpu_run, &cpus[i])) {
-			printk2(PRINTK_ERR, "pthread_create failed\n");
-			imageman_unload(&cpus[i]);
-			cpus[i].status=STATUS_UNUSED;
-		}
-	}
-}
+/*************************** global lock **/
 
-static void func_all_vcpus(void *func(void *)) {
-	int i, err;
-	for(i=0;i<A2_MAX_VCPUS;i++) {
-		if (cpus[i].status==STATUS_UNUSED) continue;
-		if (pthread_create(&cpu_thread[i], NULL, func, &cpus[i]))
-			printk2(PRINTK_ERR, "pthread_create failed\n");
-		else {
-			err=pthread_join(cpu_thread[i], NULL);
-			if (err) printk2(PRINTK_ERR, "thread join failed\n");
-		}
-	}
-}
-#else
-static inline void cancel_all_vcpus(void) {}
-static inline void continue_all_vcpus(void) {}
-static inline void func_all_vcpus(void *func(void *)) {}
-#endif
+/* This is a gigantic hack. See modules.txt for details... */
 
-
-/* This is for debugging the interpreter with no pthreads getting in the way.
- * It's also invaluble for tracing leaks.
- */
-#ifdef NO_THREADS
-static void debug_execution(char *ln) {
-	struct vcpu cpu;
-	char *reent, *tok;
-	const struct cfdop_1 *cfdtbl;
-	bzero(&cpu, sizeof(struct vcpu));
-	cpu.status=STATUS_RUN;
-	/* Now we have DL - you can load multiple images with :'s between */
-	tok=strtok_r(ln, ":", &reent);
-	if (!tok || !*tok) {
-		printk2(PRINTK_INFO, "loading %s...\n", ln);
-		if (!imageman_loadimage(ln, &cpu)) {
-			cpu.status=STATUS_UNUSED;
-			imageman_unload(&cpu);
-			printk2(PRINTK_ERR, "image load failed\n");
-			return;
-		}
-	} else while(tok) {
-		printk2(PRINTK_INFO, "loading %s...\n", tok);
-		if (!imageman_loadimage(tok, &cpu)) {
-			cpu.status=STATUS_UNUSED;
-			imageman_unload(&cpu);
-			printk2(PRINTK_ERR, "image load failed\n");
-			return;
-		}
-		tok=strtok_r(NULL, ":", &reent);
-	}
-	/* Load HAC */
-	hac_init(&cpu);
-	if (default_hac) {
-		FILE *f;
-		f=fopen(default_hac, "r");
-		if (!f) perror("fopen");
-		else {
-			hac_loadfile(&cpu, f);
-			fclose(f);
-			printk2(PRINTK_INFO, "HAC loaded from %s\n", default_hac);
-		}
-	}
-	/* Start modules (waiting for finish) */
-	vcpu_modules_start(&cpu);
-	/* Volunteer a VFD...? */
-	cfdtbl=cfdop1_fddesc_get(*((int *) "TCON"));
-	if (cfdtbl) {
-		cpu.reg[0].val.s=cfdtbl->fd_create(&cpu, NULL, fileno(stdin), fileno(stdout));
-	} else {
-		printk2(PRINTK_INFO, "TCON unavailable\n");
-	}
-	/* Start CPU */
-	vcpu_do_code(&cpu);
-	/* Done */
-	vcpu_modules_stop(&cpu);
-	imageman_unload(&cpu);
-	cpu.status=STATUS_UNUSED;
-	return;
-}
-#endif
-
-static int do_script(char *script);
-
-static void do_line(char *ln) {
-	char t=*ln;
+static void cancel_all_vcpus(void) {
+	unsigned i;
 	int err;
-	ln++;
-	switch(t) {
-		/* debug only thing */
-/*		case 's': 
-			cancel_all_vcpus();
-			sleep(5);
-			continue_all_vcpus();
-			return; */
-		case '?': {
-			const char *s;
-		s=
-"?               - help\n"
-"!               - system statistics\n"
-".               - system halt\n"
-"@fn             - run a console script\n"
-"^fn nn          - set default HAC file, or change nn's HACtable to fn\n"
-"$fn             - load binary image from file fn\n"
-#ifndef NO_THREADS
-"-nn             - kill a process on VCPU number nn\n"
-#endif
-">fn             - load library from file fn\n"
-"<id             - remove library in slot 'id'\n"
-/*"=id             - reload library in slot 'id'\n"*/
-"|xx             - comment, for scripts\n"
-"~xx             - echo, for scripts\n"
-#ifndef NO_THREADS
-"wnn dd		 - wait for cpu NN termination for dd seconds\n"
-#endif
-		;
-			printk(s);
-			return;
-		  }
-		case '@': {
-			do_script(ln);
-			return;
-		}
-		case '!': {
-#ifdef HAVE_MALLINFO
-			int i;
-			i=mallinfo().uordblks;
-			printk2(PRINTK_INFO, "%d bytes in mallocated memory\n", i);
-#else
-			printk2(PRINTK_INFO, "malloc statistics unavailable\n");
-#endif
-		}
-		case '|': return; /* Comment */
-		case '~': puts(ln); return;
-		case '^': { /* Load HAC, or change default HAC */
-			char file[128];
-			int cpuid;
-			FILE *f;
-			err=sscanf(ln, "%127s %d", file, &cpuid);
-			file[sizeof(file) - 1]=0;
+	const char *emsg;
+	for(i=0;i<A2_MAX_VCPUS;i++) {
+		if (cpu_array[i].status == STATUS_STOPPED) continue;
+		
+		err=pthread_cancel(cpu_array[i].thread);
+		if (!err) {
+			err=pthread_join(cpu_array[i].thread, NULL);
+			if (!err) continue;
+			else emsg="join";
+		} else emsg="cancel";
 
-			if (!err || !strlen(ln)) {
-				printk2(PRINTK_ERR, "^ usage:\n"
-					" <FILE> set default HAC filename\n"
-					" <FILE> <VCPU> alter VCPU's HAC\n"
-					);
-				return;
-			}
-			if (err > 1) {
-#ifndef NO_THREADS
-				if (cpuid >= A2_MAX_VCPUS) {
-					printk2(PRINTK_ERR, "Invalid VCPU\n");
-					return;
-				}
-
-				if (cpus[cpuid].status==STATUS_UNUSED) {
-					printk2(PRINTK_ERR, "That VCPU is already dead.\n");
-					return;
-				}
-				f=fopen(file, "r");
-				if (!f) {
-					perror("fopen");
-					return;
-				}
-				hac_loadfile(&cpus[cpuid], f);
-				fclose(f);
-				printk2(PRINTK_INFO, "%d's HAC loaded from %s\n", cpuid, file);
-#else
-				printk2(PRINTK_ERR, "Multithreading is disabled, so which VCPU could you possibly mean?\n");
-#endif
-				return;
-			}
-			/* Test file readability etc. */
-			f=fopen(file, "r");
-			if (!f) {
-				perror("fopen");
-				return;
-			}
-			fclose(f);
-			printk2(PRINTK_INFO, "Default HAC set to %s\n", file);
-			if (default_hac) free(default_hac);
-			default_hac=strdup(file);
-			return;
-		}
-#ifndef NO_THREADS
-		case '-': {
-			char *ret;
-			unsigned cpuid;
-			if (!*ln) {
-				printk2(PRINTK_ERR, "- usage: -<VCPU>\n");
-				return;
-			}
-			cpuid=strtoul(ln, &ret, 0);
-			if (*ret) {
-				printk2(PRINTK_ERR, "- usage: -<VCPU>\n");
-				return;
-			}
-			if (cpuid >= A2_MAX_VCPUS) {
-				printk2(PRINTK_ERR, "Invalid VCPU\n");
-				return;
-			}
-
-			if (cpus[cpuid].status==STATUS_UNUSED) {
-				printk2(PRINTK_ERR, "That VCPU is already dead.\n");
-				return;
-			}
-			/* pthread_cancel won't break if a thread quits just
-			 * before this */
-			err=pthread_cancel(cpu_thread[cpuid]);
-			if (err)
-				printk2(PRINTK_ERR, "thread cancel failed\n");
-			else {
-				err=pthread_join(cpu_thread[cpuid], NULL);
-				if (err)
-					printk2(PRINTK_ERR, "thread join failed\n");
-				/* Now vcpu_stop it */
-				if (pthread_create(&cpu_thread[cpuid], NULL, &vcpu_modules_stop, &cpus[cpuid]))
-					printk2(PRINTK_ERR, "pthread_create failed\n");
-				else {
-					err=pthread_join(cpu_thread[cpuid], NULL);
-					if (err) printk2(PRINTK_ERR, "thread join failed\n");
-				}
-				/* Because it's been cancelled, it hasn't freed */
-				imageman_unload(&cpus[cpuid]);
-				cpus[cpuid].status=STATUS_UNUSED;
-			}
-			return;
-		}
-#endif
-		case '$': {
-#ifndef NO_THREADS
-			int i;
-			for(i=0;i<A2_MAX_VCPUS;i++) {
-				/* It might become zero after this,
-				 * but it won't become one. So it's safe!(?) */
-				if (cpus[i].status==STATUS_UNUSED) {
-					char *reent, *tok;
-					bzero(&cpus[i], sizeof(struct vcpu));
-
-					cpus[i].status=STATUS_RUN;
-					/* Now we have DL - you can load multiple images with :'s between */
-					tok=strtok_r(ln, ":", &reent);
-					if (!tok || !*tok) {
-						printk2(PRINTK_INFO, "loading %s...\n", ln);
-						if (!imageman_loadimage(ln, &cpus[i])) {
-							cpus[i].status=STATUS_UNUSED;
-							imageman_unload(&cpus[i]);
-							printk2(PRINTK_ERR, "image load failed\n");
-							return;
-						}
-					} else while(tok) {
-						printk2(PRINTK_INFO, "loading %s...\n", tok);
-						if (!imageman_loadimage(tok, &cpus[i])) {
-							cpus[i].status=STATUS_UNUSED;
-							imageman_unload(&cpus[i]);
-							printk2(PRINTK_ERR, "image load failed\n");
-							return;
-						}
-						tok=strtok_r(NULL, ":", &reent);
-					}
-					/* Load HAC */
-					hac_init(&cpus[i]);
-					if (default_hac) {
-						FILE *f;
-						f=fopen(default_hac, "r");
-						if (!f) perror("fopen");
-						else {
-							hac_loadfile(&cpus[i], f);
-							fclose(f);
-							printk2(PRINTK_INFO, "HAC loaded from %s\n", default_hac);
-						}
-					}
-					/* Start modules (waiting for finish) */
-					if (pthread_create(&cpu_thread[i], NULL, &vcpu_modules_start, &cpus[i]))
-						printk2(PRINTK_ERR, "pthread_create failed\n");
-					else {
-						err=pthread_join(cpu_thread[i], NULL);
-						if (err) printk2(PRINTK_ERR, "thread join failed\n");
-					}
-					/* Start CPU */
-					if (pthread_create(&cpu_thread[i], NULL, &vcpu_run, &cpus[i])) {
-						printk2(PRINTK_ERR, "<+> pthread_create failed\n");
-						imageman_unload(&cpus[i]);
-						cpus[i].status=STATUS_UNUSED;
-					}
-					return;
-				}
-			}
-			printk2(PRINTK_ERR, "No free VCPUs\n");
-#else
-			debug_execution(ln);
-#endif
-			return;
-		}
-		case '>': { /* Load library */
-			unsigned lid;
-			cancel_all_vcpus();
-			lid=module_dyn_load(ln);
-			if (lid == ((unsigned) -1)) {
-				printk2(PRINTK_ERR, "Module load failed.\n");
-				continue_all_vcpus();
-				return;
-			}
-			/* Success! Run VCPU starts */
-			vcpu_set_moduleid(lid);
-			func_all_vcpus(vcpu_module_start);
-			continue_all_vcpus();
-			return;
-		}
-		case '<': { /* Unload library */
-			unsigned lid;
-			char *ret;
-			if (!*ln) {
-				printk2(PRINTK_ERR, "< usage: <<LID>\n");
-				return;
-			}
-			lid=strtoul(ln, &ret, 0);
-			if (*ret) {
-				printk2(PRINTK_ERR, "< usage: <<LID>\n");
-				return;
-			}
-			if (lid >= A2_MAX_RSRVD) {
-				printk2(PRINTK_ERR, "Invalid LID\n");
-				return;
-			}
-			printk2(PRINTK_INFO, "Unloading %d\n", lid);
-			cancel_all_vcpus();
-			/* Run VCPU stops */
-			vcpu_set_moduleid(lid);
-			func_all_vcpus(vcpu_module_stop);
-			/* Try shutdown */
-			if (!module_dyn_unload(lid)) {
-				/* Success! restart threads then */
-				continue_all_vcpus();
-				return;
-			}
-			printk2(PRINTK_ERR, "Module unload failed. Attempting reload (state data has been lost)\n");
-			func_all_vcpus(vcpu_module_start);
-			continue_all_vcpus();
-			return;
-		}
-		case 'w': {
-#ifndef NO_THREADS
-			unsigned cpuid;
-			unsigned tmout;
-			err=sscanf(ln, "%d %d", &cpuid, &tmout);
-			if (err < 2 || !strlen(ln)) {
-				printk2(PRINTK_ERR, "invalid argument\n");
-				return;
-			}
-			if (cpuid >= A2_MAX_VCPUS) {
-				printk2(PRINTK_ERR, "Invalid VCPU\n");
-				return;
-			}
-			if (cpus[cpuid].status==STATUS_UNUSED) {
-				printk2(PRINTK_ERR, "That VCPU is already dead.\n");
-				return;
-			}
-			if (tmout > 5 * 60 * 60) {
-				printk2(PRINTK_WARN, "It probably isn't a good idea to sleep that long."
-					" Doing 5min instead.\n");
-				tmout=5*60*60;
-			} else if (tmout < 1) {
-				printk2(PRINTK_WARN, "Minimum timeout is 1sec, ok?\n");
-				tmout=1;
-			}
-			printk2(PRINTK_INFO, "Waiting for VCPU %d for %d seconds\n", cpuid, tmout);
-			waitforthread(&cpu_thread[cpuid], tmout);
-#endif
-			return;
-		}
-		case '.': { /* Shutdown */
-#ifndef NO_THREADS
-			int i;
-#endif
-			printk2(PRINTK_WARN, "Shutting down...\n\n");
-
-			/* Stop everything */
-			cancel_all_vcpus();
-
-#ifndef NO_THREADS
-			/* Run VCPU stops */
-			for(i=0;i<A2_MAX_VCPUS;i++) {
-				if (cpus[i].status==STATUS_UNUSED) continue;
-				/* VCPU_stop */
-				if (pthread_create(&cpu_thread[i], NULL, &vcpu_modules_stop, &cpus[i]))
-					printk2(PRINTK_ERR, "pthread_create failed\n");
-				else {
-					err=pthread_join(cpu_thread[i], NULL);
-					if (err) printk2(PRINTK_ERR, "thread join failed\n");
-				}
-
-				imageman_unload(&cpus[i]);
-				cpus[i].status=STATUS_UNUSED;
-			}
-#endif
-			/* Unloading dynamic modules not possible. */
-			printk2(PRINTK_INFO, "Goodbyte... .  .  .\n"); /* Good nite? */
-			free(default_hac);
-
-#ifdef HAVE_MALLINFO
-			printk2(PRINTK_INFO, "%d bytes in mallocated memory\n", mallinfo().uordblks);
-#endif
-			exit(0);
-		}
-		default:
-			  printk2(PRINTK_ERR, "What?! Type ? for help.\n");
+		/* Likely errors mean it already finished. Don't restart it. */
+		/* XXX: tell owner state has changed */
+		printk2(PRINTK_ERR, "thread %s failed for global lock: %s\n", emsg,
+			(err==ESRCH) ? "no such thread" : (err==EDEADLK) ?
+			"deadlock" : (err==EINVAL) ? "invalid" : "other");
+		cpu_array[i].status=STATUS_STOPPED;
 	}
 }
 
-
-static int do_script(char *script) {
-	/* Run boot script */
-	FILE *f;
-	char *search;
-	char buf[1000];
-	f=fopen(script, "r");
-	if (!f) {
-		perror("fopen");
-		return 1;
+static void continue_all_vcpus(void) {
+	unsigned i;
+	for(i=0;i<A2_MAX_VCPUS;i++) {
+		if (cpu_array[i].status == STATUS_STOPPED)
+			continue;
+		else if (cpu_array[i].status == STATUS_RUNNING) {
+			if (pthread_create(&cpu_array[i].thread, NULL, &vcpu_run,
+						&cpu_array[i])) {
+				printk2(PRINTK_ERR, "pthread_create failed\n");
+				cpu_array[i].status = STATUS_STOPPED;
+				/* XXX: Tell owner-agent status has changed */
+			}
+		} else if (cpu_array[i].status == STATUS_STEPPING) {
+			if (pthread_create(&cpu_array[i].thread, NULL, &vcpu_step,
+						&cpu_array[i])) {
+				printk2(PRINTK_ERR, "pthread_create failed\n");
+				cpu_array[i].status = STATUS_STOPPED;
+				/* XXX: Tell owner-agent status has changed */
+			}
+		} else { /* ??? */
+			cpu_array[i].status = STATUS_STOPPED;
+			/* XXX: Tell owner-agent status has changed */
+		}
 	}
-	while(fgets(buf, sizeof(buf), f)) {
-		search=strchr(buf, '\n');
-		if (search) *search=0;
-		do_line(buf);
-	}
-	fclose(f);
-	return 0;
 }
 
-static int boot(void)
-{
-#define BRI  "\x1b[1m"
-#define DARK "\x1b[2m"
-#define NORM "\x1b[0m"
-#define RED "\x1b[31m"
-#define BLU "\x1b[34m"
-#define NAMECOL BRI RED
+/*********************
+ * MANAGER FUNCTIONS *
+ *********************/
 
-  printf("Booting A2 version %s:\n\t\""
-/* Insert aphorism here. I think this one's better for the prealpha. */
-   "I accept chaos. I am not sure whether it accepts me."
-/* "[We] use bad software and bad machines for the wrong things." */
-		  "\"\n\n", A2_VERSION);
-
-  printf("(C) 2001 James Kehl <ecks@optusnet.com.au>\n"
-	"(C) 2000, 2001 Michal Zalewski <lcamtuf@bos.bindview.com>\n"
-	"(C) 2000, 2001 Argante Development Team <argante@linuxpl.org>\n\n");
-
-#ifdef SIGPIPE
-	signal(SIGPIPE, SIG_IGN);
-#endif
-	/* Boot up static modules */
+void man_initialize(void) {
+	unsigned i;
+	for(i=0;i<A2_MAX_VCPUS;i++) {
+		cpu_array[i].ownerid=ORPHANED_ID;
+		cpu_array[i].status=STATUS_STOPPED;
+		cpu_array[i].cpu=NULL;
+	}
 	module_static_init();
-#ifndef NO_THREADS
-	{
-		int i;
-		for(i=0;i<A2_MAX_VCPUS;i++) cpus[i].status=STATUS_UNUSED;
+	if (!FXS_Init()) {
+		/* Don't let people upload sniffers */
+		FXS_SetBindsAdvisory(1);
+		/* Be more conservative than vconsole. Can't allow stdio */
+		FXS_SetProtocols(
+				FXS_PFLAG(FXST_UNIX_B) | FXS_PFLAG(FXST_UNIX_C)
+				| FXS_PFLAG(FXST_TCP_B)  | FXS_PFLAG(FXST_TCP_C));
+		flexsock_available=1;
+	} else {
+		printk2(PRINTK_ERR, "FlexSock library failed to initialize.\n");
 	}
-#endif
-	return 0;
 }
 
-int main(int argc, char **argv)
-{
-	char *search;
-	static char buf[1000];
-#ifdef USE_READLINE
-	char *m;
-#endif
+void man_shutdown(void) {
+	unsigned i;
+
+	printk2(PRINTK_INFO, "shutting down...\n");
+
+	for(i=0;i<A2_MAX_VCPUS;i++) {
+		if (cpu_array[i].cpu == NULL) continue;
+		if (man_cpu_stop(cpu_array[i].ownerid, i) != MANERR_OK ||
+			man_cpu_unlock(cpu_array[i].ownerid, i) != MANERR_OK) {
+			printk2(PRINTK_ERR, "vcpu %d was not cleanly shut down.\n", i);
+		}
+	}
+	
+	printk2(PRINTK_INFO, "shutdown complete.\n");
+
+	if (flexsock_available) FXS_Shutdown();
+}
+
+/*************************** cpus **/
+
+int man_cpu_lock_new(unsigned ownerid, unsigned *cpuid) {
+	unsigned i;
+	for(i=0;i<A2_MAX_VCPUS;i++) {
+		if (cpu_array[i].cpu != NULL) continue;
+		
+		cpu_array[i].cpu=malloc(sizeof(struct vcpu));
+		if (!cpu_array[i].cpu) return MANERR_OOM;
+		bzero(cpu_array[i].cpu, sizeof(struct vcpu));
+		
+		cpu_array[i].ownerid=ownerid;
+		*cpuid=i;
+		/* Initialize CPU */
+		cpu_array[i].li_first=NULL;
+		cpu_array[i].li_last=NULL;
+		hac_init(cpu_array[i].cpu);
+		vcpu_modules_start(cpu_array[i].cpu);
+		return MANERR_OK;
+	}
+	return MANERR_NOCPU;
+}
+
+int man_cpu_lock_existing(unsigned ownerid, unsigned cpuid) {
+	if (cpuid >= A2_MAX_VCPUS) return MANERR_NOCPU;
+	if (cpu_array[cpuid].cpu == NULL) return MANERR_NOCPU;
+	/* It's neccesary to allow one agent to steal another's VCPU.
+	 * Otherwise the only way to kill someone else's cpu's is with ifconfig. */
+	if (cpu_array[cpuid].ownerid != ORPHANED_ID) {
+		if (cpu_array[cpuid].ownerid == ownerid) return MANERR_OK;
+		/* XXX: Politeness dictates a message to the previous agent. */
+		printk2(PRINTK_WARN, "VCPU %d stolen by client %d\n", cpuid, ownerid);
+	}
+	cpu_array[cpuid].ownerid = ownerid;
+	return MANERR_OK;
+}
+
+int man_cpu_unlock(unsigned ownerid, unsigned cpuid) {
+	if (cpuid >= A2_MAX_VCPUS) return MANERR_NOCPU;
+	if (cpu_array[cpuid].ownerid != ownerid) return MANERR_NOLOCK;
+	
+	cpu_array[cpuid].ownerid = ORPHANED_ID;
+
+	if (cpu_array[cpuid].status==STATUS_STOPPED) free_cpu(cpuid);
+	
+	return MANERR_OK;
+}
+
+int man_cpu_run_full(unsigned ownerid, unsigned cpuid) {
+	if (cpuid >= A2_MAX_VCPUS) return MANERR_NOCPU;
+	if (cpu_array[cpuid].ownerid != ownerid) return MANERR_NOLOCK;
+	if (cpu_array[cpuid].status != STATUS_STOPPED) return MANERR_RUNNING;
+	if (cpu_array[cpuid].li_first != NULL) return MANERR_VFDPEND;
+	
+	cpu_array[cpuid].exit_type=EXITTYPE_NONE;
+
+	if (pthread_create(&cpu_array[cpuid].thread, NULL, &vcpu_run, 
+				&cpu_array[cpuid])) {
+		printk2(PRINTK_ERR, "pthread_create failed\n");
+		return MANERR_GENERIC;
+	}
+	cpu_array[cpuid].status = STATUS_RUNNING;
+	return MANERR_OK;
+}
+
+int man_cpu_run_step(unsigned ownerid, unsigned cpuid) {
+	if (cpuid >= A2_MAX_VCPUS) return MANERR_NOCPU;
+	if (cpu_array[cpuid].ownerid != ownerid) return MANERR_NOLOCK;
+	if (cpu_array[cpuid].status != STATUS_STOPPED) return MANERR_RUNNING;
+	if (cpu_array[cpuid].li_first != NULL) return MANERR_VFDPEND;
+
+	cpu_array[cpuid].exit_type=EXITTYPE_NONE;
+
+	if (pthread_create(&cpu_array[cpuid].thread, NULL, &vcpu_step,
+				&cpu_array[cpuid])) {
+		printk2(PRINTK_ERR, "pthread_create failed\n");
+		return MANERR_GENERIC;
+	}
+	cpu_array[cpuid].status = STATUS_STEPPING;
+	return MANERR_OK;
+}
+
+int man_cpu_stop(unsigned ownerid, unsigned cpuid) {
+	int err;
+	if (cpuid >= A2_MAX_VCPUS) return MANERR_NOCPU;
+	if (cpu_array[cpuid].ownerid != ownerid) return MANERR_NOLOCK;
+	if (cpu_array[cpuid].status == STATUS_STOPPED) return MANERR_OK;
+
+	if (pthread_cancel(cpu_array[cpuid].thread))
+		printk2(PRINTK_ERR, "thread cancel failed\n");
+	else {
+		err=pthread_join(cpu_array[cpuid].thread, NULL);
+		if (!err) {
+			cpu_array[cpuid].status = STATUS_STOPPED;
+			return MANERR_OK;
+		}
+		printk2(PRINTK_ERR, "thread join failed: %s\n",
+			(err==ESRCH) ? "no such thread" : (err==EDEADLK) ?
+			"deadlock" : (err==EINVAL) ? "invalid" : "other");
+	}
+	return MANERR_GENERIC;
+}
+
+/*************************** syscall modules **/
+
+int man_module_add(unsigned ownerid, const char *filename, unsigned *lid_to) {
+	char *tmpbuf;
+	unsigned u_slen, f_slen;
+	unsigned lid;
+	ALLOCA_STACK;
+	
+	/* It would not be a good idea to allow people to load ../../../evilmodule.so.
+	 * And if fold()'s buggy, we're screwed anyway :) */
+	f_slen=strlen(A2_MODULE_DIR);
+	u_slen=strlen(filename) + 1;
+	tmpbuf=alloca(f_slen + u_slen);
+	memcpy(tmpbuf, A2_MODULE_DIR, f_slen);
+	memcpy(tmpbuf + f_slen, filename, u_slen);
+	fold(tmpbuf + f_slen);
+	
+	/* Now load it */
+	cancel_all_vcpus();
+	
+	lid=module_dyn_load(tmpbuf);
+	if (lid != ((unsigned) -1)) {
+		/* Success! Run VCPU starts */
+		modstart_all_vcpus(lid);
+	}
+	
+	continue_all_vcpus();
+	
+	if (lid == ((unsigned) -1)) {
+		printk2(PRINTK_ERR, "Module load failed.\n");
+		return MANERR_GENERIC;
+	}
+	*lid_to=lid;
+	return MANERR_OK;
+}
+
+int man_module_rm(unsigned ownerid, unsigned lid) {
+	int err;
+	
+	if (lid >= A2_MAX_RSRVD) {
+		printk2(PRINTK_ERR, "Invalid LID\n");
+		return MANERR_GENERIC;
+	}
+	printk2(PRINTK_INFO, "Unloading %d\n", lid);
+	
+	cancel_all_vcpus();
+	/* Run VCPU stops */
+	modstop_all_vcpus(lid);
+	/* Try shutdown */
+	err=module_dyn_unload(lid);
+	if (err) {
+		printk2(PRINTK_ERR, 
+			"Module unload failed. Attempting reload (state data has been lost)\n");
+		modstart_all_vcpus(lid);
+	}
+	continue_all_vcpus();
+	
+	return (err) ? MANERR_GENERIC : MANERR_OK;
+}
+
+int man_module_reload(unsigned ownerid, unsigned lid) {
+	int err;
+	
+	if (lid >= A2_MAX_RSRVD) {
+		printk2(PRINTK_ERR, "Invalid LID\n");
+		return MANERR_GENERIC;
+	}
+	printk2(PRINTK_INFO, "Reloading %d\n", lid);
+	
+	cancel_all_vcpus();
+	/* Try shutdown */
+	err=module_dyn_reload(lid);
+	continue_all_vcpus();
+
+	if (err) return MANERR_GENERIC;
+	
+	return MANERR_OK;
+}
+
+int man_module_stat(unsigned ownerid, unsigned *lid,
+		const char **filename, const char **otherdesc) {
+	unsigned ltmp;
+	ltmp=lid_getdata(*lid, filename, otherdesc);
+	if (ltmp == -1) return MANERR_NOLID;
+	
+	*lid=ltmp;
+	return MANERR_OK;
+}
+
+/*************************** load-from-file routines **/
+
+/* XXX:
+ * These will be removed in future.
+ * The plan is that dealing with the icky details of the image file
+ * format will be reserved for the agents, who'll decode it and send
+ * it to us in network byte order and make our life really easy :)
+ * 
+ * For efficiency, the parts of the image would be uploaded to a cache
+ * before the agent would be able to load them into a CPU. Otherwise
+ * RELOAD would get exceptionally sloooow.
+ * 
+ * (You'd think static code -> shared code!!!)
+ *
+ * Seriously, we should not be getting messy with the file format;
+ * (but... how do we do DL if we don't know how to load images?!)
+ */
+
+int man_cpu_image_addfile(unsigned ownerid, unsigned cpuid,
+		const char *filename, unsigned *alib_id) {
+	char *buf;
+	unsigned fn_len, alib_tmp;
 	ALLOCA_STACK;
 
-	/* CD to the argante exe directory */
-	search=strrchr(argv[0], '/');
-	if (search) {
-		char *dir;
-		int i;
-		i=search - argv[0];
-		dir=alloca(i + 1);
-		memcpy(dir, argv[0], i);
-		dir[i]=0;
-		chdir(dir);
-	}
-	boot();
-
-	if (argc > 2 && argv[2]) default_hac=strdup(argv[2]);
-	do_script("conf/scripts/argboot.scr");
-
-	/* Single-thread (well, 3 at most :), batch mode */
-	if (argc > 1 && argv[1]) {
-		sprintf(buf, "!");
-		do_line(buf);
-		sprintf(buf, "$%s", argv[1]);
-		do_line(buf);
-		sprintf(buf, "!");
-		do_line(buf);
-		sprintf(buf, "w0 180");
-		do_line(buf);
-		sprintf(buf, ".");
-		do_line(buf);
-		return 0;
-	}
-
-#ifdef USE_READLINE
-	using_history();
-	while((m=readline("[Agt+] "))) {
-		search=strchr(m, '\n');
-		if (search) *search=0;
-		/* A2 0.008. Strip trailing spaces when using readline. */
-		search=strchr(m, 0);
-		while(search > m && *(search-1)==' ') search--;
-		*search=0;
-		do_line(m);
-	        if (strlen(m)) add_history(m);
-		free(m);
-	}
-#else
-	/* Ensures fputs happens before fgets, but the only answer that counts is gets */
-	while((fputs("[Agt+] ", stdout) & 0) || fgets(buf, sizeof(buf), stdin)) {
-		search=strchr(buf, '\n');
-		if (search) *search=0;
-		do_line(buf);
-	}
-#endif
-	return 0;
+	if (cpuid >= A2_MAX_VCPUS) return MANERR_NOCPU;
+	if (cpu_array[cpuid].ownerid != ownerid) return MANERR_NOLOCK;
+	if (cpu_array[cpuid].status != STATUS_STOPPED) return MANERR_RUNNING;
+	
+	/* XXX: This will confuse a lot of people. The alternative
+	 * is to let people add /etc/shadow and debug it.
+	 * (Ok, chances are slim that /etc/shadow will be valid bytecode,
+	 *  but you should know what I mean.)
+	 */
+	fn_len=strlen(filename) + 1;
+	buf=alloca(fn_len);
+	memcpy(buf, filename, fn_len);
+	fold(buf);
+	
+	printk2(PRINTK_INFO, "loading %s...\n", buf);
+	alib_tmp=imageman_loadimage(buf, cpu_array[cpuid].cpu);
+	if (!alib_tmp) return MANERR_GENERIC;
+	*alib_id=alib_tmp;
+	return MANERR_OK;
 }
+
+int man_cpu_alib_rm(unsigned ownerid, unsigned cpuid, unsigned alib_id) {
+	int err;
+
+	if (cpuid >= A2_MAX_VCPUS) return MANERR_NOCPU;
+	if (cpu_array[cpuid].ownerid != ownerid) return MANERR_NOLOCK;
+	if (cpu_array[cpuid].status != STATUS_STOPPED) return MANERR_RUNNING;
+	
+	if (alib_id >= A2_MAX_ALID) return MANERR_GENERIC;
+	
+	printk2(PRINTK_INFO, "unloading %d...\n", alib_id);
+	err=imageman_unload_al(cpu_array[cpuid].cpu, alib_id);
+
+	if (err) return MANERR_GENERIC;
+	return MANERR_OK;
+}
+
+/* XXX: We might like some method of enumerating libraries.
+ * Pity they have no names. */
+
+int man_cpu_hac_addfile(unsigned ownerid, unsigned cpuid, const char *filename) {
+	char *buf;
+	unsigned fn_len;
+	int err;
+	FILE *f;
+	ALLOCA_STACK;
+
+	if (cpuid >= A2_MAX_VCPUS) return MANERR_NOCPU;
+	if (cpu_array[cpuid].ownerid != ownerid) return MANERR_NOLOCK;
+	if (cpu_array[cpuid].status != STATUS_STOPPED) return MANERR_RUNNING;
+	
+	/* fold() as per 'standard' */
+	fn_len=strlen(filename) + 1;
+	buf=alloca(fn_len);
+	memcpy(buf, filename, fn_len);
+	fold(buf);
+	
+	printk2(PRINTK_INFO, "loading hac %s...\n", buf);
+
+	f=fopen(buf, "r");
+	if (!f) {
+		perror("fopen");
+		return MANERR_GENERIC;
+	}
+	/* Note hac_loadfile will unload a previous HAC before adding a new one! */
+	err=hac_loadfile(cpu_array[cpuid].cpu, f);
+	fclose(f);
+	if (err) return MANERR_GENERIC;
+	return MANERR_OK;
+}
+
+/*************************** CFDop routines **/
+
+int man_cpu_cfdop_add(unsigned ownerid, unsigned cpuid, char desc[A2_CFDDESC_LEN],
+		const char *extradesc,
+		const struct flexsock_desc *to, struct flexsock_desc *revers) {
+	if (cpuid >= A2_MAX_VCPUS) return MANERR_NOCPU;
+	if (cpu_array[cpuid].ownerid != ownerid) return MANERR_NOLOCK;
+	if (cpu_array[cpuid].status != STATUS_STOPPED) return MANERR_RUNNING;
+
+	if (!flexsock_available) return MANERR_GENERIC;
+	if (FXS_IsConnectType(to)) {
+		flexsock f;
+		unsigned vfd;
+		volatile unsigned xid;
+		const struct cfdop_1 *cfdtbl;
+		
+		/* XXX: May take a long time to return? */
+		f=FXS_ConnectTo(to);
+		if (!f) return MANERR_GENERIC;
+	
+		cfdtbl=cfdop1_fddesc_get(desc);
+		if (!cfdtbl) return MANERR_GENERIC;
+		
+		EXCEPT_CATCH(cpu_array[cpuid].cpu, xid) {
+			vfd=cfdtbl->fd_create(cpu_array[cpuid].cpu, extradesc, f);
+			cpu_array[cpuid].cpu->reg[A2_REGISTERS - 1].val.u=vfd+1;
+		}
+		EXCEPT_END(cpu_array[cpuid].cpu);
+
+		if (xid==ERR_OOM) return MANERR_OOM;
+		else if (xid != 0) return MANERR_GENERIC;
+	} else {
+		flexlisock fl;
+		struct pending_sock *s;
+		
+		fl=FXS_BindTo(to, revers);
+		if (!fl) return MANERR_GENERIC;
+
+		/* Accept might well take forever. Set it up for later. */
+		s=malloc(sizeof(struct pending_sock));
+		if (!s) return MANERR_OOM;
+		
+		memcpy(s->socktype, desc, A2_CFDDESC_LEN);
+		s->sock=fl;
+		s->extradesc=(extradesc) ? strdup(extradesc) : NULL;
+		s->next=NULL;
+		if (cpu_array[cpuid].li_last)
+			cpu_array[cpuid].li_last->next=s;
+		else
+			cpu_array[cpuid].li_first=s;
+		cpu_array[cpuid].li_last=s;
+	}
+	return MANERR_OK;
+}
+
+int man_cpu_cfdop_accept(unsigned ownerid, unsigned cpuid, int *remaining) {
+	struct pending_sock *s, *prev=NULL;
+	unsigned createfail=0;
+	flexsock remt;
+
+	if (cpuid >= A2_MAX_VCPUS) return MANERR_NOCPU;
+	if (cpu_array[cpuid].ownerid != ownerid) return MANERR_NOLOCK;
+	if (cpu_array[cpuid].status != STATUS_STOPPED) return MANERR_RUNNING;
+
+	*remaining=0;
+	s=cpu_array[cpuid].li_first;
+	while(s) {
+		remt=FXS_AcceptPoll(s->sock);
+		if (remt == NULL) {
+			(*remaining)++;
+			if (prev)
+				prev->next=s;
+			else
+				cpu_array[cpuid].li_first=s;
+			prev=s;
+			s=s->next;
+		} else {
+			unsigned vfd;
+			volatile unsigned xid;
+			const struct cfdop_1 *cfdtbl;
+			struct pending_sock *tmp;
+			
+			FXS_CloseListener(s->sock);
+			
+			cfdtbl=cfdop1_fddesc_get(s->socktype);
+			if (cfdtbl) {
+				EXCEPT_CATCH(cpu_array[cpuid].cpu, xid) {
+					vfd=cfdtbl->fd_create(cpu_array[cpuid].cpu,
+							s->extradesc, remt);
+					cpu_array[cpuid].cpu->reg[A2_REGISTERS - 1].val.u=vfd+1;
+				}
+				EXCEPT_END(cpu_array[cpuid].cpu);
+				/* Save the first exception. It can't hurt in
+				 * OOM to free the remaining sockets anyway... */
+				if (xid && !createfail) createfail=xid;
+			} else {
+				/* Good enough, anyway. */
+				createfail=ERR_BAD_FD;
+			}
+	
+			tmp=s->next;
+			if (s->extradesc) free(s->extradesc);
+			free(s);
+			s=tmp;
+		}
+	}
+	if (!prev) cpu_array[cpuid].li_first=NULL;
+	cpu_array[cpuid].li_last=prev;
+
+	if (createfail == ERR_OOM) return MANERR_OOM;
+	else if (createfail != 0) return MANERR_GENERIC;
+	return MANERR_OK;
+}
+
+/* Destroy all pending-accept VFDs. (opposite of accept :) */
+int man_cpu_cfdop_reject(unsigned ownerid, unsigned cpuid) {
+	if (cpuid >= A2_MAX_VCPUS) return MANERR_NOCPU;
+	if (cpu_array[cpuid].ownerid != ownerid) return MANERR_NOLOCK;
+	if (cpu_array[cpuid].status != STATUS_STOPPED) return MANERR_RUNNING;
+
+	drop_pending_socks(cpuid);
+	return MANERR_OK;
+}
+
+/*************************** debugging functions **/
+
+int man_cpu_exitstatus_get(unsigned ownerid, unsigned cpuid, unsigned *exittype) {
+	if (cpuid >= A2_MAX_VCPUS) return MANERR_NOCPU;
+	if (cpu_array[cpuid].ownerid != ownerid) return MANERR_NOLOCK;
+	if (cpu_array[cpuid].status != STATUS_STOPPED) return MANERR_RUNNING;
+
+	*exittype=cpu_array[cpuid].exit_type;
+
+	return MANERR_OK;
+}
+
+/* This is the heart of the update cycle.
+ * It always takes POLLTIME to complete  */
+int man_pollall(void) {
+	unsigned i, xid;
+	const char *c;
+	struct vcpu *curr_cpu;
+	for(i=0;i<A2_MAX_VCPUS;i++) {
+		if (cpu_array[i].status == STATUS_STOPPED) continue;
+		if (cpu_array[i].exit_type == EXITTYPE_NONE) continue;
+
+		/* Ooh, cpu has stopped. (well, it set exit code) */
+		cpu_array[i].status=STATUS_STOPPED;
+		curr_cpu=cpu_array[i].cpu;
+
+		switch(cpu_array[i].exit_type) {
+			case EXITTYPE_HALT:
+				/* Normal halt */
+				printk2(PRINTK_WARN, "VCPU %d stopped: HALT or RAISE -1.\n", i);
+				break;
+			case EXITTYPE_FAIL:
+				xid=curr_cpu->reg[A2_REGISTERS - 1].val.u;
+				c=human_exception_name(xid);
+				
+				if (c)
+					printk2(PRINTK_ERR, "VCPU %d stopped: unhandled exception %d (%s), origin 0x%x.\n", i, xid, c, curr_cpu->prev_ip);
+				else
+					printk2(PRINTK_ERR, "VCPU %d stopped: unhandled exception %d, origin 0x%x.\n", i, xid, curr_cpu->prev_ip);
+				break;
+			case EXITTYPE_EXCEPT:
+				xid=curr_cpu->reg[A2_REGISTERS - 1].val.u;
+				c=human_exception_name(xid);
+				
+				if (c)
+					printk2(PRINTK_ERR, "VCPU %d stopped: HANDLED exception %d (%s), origin 0x%x.\n", i, xid, c, curr_cpu->prev_ip);
+				else
+					printk2(PRINTK_ERR, "VCPU %d stopped: HANDLED exception %d, origin 0x%x.\n", i, xid, curr_cpu->prev_ip);
+				break;
+			case EXITTYPE_STEP:
+				printk2(PRINTK_ERR, "VCPU %d stopped: step completed: did 0x%x, next 0x%x\n", i, curr_cpu->prev_ip, curr_cpu->ip);
+				break;
+		}
+
+		if (cpu_array[i].ownerid==ORPHANED_ID) {
+			free_cpu(i);
+		} else {
+			/* Cpu's locked, so they'll debug it or unlock later.
+			 * XXX: tell them it stopped! */
+		}
+	}
+	usleep(A2_POLLTIME * 1000);
+	return MANERR_OK;
+}
+
+

@@ -33,9 +33,8 @@
  */
 void throw_except(struct vcpu *curr_cpu, int except)
 {
-	IDLE; /* Make sure priority isn't exceeded */
 /* printk("<-> Exception %d thrown...\n", except); */
-	longjmp(curr_cpu->onexcept, except);
+	longjmp(*curr_cpu->onexcept, except);
 }
 
 void push_ip_on_stack(struct vcpu *curr_cpu)

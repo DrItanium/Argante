@@ -22,7 +22,6 @@
 #include "compat/alloca.h"
 #include "compat/strtok_r.h"
 #include "compat/strcmpi.h"
-#include "compat/semaphr.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -168,7 +167,6 @@ static int search_hac(struct hac *hac, char *dir, char *atype) {
  * returns 0 on auth success, nonzero else */
 int validate_access(struct vcpu *curr_cpu, char *dir, char *atype) {
 	int x;
-	sem_wait(&curr_cpu->hac_semaphore);
 	/* Uninitalized HAC. Shouldn't happen, really,
 	 * but if it does, why crash and burn without a trace? */
 	if (!curr_cpu->hac) {
@@ -176,13 +174,12 @@ int validate_access(struct vcpu *curr_cpu, char *dir, char *atype) {
 		return 1;
 	}
 	x=search_hac(&curr_cpu->hac->hac, dir, atype);
-	sem_post(&curr_cpu->hac_semaphore);
 	return (x == PERM_ALLOW) ? 0 : 1;
 }
 
 /* Now: the HAC update functions <EEEEEEK>
- * The only ones that lock semaphore are the ones that can be
- * called externally... */
+ * As we don't need the semaphore anymore, the external functions
+ * are a little redundant; but they still check for initialization. */
 
 /* When we alter a VCPU's HAC, we do it all at once.
  * No namby-pamby updating, we tear the whole thing
@@ -426,7 +423,6 @@ static int add_hac_i(struct hactable *parent, char *dir, char *atype, int amode)
 
 /* Readies a VCPU's #HAC table for use. */
 int hac_init(struct vcpu *cpu) {
-	sem_init(&cpu->hac_semaphore, 0, 1);
 	cpu->hac=calloc(sizeof(struct hactable), 1);
 	if (!cpu->hac) return 1;
 	return 0;
@@ -439,7 +435,6 @@ int hac_loadfile(struct vcpu *cpu, FILE *from) {
 	char *x, *s;
 	char *dir, *atype, *mode;
 	int lineno=0;
-	sem_wait(&cpu->hac_semaphore);
 	if (!cpu->hac) {
 		printk2(PRINTK_CRIT, "loading file into uninitialised HAC!\n");
 		return 1;
@@ -477,7 +472,6 @@ int hac_loadfile(struct vcpu *cpu, FILE *from) {
 		if (add_hac_i(cpu->hac, dir, atype, i))
 			printk2(PRINTK_ERR, "#HAC: line %d failed\n", lineno);
 	}
-	sem_post(&cpu->hac_semaphore);
 	return 0;
 }
 
@@ -485,20 +479,17 @@ int hac_loadfile(struct vcpu *cpu, FILE *from) {
  * There might be some (perf) issues with using this repetitively. So avoid it. */
 int add_hac_entry(struct vcpu *cpu, char *dir, char *atype, int amode) {
 	int x;
-	sem_wait(&cpu->hac_semaphore);
 	if (!cpu->hac) {
 		printk2(PRINTK_CRIT, "loading file into uninitialised HAC!\n");
 		return 1;
 	}
 	x=add_hac_i(cpu->hac, dir, atype, amode);
-	sem_post(&cpu->hac_semaphore);
 	return x;
 }
 
 /* Unloads a #HAC table, in preparation for VCPU shutdown */
 int hac_unload(struct vcpu *cpu) {
 	int i;
-	sem_wait(&cpu->hac_semaphore);
 	if (cpu->hac) {
 		i=destroy_hac_i(&cpu->hac->hac);
 		i+=sizeof(struct hactable);
@@ -506,6 +497,5 @@ int hac_unload(struct vcpu *cpu) {
 		cpu->hac=NULL;
 		printk2(PRINTK_DEBUG, "%d bytes (or more) freed with #HAC table\n", i);
 	}
-	sem_post(&cpu->hac_semaphore);
 	return 0;
 }

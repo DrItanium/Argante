@@ -167,7 +167,8 @@ int unregister_syscall(unsigned callno)
 
 struct moduleent {
 	unsigned lid; /* A kinda pointless redundancy check, I guess. */
-	char *name;
+	char *filename;
+	char *otherdesc;
 	modulevcpufunc *start;	
 	modulevcpufunc *stop;
 	const struct cfdop_1 *cfd1;
@@ -206,7 +207,7 @@ unsigned lid_create() {
 	l=mentcount;
 	ments=new;
 	ments[l].lid=l;
-	ments[l].name=NULL;
+	ments[l].filename=NULL;
 	ments[l].start=NULL;
 	ments[l].stop=NULL;
 	ments[l].cfd1=NULL;
@@ -225,6 +226,8 @@ void lid_destroy(unsigned lid) {
 
 	ments[lid].lid=-1;
 	ments[lid].cfd1=NULL;
+	if (ments[lid].filename) free(ments[lid].filename);
+	if (ments[lid].otherdesc) free(ments[lid].otherdesc);
 	q=mentcount-1;
 	if (lid != q) return;
 	/* Downsize */
@@ -244,16 +247,28 @@ void lid_destroy(unsigned lid) {
 	}
 }
 
-void lid_assign(unsigned lid, char *name,
+void lid_assign(unsigned lid, const char *filename, const char *otherdesc,
 		modulevcpufunc *start, modulevcpufunc *stop) {
 	if (lid >= mentcount || ments[lid].lid!=lid) {
 		printk2(PRINTK_CRIT, "Corrupt LID!\n");
 		return;
 	}
 
-	ments[lid].name=name;
+	ments[lid].filename=(filename) ? strdup(filename) : NULL;
+	ments[lid].otherdesc=(otherdesc) ? strdup(otherdesc) : NULL;
 	ments[lid].start=start;
 	ments[lid].stop=stop;
+}
+
+unsigned lid_getdata(unsigned lid, const char **filename, const char **otherdesc) {
+	while(lid < mentcount && ments[lid].lid!=lid) lid++;
+	
+	if (lid >= mentcount) {
+		return -1;
+	}
+	*filename=ments[lid].filename;
+	*otherdesc=ments[lid].otherdesc;
+	return lid;
 }
 
 /* Common Input/Output layer setup thingies */
@@ -273,65 +288,51 @@ const struct cfdop_1 *cfdop1_lid_get(unsigned lid) {
 	return ments[lid].cfd1;
 }
 
-const struct cfdop_1 *cfdop1_fddesc_get(int fddesc) { 
+const struct cfdop_1 *cfdop1_fddesc_get(char fddesc[A2_CFDDESC_LEN]) { 
 	unsigned i;
 	for(i=0;i < mentcount;i++) {
 		if (ments[i].cfd1 && ments[i].cfd1->fd_close &&
-			ments[i].cfd1->fd_desc==fddesc) {
+			!memcmp(ments[i].cfd1->fd_desc, fddesc, A2_CFDDESC_LEN)) {
 			return ments[i].cfd1;
 		}
 	}
-	printk2(PRINTK_ERR, "Couldn't find module for desc %d\n", fddesc);
+	printk2(PRINTK_ERR, "Couldn't find module for desc 0x%x%x%x%x\n", 
+			fddesc[0],fddesc[1],fddesc[2],fddesc[3]);
 	return NULL;
 }
 
-/* (per-vcpu) possibly Pthread calls, which is why the void * */
-void *vcpu_modules_start(void *v) {
+void vcpu_modules_start(struct vcpu *curr_cpu) {
 	unsigned i;
-	struct vcpu *curr_cpu=v;
 	for(i=0;i < mentcount;i++) {
 		if (ments[i].lid == i && ments[i].start)
 			ments[i].start(curr_cpu);
 	}
-	return NULL;
 }
 
-void *vcpu_modules_stop(void *v) {
+void vcpu_modules_stop(struct vcpu *curr_cpu) {
 	unsigned i;
-	struct vcpu *curr_cpu=v;
 	for(i=0;i < mentcount;i++) {
 		if (ments[i].lid == i && ments[i].start)
 			ments[i].stop(curr_cpu);
 	}
-	return NULL;
 }
 
-#define UNEG1 (unsigned) -1
-
-static unsigned moduleid=UNEG1;
-void vcpu_set_moduleid(unsigned new) {
-	if (new >= mentcount) {
-		printk2(PRINTK_CRIT, "nasty moduleid!\n");
-		new=UNEG1;
-	}
-	moduleid=new;
-}
-
-void *vcpu_module_start(void *v) {
-	struct vcpu *curr_cpu=v;
-	printk2(PRINTK_DEBUG, "UNEG1 = 0x%x\n", UNEG1);
-	if (moduleid == UNEG1) return NULL;
-	if (ments[moduleid].lid == moduleid && ments[moduleid].start)
+void vcpu_module_start(struct vcpu *curr_cpu, unsigned moduleid) {
+	if (moduleid >= mentcount)
+		printk2(PRINTK_CRIT, "starting invalid module!\n");
+	else if (ments[moduleid].lid != moduleid)
+		printk2(PRINTK_CRIT, "starting unloaded module!\n");
+	else if (ments[moduleid].start)
 		ments[moduleid].start(curr_cpu);
-	return NULL;
 }
 
-void *vcpu_module_stop(void *v) {
-	struct vcpu *curr_cpu=v;
-	if (moduleid == UNEG1) return NULL;
-	if (ments[moduleid].lid == moduleid && ments[moduleid].stop)
+void vcpu_module_stop(struct vcpu *curr_cpu, unsigned moduleid) {
+	if (moduleid >= mentcount)
+		printk2(PRINTK_CRIT, "stopping invalid module!\n");
+	else if (ments[moduleid].lid != moduleid)
+		printk2(PRINTK_CRIT, "stopping unloaded module!\n");
+	else if (ments[moduleid].stop)
 		ments[moduleid].stop(curr_cpu);
-	return NULL;
 }
 
 /* Get the reserved structs, creating them if needed.
