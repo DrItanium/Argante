@@ -65,57 +65,63 @@ int got_nonfatal_round=0;
 void non_fatal(int,char*,int);
 extern int failure;
 
-// Pushes current VCPU's (curr_cpu, curr_cpu_p) IP onto the top of it's stack.
+/* Pushes the current VCPU's IP onto the top of it's call stack. 
+   Note: This function works on the currently active VCPU (ie. the 
+   one stored in curr_cpu_p and curr_cpu)! This is for speed reasons. */
 
-inline void push_on_stack() {
-  CHECK_FAILURE_FN;
+inline void push_ip_on_stack() {
+    CHECK_FAILURE_FN;
 
-  if (curr_cpu_p->stack_ptr>=MAX_STACK) {
-    non_fatal(ERROR_STACK_OVER,"Cannot push - stack overflow",curr_cpu);
-    return;
-  }
+    if( curr_cpu_p->stack_ptr >= MAX_STACK ) {
+        non_fatal( ERROR_STACK_OVER, "Cannot push - stack overflow", curr_cpu );
+        return;
+    }
   
-  if (curr_cpu_p->stack_ptr>=curr_cpu_p->dssiz) {
-    void* q;
-    curr_cpu_p->dssiz+=STACK_GROW;
-    q=realloc(curr_cpu_p->stack,4*curr_cpu_p->dssiz);
-    if (!q) {
-      non_fatal(ERROR_STACK_OVER,"Cannot resize stack",curr_cpu);
-      return;
+    if( curr_cpu_p->stack_ptr >= curr_cpu_p->dssiz ) {
+        void* q;
+        curr_cpu_p->dssiz += STACK_GROW;
+        q = realloc( curr_cpu_p->stack, 4 * curr_cpu_p->dssiz );
+        
+        if( !q ) {
+            non_fatal( ERROR_STACK_OVER, "Cannot resize stack", curr_cpu );
+            return;
+        }
+        
+        curr_cpu_p->stack = q;
+        q = realloc( curr_cpu_p->ex_st, 4 * (curr_cpu_p->dssiz + 1) );
+        
+        if( !q ) {
+            non_fatal( ERROR_STACK_OVER, "Cannot resize exception stack", curr_cpu );
+            return;
+        }
+        curr_cpu_p->ex_st = q;
     }
-    curr_cpu_p->stack=q;
-    q=realloc(curr_cpu_p->ex_st,4*(curr_cpu_p->dssiz+1));
-    if (!q) {
-      non_fatal(ERROR_STACK_OVER,"Cannot resize exception stack",curr_cpu);
-      return;
-    }
-    curr_cpu_p->ex_st=q;
-  }
   
   (*curr_cpu_p->stack)[curr_cpu_p->stack_ptr++]=curr_cpu_p->IP;
   (*curr_cpu_p->ex_st)[curr_cpu_p->stack_ptr]=0;
 }
 
-// Pops an address from the current VCPU's (curr_cpu, curr_cpu_p) call stack.
+/* Pops the current VCPU's IP from the top of it's call stack. 
+   Note: This function works on the currently active VCPU (ie. the 
+   one stored in curr_cpu_p and curr_cpu)! This is for speed reasons. */
 
-inline unsigned int pop_from_stack() {
-  unsigned int ret;
+inline void pop_ip_from_stack() {
+    CHECK_FAILURE_FN;
 
-  CHECK_FAILURE_FN2;
-
-  if (curr_cpu_p->stack_ptr>0) ret=(*curr_cpu_p->stack)[--curr_cpu_p->stack_ptr]; else {
-    non_fatal(ERROR_STACK_UNDER,"Attempt to pop from empty stack",curr_cpu);
-    return 0;
-  }
-
-  if (curr_cpu_p->saved_ex)
-    if (curr_cpu_p->stack_ptr==curr_cpu_p->ex_at) {
-//    printk("RET - Restoring saved_ex %d\n",curr_cpu_p->saved_ex);
-      (*curr_cpu_p->ex_st)[curr_cpu_p->stack_ptr]=curr_cpu_p->saved_ex;
-      curr_cpu_p->saved_ex=0;
+    if( curr_cpu_p->stack_ptr > 0 ) {
+        curr_cpu_p->IP = (*curr_cpu_p->stack)[--curr_cpu_p->stack_ptr]; 
+    } else {
+      non_fatal( ERROR_STACK_UNDER, "Attempt to pop from empty stack", curr_cpu );
+      return;
     }
 
-  return ret;
+    if( curr_cpu_p->saved_ex ) {
+        if( curr_cpu_p->stack_ptr == curr_cpu_p->ex_at ) {
+          // printk("RET - Restoring saved_ex %d\n",curr_cpu_p->saved_ex);
+          (*curr_cpu_p->ex_st)[curr_cpu_p->stack_ptr]=curr_cpu_p->saved_ex;
+          curr_cpu_p->saved_ex = 0;
+        }
+    }
 }
 
 inline void set_mem_value(int c,unsigned int addr,int value);
@@ -444,7 +450,6 @@ int change;
 // Main exception handler - check if exception can be handled,
 // call handler or terminate VCPU.
 
-
 int nofatalinside;
 
 void non_fatal(int code,char* desc,int c) {
@@ -459,8 +464,11 @@ void non_fatal(int code,char* desc,int c) {
   x = cpu[c].stack_ptr;
 
   for (;x>=0;x--) {
-    if ((*cpu[c].ex_st)[x]) break;
-    if (x>0) cpu[c].IP=pop_from_stack(c); // Kosmos ;>
+    if( (*cpu[c].ex_st)[x] ) break;
+    if( x > 0 ) {
+        // WARNING: possible problem if c != curr_cpu !!  
+        pop_ip_from_stack();
+    } // Kosmos ;>
   }
 
   // zed's changes
@@ -496,7 +504,7 @@ void non_fatal(int code,char* desc,int c) {
     cpu[c].saved_ex=(*cpu[c].ex_st)[x];
     cpu[c].ex_at=cpu[c].stack_ptr;
     (*cpu[c].ex_st)[x]=0;
-    push_on_stack();
+    push_ip_on_stack();
     nofatalinside=0;
     cpu[c].IP=cpu[c].saved_ex; 
     change=0;
