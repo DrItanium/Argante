@@ -269,7 +269,7 @@ AExpr ExprCast(AExpr expr, AType type)
 	return out;
 }
 
-AExpr ExprAssign(string id, AExpr val)
+AExpr ExprAssign(AExpr id, AExpr val)
 {
 	AExpr out;
 	out=calloc(sizeof(struct _AExpr), 1);
@@ -279,7 +279,7 @@ AExpr ExprAssign(string id, AExpr val)
 
 	out->kind=EAssign;
 	out->type=val->type;
-	out->u.assn.id=id;
+	out->u.assn.to=id;
 	out->u.assn.a=val;
 	return out;
 }

@@ -1,4 +1,7 @@
-typedef struct _AVar *AVar;
+#define REG_U 0x10000
+#define REG_S 0x20000
+#define REG_F 0x40000
+
 struct _AVar {
 	string id;
 	AType type;
@@ -14,7 +17,6 @@ typedef struct _AFunc *AFunc;
 struct _AFunc {
 	string id;
 	AType retType;
-	AParmList parmlist;
 	union { string s; AFunc f; } errhandler;
 	AStm code;
 	AVar vars[VARTABSIZE];

@@ -161,6 +161,11 @@ AType TypeCompound(AParmList parms)
 	return n;
 }
 
+int TypeCmp(AType a, AType b)
+{
+	return memcmp(a, b, sizeof(struct _AType));
+}
+
 /* No Phase0 code after this line */
 #include "linearize.h"
 /* Solve TIDS */
@@ -187,3 +192,6 @@ void TypeDoTID()
 		tc=tc->next;
 	}
 }
+
+/* Build compound type field locations et cetera.
+ * No point doing this until we have field references :) */

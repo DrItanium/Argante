@@ -10,9 +10,12 @@ func main () =
 	var unsigned d = 0xa;
 	var signed x=0;
 	var p pop;
+	var unsigned pop;
+	var signed pop;
+	var float pop;
 
 	p=(300 - 60) % 02;
-/* errhandler main */
+/* errhandler main /* /* */ */ */ 
 	func unsigned submain (signed x) =
 	{
 		p=p-1;

@@ -5,6 +5,7 @@
  */
 
 extern void EM_ErrorMessage(char *x);
+extern int EM_LineNo;
 
 typedef struct _AStm *AStm;
 typedef struct _AExpr *AExpr;
@@ -12,6 +13,7 @@ typedef struct _AType *AType;
 typedef struct _AExprList *AExprList;
 typedef struct _AParmList *AParmList;
 typedef struct _ACompoundField *ACompoundField;
+typedef struct _AVar *AVar;
 
 struct _AStm {
 	enum { SGoto, SReturn, SRaise, SLabel, SExpr, SFunc, SCJump, SDestroy, SResize, SVar, SType } kind;
@@ -24,20 +26,22 @@ struct _AStm {
 		struct { string id; AType type; } var;
 		struct { string id; AType retType; AParmList parmlist; string errhandler; AStm code; } func;
 	} u;
+	int EMLineNo;
 	AStm next;
 	AStm prev;
 	AStm last; /* Last statement in this StmList */
 };
 
 struct _AExpr {
-	enum { EID, EAssign, EUnOp, EBinOp, ECast, ESizeof, ENew, ECall, EValue } kind;
+	enum { EID, EAssign, EUnOp, EBinOp, ECast, ESizeof, ENew, ECall, EValue, EVar } kind;
 	AType type; /* float/unsigned/signed etc */
 	union {
 		string id;
 		struct { AExpr a1; int op; AExpr a2; } binop;
-		struct { string id; AExpr a; } assn;
+		struct { AExpr to; AExpr a; } assn;
 		struct { AExpr a; int op; } unop;
 		struct { string id; AExprList args; } call;
+		AVar var;
 		AExpr cast;
 		int ival;
 		float fval;
@@ -135,6 +139,7 @@ extern AType TypePointer(AType pointertype);
 extern AType TypeArray(AType pointertype, AExpr size);
 extern AType TypeID(string id);
 extern AType TypeCompound(AParmList parms);
+extern int TypeCmp(AType a, AType b);
 
 /*
  * -- Expressions. --
@@ -148,7 +153,7 @@ extern AExpr ExprCast(AExpr expr, AType type);
 extern AExpr ExprValuef(float val);
 extern AExpr ExprValuei(int val, AType type);
 extern AExpr ExprString(string val);
-extern AExpr ExprAssign(string id, AExpr val);
+extern AExpr ExprAssign(AExpr id, AExpr val);
 extern AExpr ExprSizeof(string id);
 extern AExpr ExprNew(AType type);
 extern AExpr ExprCall(string id, AExprList arglist);

@@ -53,7 +53,7 @@ AStm prog;
 %left '|' '&' 
 
 // Really, they're left-assoc, but !! expr is a retarded thing to do
-%nonassoc UMINUS '~' '!'
+%nonassoc UMINUS '!'
 
 //%token type
 %type <uinum> '+' '-' '*' '/' '|' '&'
@@ -143,7 +143,7 @@ stm:	FUNCDEF type ID '(' parmlist ')' ERRHANDLER ID '=' stm
 stm:	VAR type ID '=' expr ';'
 		/* The decl will be scooped away later. The assignment sticks
 		   where it's put. */
-		{ $$=StmCompound(VarGen($3, $2), StmExpr(ExprAssign($3, $5))); }
+		{ $$=StmCompound(VarGen($3, $2), StmExpr(ExprAssign(ExprID($3), $5))); }
 	| VAR type ID ';'
 		{ $$=VarGen($3, $2); }
 stm:	TYPEDEF ID '=' '{' parmlist '}' { $$=TypeGen($2, TypeCompound($5)); }
@@ -178,7 +178,7 @@ expr:	expr '<' expr { $$=ExprBinOp($1, $3, '<'); }
 	| expr GEQ expr { $$=ExprBinOp($1, $3, GEQ); }
 	| expr EQ expr { $$=ExprBinOp($1, $3, EQ); }
 	| expr NEQ expr { $$=ExprBinOp($1, $3, NEQ); }
-expr:	ID '=' expr { $$=ExprAssign($1, $3); }
+expr:	expr '=' expr { $$=ExprAssign($1, $3); }
 
 /* This can get put in later. ugh 
 expr:	expr '[' expr ']'

@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include "string.h"
 #include "tree.h"
@@ -62,6 +63,7 @@ AVar makeVar(string id, AFunc in)
 	x=hash(id);
 	a=findVar_i(in, x, id);
 
+	fprintf(stderr, "defining %s\n", StringToChar(id));
 	/* Note this doesn't warn about shadowed globals. */
 	if (a)
 		EM_ErrorMessage("Variable shadowed / redeclared");

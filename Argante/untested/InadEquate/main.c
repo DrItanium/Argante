@@ -42,12 +42,13 @@ int main()
 //	yydebug=1;
 
 	/* PHASE0: Lex and parse */
-	if ((e=yyparse()) || yynerrs) NErrs(3);
+	if ((e=yyparse()) || yynerrs) NErrs(4);
 	/* PHASE1: Split out functions, Resolve TIDs */
 	Phase1();
-	if (yynerrs) NErrs(2);
+	if (yynerrs) NErrs(3);
 	/* PHASE2: finalize compound types, constant optimization */
-	
+	Phase2();
+	if (yynerrs) NErrs(2);
 	/* PHASE(3/4?): Register Allocation. */
 	
 	/* We're done. Dump code (core? :P) */

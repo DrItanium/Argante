@@ -32,13 +32,15 @@ AStm LabelGenGeneric(string id)
 	new=calloc(sizeof(struct _AStm), 1);
 	new->kind=SLabel;
 	new->u.to=id;
+
+	new->EMLineNo=EM_LineNo;
 	return new;
 }
 
 static string genLabelID()
 {
 	string s;
-	char buf[30];
+	static char buf[30];
 	
 	labelnum++;
 	snprintf(buf, sizeof(buf) - 1, "_L%x", labelnum);
@@ -95,6 +97,7 @@ AStm StmGotoGeneric(string id)
 	new=calloc(sizeof(struct _AStm), 1);
 	new->kind=SGoto;
 	new->u.to=id;
+	new->EMLineNo=EM_LineNo;
 	return new;
 }
 
@@ -172,6 +175,7 @@ AStm StmIfElse(AExpr expr, AStm branch1, AStm branch2)
 
 	out=calloc(sizeof(struct _AStm), 1);
 	out->kind=SCJump;
+	out->EMLineNo=EM_LineNo;
 	out->u.cjump.cond=expr;
 	out->u.cjump.to=(to1=genLabelID()); /* TRUE branch */
 	to2=genLabelID(); /* end */
@@ -197,6 +201,7 @@ AStm StmReturn(AExpr expr)
 	new=calloc(sizeof(struct _AStm), 1);
 	new->kind=SReturn;
 	new->u.val=expr;
+	new->EMLineNo=EM_LineNo;
 	return new;
 }
 
@@ -206,6 +211,7 @@ AStm StmRaise(AExpr expr)
 	new=calloc(sizeof(struct _AStm), 1);
 	new->kind=SRaise;
 	new->u.val=expr;
+	new->EMLineNo=EM_LineNo;
 	return new;
 
 }
@@ -216,6 +222,7 @@ AStm StmExpr(AExpr in)
 	new=calloc(sizeof(struct _AStm), 1);
 	new->kind=SExpr;
 	new->u.val=in; /* Check for side-effects? */
+	new->EMLineNo=EM_LineNo;
 	return new;
 
 }
@@ -227,6 +234,7 @@ AStm StmDestroy(string id)
 	new=calloc(sizeof(struct _AStm), 1);
 	new->kind=SDestroy;
 	new->u.to=id;
+	new->EMLineNo=EM_LineNo;
 	return new;
 }
 
@@ -237,6 +245,7 @@ AStm StmResize(string id, AType newsize)
 	new->kind=SResize;
 	new->u.resize.id=id;
 	new->u.resize.newsize=newsize;
+	new->EMLineNo=EM_LineNo;
 	return new;
 }
 
@@ -254,6 +263,7 @@ AStm FuncGen(string id, AType retType, AParmList parmlist, string errhandler, AS
 	new->u.func.parmlist=parmlist;
 	new->u.func.errhandler=errhandler;
 	new->u.func.code=code;
+	new->EMLineNo=EM_LineNo;
 	return new;
 }
 
@@ -265,6 +275,7 @@ AStm VarGen(string id, AType type)
 
 	new->u.var.id=id;
 	new->u.var.type=type;
+	new->EMLineNo=EM_LineNo;
 
 	return new;
 }
@@ -277,6 +288,7 @@ AStm TypeGen(string id, AType type)
 	new->kind=SType;
 	new->u.var.id=id;
 	new->u.var.type=type;
+	new->EMLineNo=EM_LineNo;
 
 	return new;
 }
