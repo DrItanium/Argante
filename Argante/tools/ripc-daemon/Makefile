@@ -9,11 +9,30 @@
 # FIXME: This uses 'locate', which may fail on some platforms
 #        (Solaris for example) - investigate other options!!
 
-SSL_INCS=$(foreach file,$(shell locate ssl/ssl.h),-I$(dir $(file)))
-SSL_LIBS=$(foreach file,$(shell locate libssl.so),-L$(dir $(file)))
+# This appears to be a little point of tension; because
+# every distribution has its own place to put these.
+# For example, I have /usr/local/ssl/include/ssl.h and
+# /usr/local/ssl/lib/libssl.a. (James)
+# Would autoconf be able to help?
+
+INCDIR=$(shell locate ssl/ssl.h)
+INCPREFIX=ssl/
+ifeq ($(INCDIR),)
+INCDIR=$(shell locate ssl.h)
+INCPREFIX=
+endif
+
+LIBDIR=$(shell locate libssl.so)
+ifeq ($(LIBDIR),)
+LIBDIR=$(shell locate libssl.a)
+endif
+
+
+SSL_INCS=$(foreach file,$(INCDIR),-I$(dir $(file)))
+SSL_LIBS=$(foreach file,$(LIBDIR),-L$(dir $(file)))
 
 ifneq ($(SSL_INCS),)
-CFLAGS+=-DUSE_SSL
+CFLAGS+=-DUSE_SSL $(SSL_INCS)
 LDLIBS+=$(SSL_LIBS) -lssl -lcrypto
 
 all: ripcd
@@ -28,8 +47,8 @@ ripcd: ripcd.c ssl.h
 
 ssl.h:
 	@echo "/*** Auto-generated file. Do not edit! ***/" >ssl.h
-	@echo "#include \""$(word 1,$(shell locate ssl/ssl.h))"\"" >>ssl.h
-	@echo "#include \""$(word 1,$(shell locate ssl/err.h))"\"" >>ssl.h
+	@echo "#include \""$(word 1,$(shell locate $(INCPREFIX)ssl.h))"\"" >>ssl.h
+	@echo "#include \""$(word 1,$(shell locate $(INCPREFIX)err.h))"\"" >>ssl.h
 
 warn:
 	@echo
