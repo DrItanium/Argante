@@ -111,7 +111,26 @@ echo "  Please run (g)make anyway, cross your fingers, and report this."
 exit 1
 fi
 
-# FIXME: SSL tests?
+# SSL tests
+# FIXME: Overrides?
+if [ -z "$NOSSL" ]; then
+	echo ">>> Performing SSL detection..."
+	# /usr/bin/which is broken, for me.
+	OPENSSLLOC=`type -path openssl` 2>/dev/null
+	if [ -z "$OPENSSLLOC" ]; then
+		echo ">>> OpenSSL executable not found in \$PATH, SSL unused."
+	else
+		# Yuk. I hope this isn't Linux specific...
+		OPENSSLLOC=`(cd $OPENSSLLOC/../..; pwd)`
+		echo ">>> OpenSSL found in $OPENSSLLOC..."
+		echo "Using includes as $OPENSSLLOC/include, libs as $OPENSSLLOC/lib"
+		echo "USE_SSL=YES" >> conf.mk
+		echo "SSL_INCLUDES=-I$OPENSSLLOC/include" >> conf.mk
+		echo "SSL_LIBS=-L$OPENSSLLOC/lib" >> conf.mk
+	fi
+else
+	echo "NOTE: SSL test disabled by user."
+fi
 
 # GTK test
 if [ -z "$NOGTK" ]; then
@@ -151,9 +170,22 @@ else
 	echo "NOTE: Curses test disabled by user."
 fi
 
+# Arch test.
+# 
+echo ">>> Performing architecture check..."
+ARCH=`uname -m`
+if grep -q $ARCH .valid-arch; then
+  echo ">>> GCC-supported architecture detected, using -m"$ARCH"..."
+  echo "ARCH="$ARCH >> conf.mk
+else
+  echo "+>> I'm not adding any GCC -m flags."
+  echo "+>> If there is a -m"$ARCH" GCC flag, add your architecture"
+  echo "+>> to .valid-arch."
+fi
+
 # Has the config changed, and needs a cleanup?
 if [ -e conf.mk~ ]; then
-  if cmp conf.mk~ conf.mk; then
+  if cmp conf.mk~ conf.mk 2>&1 >/dev/null; then
     echo "Config files are identical!!!"
   else
     echo "Config files are different. Cleaning:"

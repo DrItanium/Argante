@@ -30,18 +30,13 @@ include $(TOP)/conf.mk
 CC      = gcc
 LDLIBS += -lm -lc
 CFLAGS += -I$(TOP)/include -fomit-frame-pointer -O9 -ffast-math -Wall -fforce-mem -fforce-addr -fcaller-saves -fstrength-reduce -fthread-jumps -funroll-loops -fcse-follow-jumps -fcse-skip-blocks -frerun-cse-after-loop -fexpensive-optimizations -fschedule-insns2
+# -g has no effect on the output image, due to strip, but it keeps a
+# debuggable backup in kernel/.
+CFLAGS+=-g
 SHROPTS = -shared
 
-#
-# Optimization for Everyone.
-# I don't know if it will work with other than i-x86's,
-# flame me if not. Fingers crossed.
-#
-# chodorowski: Works on Linux/i386 and OpenBSD/i386, but not Solaris/sparc.
-
-ARCH=$(shell uname -m)
-
-ifneq ($(SYS),Solaris)
+# Detected in build
+ifdef ARCH
 CFLAGS+=-mcpu=$(ARCH) -march=$(ARCH)
 endif
 
@@ -92,13 +87,13 @@ DIRS=compiler/ kernel/ modules/ hll/ tools/
 
 all: $(DIRS)
 	@for dir in $(DIRS); do \
-		$(MAKE) -C $$dir TOP=$(TOP); \
+		$(MAKE) -C $$dir TOP=$(TOP) || exit 1;\
 	done
 #	let X=$X+1; echo $$X >$E
 
 clean: $(DIRS)
 	@for dir in $(DIRS); do \
-		$(MAKE) -C $$dir TOP=$(TOP) clean; \
+		$(MAKE) -C $$dir TOP=$(TOP) clean || exit 1; \
 	done
 
 # I have not touched anything below this line
