@@ -9,11 +9,11 @@
 # FIXME: This uses 'locate', which may fail on some platforms
 #        (Solaris for example) - investigate other options!!
 
-SSL_INCS=$(foreach file,$(shell locate ssl.h),-I$(dir $(file)))
+SSL_INCS=$(foreach file,$(shell locate ssl/ssl.h),-I$(dir $(file)))
 SSL_LIBS=$(foreach file,$(shell locate libssl.so),-L$(dir $(file)))
 
 ifneq ($(SSL_INCS),)
-CFLAGS+=-DUSE_SSL $(SSL_INCS)
+CFLAGS+=-DUSE_SSL
 LDLIBS+=$(SSL_LIBS) -lssl -lcrypto
 
 all: ripcd
@@ -25,6 +25,11 @@ ripcd: ripcd.c
 	$(CC) $(CFLAGS) -DCFGFILE='"r1"' -c $^ -o $@.o
 	$(CC) $(CFLAGS) $@.o $(LDLIBS) -o $@
 	ln -sf ripc-daemon/$@ ../.
+
+ripcd.c: ssl.h
+	@echo "" >ssl.h
+	@echo "#include \""$(word 1,$(shell locate ssl/ssl.h))"\"" >>ssl.h
+	@echo "#include \""$(word 1,$(shell locate ssl/err.h))"\"" >>ssl.h
 
 warn:
 	@echo
@@ -39,6 +44,6 @@ warn:
 
 # This is one contributor to the third-snapshot bloat!
 clean:
-	-rm -f core *.o cli ripcd
+	-rm -f core *.o cli ripcd ssl.h
 
 cli: cli.c

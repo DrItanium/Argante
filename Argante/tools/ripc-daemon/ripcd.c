@@ -33,9 +33,7 @@ Marcin Dawcewicz
 char* CONFIG=CFGFILE;
 
 #ifdef USE_SSL
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-
+#include "ssl.h"
 
 // customize this
 #define CERTFILE	"/var/state/openssl/cacert.pem"
