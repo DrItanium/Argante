@@ -15,8 +15,8 @@
 #ifndef __HAVE_MEMORY_H
 #define __HAVE_MEMORY_H
 
-#define MEM_FLAG_READ           0x00000001
-#define MEM_FLAG_WRITE          0x00000002
+#define MEM_FLAG_READ       0x00000001
+#define MEM_FLAG_WRITE      0x00000002
 #define MEM_FLAG_STRICT		0x00000010
 #define MEM_FLAG_MAPPED		0x00001000
 /* JK for reverse endian binaries */
@@ -31,10 +31,12 @@ struct memarea {
 
 #ifndef __HAVE_MY_OWN_MEMORY_MANAGEMENT
 
-void push_on_stack();
-unsigned int pop_from_stack();
-int get_mem_value(int c,unsigned int addr);
-int mem_alloc(int c,unsigned int size,unsigned int flags);
+/*** Prototypes **************************************************************/
+
+void push_ip_on_stack();
+void pop_ip_from_stack();
+int  get_mem_value(int c,unsigned int addr);
+int  mem_alloc(int c,unsigned int size,unsigned int flags);
 void mem_dealloc(int c,int h);
 void mem_realloc(int c,int h,int newsize);
 void set_mem_value(int c,unsigned int addr,int value);
