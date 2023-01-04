@@ -29,7 +29,7 @@ include $(TOP)/conf.mk
 # Generic definitions
 CC      = gcc
 LDLIBS += -lm -lc
-CFLAGS += -I$(TOP)/include -fomit-frame-pointer -O3 -Wall -fPIC
+CFLAGS += -I$(TOP)/include -fomit-frame-pointer -O3 -Wall -fPIC -Werror
 # -g has no effect on the output image, due to strip, but it keeps a
 # debuggable backup in kernel/.
 CFLAGS+=-g
