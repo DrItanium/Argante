@@ -218,7 +218,7 @@ void show_registers(int c)
 	    printk("\n");
 	}
 	for (i=0;i<REGISTERS;i++) {
-	  printk("f%d: 0x%x  %f      ",i,(int)cpu[c].fregs[i],cpu[c].fregs[i]);
+	  printk("f%d: 0x%x  %f      ",i,cpu[c].fregs[i].i,cpu[c].fregs[i].f);
 	  if(i%2==1)
 	    printk("\n");
 	}
