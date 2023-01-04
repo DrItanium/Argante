@@ -59,7 +59,7 @@ add_executable(agrante
 )
 target_include_directories(agrante PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_library(display 
+add_library(display  SHARED
 	include/config.h
 	include/task.h
 	include/bcode.h
@@ -70,7 +70,7 @@ add_library(display
 	include/acman.h
 	modules/display.c)
 
-add_library(fs
+add_library(fs SHARED
 	include/config.h
 	include/task.h
 	include/bcode.h
@@ -81,7 +81,7 @@ add_library(fs
 	include/acman.h
 	modules/fs.c)
 
-add_library(ipc
+add_library(ipc SHARED
 	include/config.h
 	include/task.h
 	include/bcode.h
@@ -92,7 +92,7 @@ add_library(ipc
 	include/acman.h
 	modules/ipc.c)
 
-add_library(network
+add_library(network SHARED
 	include/config.h
 	include/task.h
 	include/bcode.h
@@ -104,7 +104,7 @@ add_library(network
 	include/acman.h
 	modules/network.c)
 
-add_library(packet
+add_library(packet SHARED
 	include/config.h
 	include/task.h
 	include/bcode.h
@@ -115,7 +115,7 @@ add_library(packet
 	include/acman.h
 	include/exception.h
 	modules/packet.c)
-add_library(advmem
+add_library(advmem SHARED
 	include/config.h
 	include/task.h
 	include/bcode.h
@@ -126,7 +126,7 @@ add_library(advmem
 	include/acman.h
 	include/exception.h
 	modules/advmem.c)
-add_library(access
+add_library(access SHARED
 	include/config.h
 	include/task.h
 	include/bcode.h
@@ -137,7 +137,7 @@ add_library(access
 	include/acman.h
 	include/exception.h
 	modules/access.c)
-add_library(locallib
+add_library(locallib SHARED
 	include/config.h
 	include/task.h
 	include/bcode.h
@@ -149,7 +149,7 @@ add_library(locallib
 	include/exception.h
 	modules/locallib.c)
 
-add_library(math
+add_library(math SHARED
 	include/config.h
 	include/task.h
 	include/bcode.h
