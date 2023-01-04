@@ -59,6 +59,119 @@ add_executable(agrante
 )
 target_include_directories(agrante PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+add_library(display 
+	include/config.h
+	include/task.h
+	include/bcode.h
+	include/module.h
+	include/memory.h
+	include/console.h
+	include/syscall.h
+	include/acman.h
+	modules/display.c)
+
+add_library(fs
+	include/config.h
+	include/task.h
+	include/bcode.h
+	include/module.h
+	include/memory.h
+	include/console.h
+	include/syscall.h
+	include/acman.h
+	modules/fs.c)
+
+add_library(ipc
+	include/config.h
+	include/task.h
+	include/bcode.h
+	include/module.h
+	include/memory.h
+	include/console.h
+	include/syscall.h
+	include/acman.h
+	modules/ipc.c)
+
+add_library(network
+	include/config.h
+	include/task.h
+	include/bcode.h
+	include/module.h
+	include/memory.h
+	include/console.h
+	include/syscall.h
+	include/exception.h
+	include/acman.h
+	modules/network.c)
+
+add_library(packet
+	include/config.h
+	include/task.h
+	include/bcode.h
+	include/module.h
+	include/memory.h
+	include/console.h
+	include/syscall.h
+	include/acman.h
+	include/exception.h
+	modules/packet.c)
+add_library(advmem
+	include/config.h
+	include/task.h
+	include/bcode.h
+	include/module.h
+	include/memory.h
+	include/console.h
+	include/syscall.h
+	include/acman.h
+	include/exception.h
+	modules/advmem.c)
+add_library(access
+	include/config.h
+	include/task.h
+	include/bcode.h
+	include/module.h
+	include/memory.h
+	include/console.h
+	include/syscall.h
+	include/acman.h
+	include/exception.h
+	modules/access.c)
+add_library(locallib
+	include/config.h
+	include/task.h
+	include/bcode.h
+	include/module.h
+	include/memory.h
+	include/console.h
+	include/syscall.h
+	include/acman.h
+	include/exception.h
+	modules/locallib.c)
+
+add_library(math
+	include/config.h
+	include/task.h
+	include/bcode.h
+	include/module.h
+	include/memory.h
+	include/console.h
+	include/syscall.h
+	include/acman.h
+	include/exception.h
+	modules/math.c)
+
+target_include_directories(display PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(fs PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(ipc PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(network PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(advmem PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(access PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(locallib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(math PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(packet PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+
 # add_library(hitagisys
 # 		# disabled entries are because mon960 provides the implementations for them
 # 		#sys/brk.cc
