@@ -226,3 +226,16 @@ add_executable(vcpucons
 add_executable(agtexe
 	tools/agtexe.c)
 
+add_executable(agtman
+	tools/GMI/agtmain.c
+	tools/GMI/cursrtns.c
+	tools/GMI/funcs.c
+	tools/GMI/iortns.c
+	tools/GMI/notglib.c
+	tools/GMI/toplevel.h
+)
+target_compile_definitions(agtman PRIVATE CURSES)
+
+target_link_libraries(agtman curses tinfo)
+# @todo add support for the GTK GUI GMI interface
+

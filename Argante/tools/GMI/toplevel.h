@@ -1,3 +1,5 @@
+#ifndef _AGTMAIN_TOP_LEVEL_H__
+#define _AGTMAIN_TOP_LEVEL_H__
 extern int console_in_fd;
 extern int console_out_fd;
 extern int pid;
@@ -35,3 +37,4 @@ extern int keepgoing;
 #define	TRUE	(!FALSE)
 #endif
 
+#endif
