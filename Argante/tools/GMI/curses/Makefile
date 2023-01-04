@@ -5,7 +5,7 @@ include ../common.mk
 
 ifdef USE_CURSES
 CFLAGS+=-DCURSES
-LDLIBS+=-lcurses
+LDLIBS+=-lcurses -ltinfo
 
 all: agtman
 	cp -f agtman ../..
