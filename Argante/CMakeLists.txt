@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(hitagimon VERSION 0.1)
 enable_language(CXX C)
+file(READ kernel/.argbuild BUILDNUMBER)
+add_compile_definitions(BUILD=${BUILDNUMBER})
 add_custom_command(
 	OUTPUT include/autogen-debug.h
 	COMMAND include/autogen.sh
