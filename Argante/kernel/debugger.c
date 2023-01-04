@@ -19,6 +19,7 @@
 
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 #include "config.h"
 #include "task.h"
 #include "bcode.h"
