@@ -230,17 +230,21 @@ void cmd_mov_freg_freg () {
 }
 
 void cmd_mov_freg_immptr () {
-  int a2;
+    int a2;
 
-	IMMPTRVAL(a2,A2);
-	FFREG(A1)=*((float *)&a2);
+    IMMPTRVAL(a2,A2);
+    float* temp = (float*)&a2;
+    FFREG(A1)=*temp;
+	//FFREG(A1)=*((float *)&a2);
 }
 
 void cmd_mov_freg_uptr () {
   int a2;
 
 	UPTRVAL(a2,A2);
-	FFREG(A1)=*((float *)&a2);
+    float* temp = (float*)&a2;
+    FFREG(A1) = *temp;
+	//FFREG(A1)=*((float *)&a2);
 }
 
 
@@ -343,12 +347,15 @@ void cmd_add_immptr_sreg () {
 
 void cmd_add_immptr_freg () {
   int a1;
-  float f;
+  union FloatRegister f;
+  //float f;
 
   	EVAL_A1;
-	*((int *)&f)=get_mem_value(curr_cpu,a1);
-	f+=FFREG(A2);
-	set_mem_value(curr_cpu,a1,*((int *)&f));
+    f.i = get_mem_value(curr_cpu,a1);
+	//*((int *)&f)=get_mem_value(curr_cpu,a1);
+	f.f += FFREG(A2);
+	//set_mem_value(curr_cpu,a1,*((int *)&f));
+    set_mem_value(curr_cpu, a1, f.i);
 }
 
 void cmd_add_immptr_immptr () {
@@ -1531,59 +1538,61 @@ void cmd_raise_uptr () {
 // cmd_ifeq
 
 void cmd_ifeq_immediate () {
-  int work;
-  int t2;
+    int work;
+    int t2;
 
     EVAL_T2;
-         if (t2 == TYPE_IMMEDIATE) { 
-		 if ((A2)!=(A1)) change=2; 
-		 return;
-	 } else if (t2 == TYPE_UREG) {
-		 if ((UREG(A2))!=(A1)) change=2;
-		 return;
-	 } else if (t2 == TYPE_SREG) {
-		 if ((SREG(A2))!=(A1)) change=2;
-		 return;
-	 } else if (t2 == TYPE_FREG) {
-		 if ((FREG(A2))!=(A1)) change=2;
-	 } else if (t2 == TYPE_IMMPTR) {
-		 IMMPTRVAL(work,A2);
-		 if (work!=A1) change=2;
-		 return;
-	 } else if (t2 == TYPE_UPTR) {
-		 UPTRVAL(work,A2)
-		 if (work!=A1) change=2;
-	 } else \
-           non_fatal(ERROR_BAD_PARAM,"IFEQ: Bad parameter #2",curr_cpu);
-           return;
+    if (t2 == TYPE_IMMEDIATE) { 
+        if ((A2)!=(A1)) change=2; 
+        return;
+    } else if (t2 == TYPE_UREG) {
+        if ((UREG(A2))!=(A1)) change=2;
+        return;
+    } else if (t2 == TYPE_SREG) {
+        if ((SREG(A2))!=(A1)) change=2;
+        return;
+    } else if (t2 == TYPE_FREG) {
+        if ((FREG(A2))!=(A1)) change=2;
+    } else if (t2 == TYPE_IMMPTR) {
+        IMMPTRVAL(work,A2);
+        if (work!=A1) change=2;
+        return;
+    } else if (t2 == TYPE_UPTR) {
+        UPTRVAL(work,A2)
+            if (work!=A1) change=2;
+    } else {
+        non_fatal(ERROR_BAD_PARAM,"IFEQ: Bad parameter #2",curr_cpu);
+    }
+    return;
 }
 
 void cmd_ifeq_ureg () {
-  int work;
-  int t2;
+    int work;
+    int t2;
 
     EVAL_T2;
-    	if (t2 == TYPE_IMMEDIATE) {
-		if ((A2)!=(UREG(A1))) change=2;
-		return;
-	 } else if (t2 == TYPE_UREG) {
-		 if ((UREG(A2))!=(UREG(A1))) change=2;
-		 return;
-	 } else if (t2 == TYPE_SREG) {
-		 if ((SREG(A2))!=(UREG(A1))) change=2;
-		 return;
-	 } else if (t2 == TYPE_FREG) {
-		 if ((FREG(A2))!=(UREG(A1))) change=2;
-	 } else if (t2 == TYPE_IMMPTR) {
-		 IMMPTRVAL(work,A2);
-		 if (work!=UREG(A1)) change=2;
-		 return;
-	 } else if (t2 == TYPE_UPTR) {
-		 UPTRVAL(work,A2)
-		 if (work!=UREG(A1)) change=2;
-	 } else \
-           non_fatal(ERROR_BAD_PARAM,"IFEQ: Bad parameter #2",curr_cpu);
-           return;
+    if (t2 == TYPE_IMMEDIATE) {
+        if ((A2)!=(UREG(A1))) change=2;
+        return;
+    } else if (t2 == TYPE_UREG) {
+        if ((UREG(A2))!=(UREG(A1))) change=2;
+        return;
+    } else if (t2 == TYPE_SREG) {
+        if ((SREG(A2))!=(UREG(A1))) change=2;
+        return;
+    } else if (t2 == TYPE_FREG) {
+        if ((FREG(A2))!=(UREG(A1))) change=2;
+    } else if (t2 == TYPE_IMMPTR) {
+        IMMPTRVAL(work,A2);
+        if (work!=UREG(A1)) change=2;
+        return;
+    } else if (t2 == TYPE_UPTR) {
+        UPTRVAL(work,A2)
+            if (work!=UREG(A1)) change=2;
+    } else {
+        non_fatal(ERROR_BAD_PARAM,"IFEQ: Bad parameter #2",curr_cpu);
+    }
+    return;
 }
 
 void cmd_ifeq_sreg () {

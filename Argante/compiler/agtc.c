@@ -327,7 +327,12 @@ loop:
       if (strlen(buf)<1) goto loop;
 
       { 
-        int b,a,i; float c; int* q;
+        int b,a,i; 
+        union {
+            float c;
+            int i;
+        } c;
+        int* q;
         if (sscanf(buf,"%*s repeat %i",&b)>0) {
           if (in_code) {
             error("'repeat' statement not allowed in code.",buf);
@@ -342,8 +347,8 @@ loop:
           q=(void*)sym[top_sym].data;
 
           if (strchr(buf,'.')) {
-            if (sscanf(buf,"%f repeat",&c)) {
-              a=*(int*)(&c);
+            if (sscanf(buf,"%f repeat",&c.c)) {
+                a = c.i;
             } else {
               error("unparsable repeat parameter.",buf);
             }
@@ -364,7 +369,12 @@ loop:
 
 
       { 
-        int b,a; float c; int* q;
+        int b,a; 
+        union {
+            float c;
+            float i;
+        } c;
+        int* q;
         int kount=0;
         if (sscanf(buf,"block %i",&b)>0) {
           if (in_code) {
@@ -387,8 +397,8 @@ loop:
             if (strlen(buf)<1) continue;
 
             if (strchr(buf,'.')) {
-              if (sscanf(buf,"%f",&c)) {
-                a=*(int*)(&c);
+              if (sscanf(buf,"%f",&c.c)) {
+                  a = c.i;
               } else {
                 error("unparsable block member.",buf);
               }
@@ -426,13 +436,17 @@ loop:
       }
 
       if (in_data) {
-        float c; int a;
+          union {
+            float c;
+            float i;
+          } c; int a;
         sym[top_sym].addr=current_data;
         sym[top_sym].data=malloc(4);
 
         if (strchr(buf,'.')) {
-          if (sscanf(buf,"%f",&c)) {
-            a=*(int*)(&c);
+          if (sscanf(buf,"%f",&c.c)) {
+            //a=*(int*)(&c);
+            a = c.i;
            } else {
               error("unparsable variable.",buf);
             }

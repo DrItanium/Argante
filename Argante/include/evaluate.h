@@ -7,7 +7,7 @@
 #define SREGVAL(W,A) 	W=curr_cpu_p->sregs[A];
 
 
-#define FREGVAL(W,A) 	W=*((int*)&curr_cpu_p->fregs[A]);
+#define FREGVAL(W,A) 	W=(curr_cpu_p->fregs[A].i);
 
 #define IMMPTRVAL(W,A)	W=get_mem_value(curr_cpu,A); if (got_nonfatal_round) return;
 
@@ -18,8 +18,8 @@
 
 #define SREG(A)		curr_cpu_p->sregs[A]
 
-#define FREG(A)		*((int*)&curr_cpu_p->fregs[A])
+#define FREG(A)		curr_cpu_p->fregs[A].i
 
-#define FFREG(A)	curr_cpu_p->fregs[A]
+#define FFREG(A)	curr_cpu_p->fregs[A].f
 
 #endif // end !defined(ARGANTE_EVALUATE_H__)
