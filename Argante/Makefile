@@ -29,17 +29,14 @@ include $(TOP)/conf.mk
 # Generic definitions
 CC      = gcc
 LDLIBS += -lm -lc
-CFLAGS += -I$(TOP)/include -fomit-frame-pointer -O3 -Wall 
+CFLAGS += -I$(TOP)/include -fomit-frame-pointer -O3 -Wall -fPIC
 # -g has no effect on the output image, due to strip, but it keeps a
 # debuggable backup in kernel/.
 CFLAGS+=-g
 SHROPTS = -shared
 
 # Detected in build
-ifdef ARCH
-CFLAGS+=-mcpu=$(ARCH) -march=$(ARCH)
-endif
-
+#
 # System dependant
 # NOTE: SVGA and PACKET in modules makefile
 
