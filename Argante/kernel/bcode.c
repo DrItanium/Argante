@@ -126,7 +126,7 @@ void g_pop_ip_from_stack() {
 
 /* Pushes the specified VCPU's IP onto the top of it's call stack.  */
 
-inline void push_ip_on_stack( int id ) {
+void push_ip_on_stack( int id ) {
     CHECK_FAILURE_FN;
 
     if( cpu[id].stack_ptr >= MAX_STACK ) {
@@ -160,7 +160,7 @@ inline void push_ip_on_stack( int id ) {
 
 /* Pops the specified VCPU's IP from the top of it's call stack. */
 
-inline void pop_ip_from_stack( int id ) {
+void pop_ip_from_stack( int id ) {
     CHECK_FAILURE_FN;
 
     if( cpu[id].stack_ptr > 0 ) {

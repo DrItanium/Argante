@@ -8,7 +8,7 @@ execute_process(COMMAND date "+%A, %d %B %Y, %H:%M" OUTPUT_VARIABLE CURRENT_DATE
 set(IDSTR "${CURRENT_USER}@${MACHINE_NAME} on ${CURRENT_DATE_TIME}")
 string(STRIP ${BUILDNUMBER} BUILDNUMBER)
 string(STRIP ${IDSTR} IDSTR)
-add_compile_definitions(BUILD=${BUILDNUMBER} IDSTR=${IDSTR})
+add_compile_definitions(BUILD=${BUILDNUMBER} IDSTR="${IDSTR}")
 add_custom_command(
 	OUTPUT include/autogen-debug.h
 	COMMAND include/autogen.sh
