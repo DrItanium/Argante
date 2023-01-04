@@ -11,6 +11,8 @@
    Maintainer: Michal Zalewski <lcamtuf@ids.pl>
 
 */
+#ifndef ARGANTE_LINKER_H__
+#define ARGANTE_LINKER_H__
 
 #define MAX_LIBNAM 32
 #define MAX_FNAM   32
@@ -62,3 +64,4 @@ struct link_entry {
     struct message_3 m3;
   };
 };
+#endif // end !defined(ARGANTE_LINKER_H__)
