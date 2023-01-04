@@ -38,44 +38,6 @@ if [ "$SYS" = "Linux" ]; then
     echo "NOTE: libreadline *NOT* detected, using old-style compilation."
   fi
 
-  if [ -z "$NOSVGALIB" ]; then
-  echo ">>> Performing svgalib compatibility test..."
-
-  rm -f setup/svga-test
-  gcc -fomit-frame-pointer -O9 -ffast-math -Wall -fforce-mem -fforce-addr \
-      -fcaller-saves -fstrength-reduce -fthread-jumps -funroll-loops \
-      -fcse-follow-jumps -fcse-skip-blocks -frerun-cse-after-loop \
-      -fexpensive-optimizations -fschedule-insns2 -m486 -ldl -rdynamic -lm \
-      -lvga setup/svga-test.c -o setup/svga-test >/dev/null 2>&1
-
-  if [ ! -x setup/svga-test ]; then
-    echo ">>> Test failed, compiling without gfx module."
-  else
-    echo ">>> Test successful, compiling with gfx module."
-    echo "USE_SVGALIB=YES" >> conf.mk
-  fi
-  rm -f setup/svga-test
-  else
-    echo "NOTE: SVGALib test disabled by user."
-  fi
-fi
-
-# Check if we should compile the GGI module
-if [ -z "$NOGGILIB" ]; then 
-	rm -f setup/ggi-test
-	gcc -lggi setup/ggi-test.c -o setup/ggi-test >/dev/null 2>&1
-	
-	if [ ! -x setup/ggi-test ]; then
-		echo "<+> GGI test failed, compiling without GGI module."
-	else
-		echo "<I> GGI test successful, compiling with GGI module."
-		echo "USE_GGI=YES" >> conf.mk
-	fi
-	
-	rm -f setup/ggi-test
-else
-	echo "<+> GGI test disabled by user."
-fi
 
 ISSOL=`echo $SYS|egrep -e 'Sun|Sola|Nis'`
 
@@ -113,25 +75,25 @@ fi
 
 # SSL tests
 # FIXME: Overrides?
-if [ -z "$NOSSL" ]; then
-	echo ">>> Performing SSL detection..."
-	# /usr/bin/which is broken, for me.
-	OPENSSLLOC=`type -path openssl` 2>/dev/null
-	if [ -z "$OPENSSLLOC" ]; then
-		echo ">>> OpenSSL executable not found in \$PATH, SSL unused."
-	else
-		# No typo, we do it twice (/bin/openssl)
-		OPENSSLLOC=`dirname $OPENSSLLOC`
-		OPENSSLLOC=`dirname $OPENSSLLOC`
-		echo ">>> OpenSSL found in $OPENSSLLOC..."
-		echo "Using includes as $OPENSSLLOC/include, libs as $OPENSSLLOC/lib"
-		echo "USE_SSL=YES" >> conf.mk
-		echo "SSL_INCLUDES=-I$OPENSSLLOC/include" >> conf.mk
-		echo "SSL_LIBS=-L$OPENSSLLOC/lib" >> conf.mk
-	fi
-else
+#if [ -z "$NOSSL" ]; then
+#	echo ">>> Performing SSL detection..."
+#	# /usr/bin/which is broken, for me.
+#	OPENSSLLOC=`type -path openssl` 2>/dev/null
+#	if [ -z "$OPENSSLLOC" ]; then
+#		echo ">>> OpenSSL executable not found in \$PATH, SSL unused."
+#	else
+#		# No typo, we do it twice (/bin/openssl)
+#		OPENSSLLOC=`dirname $OPENSSLLOC`
+#		OPENSSLLOC=`dirname $OPENSSLLOC`
+#		echo ">>> OpenSSL found in $OPENSSLLOC..."
+#		echo "Using includes as $OPENSSLLOC/include, libs as $OPENSSLLOC/lib"
+#		echo "USE_SSL=YES" >> conf.mk
+#		echo "SSL_INCLUDES=-I$OPENSSLLOC/include" >> conf.mk
+#		echo "SSL_LIBS=-L$OPENSSLLOC/lib" >> conf.mk
+#	fi
+#else
 	echo "NOTE: SSL test disabled by user."
-fi
+#fi
 
 # GTK test
 if [ -z "$NOGTK" ]; then
