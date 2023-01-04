@@ -1,3 +1,5 @@
+#ifndef ARGANTE_EVALUATE_H__
+#define ARGANTE_EVALUATE_H__
 
 #define UREGVAL(W,A) 	W=curr_cpu_p->uregs[A];
 
@@ -19,3 +21,5 @@
 #define FREG(A)		*((int*)&curr_cpu_p->fregs[A])
 
 #define FFREG(A)	curr_cpu_p->fregs[A]
+
+#endif // end !defined(ARGANTE_EVALUATE_H__)

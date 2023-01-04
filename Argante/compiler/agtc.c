@@ -343,9 +343,7 @@ loop:
 
           if (strchr(buf,'.')) {
             if (sscanf(buf,"%f repeat",&c)) {
-                int* temporary = (int*)&c;
-                a = *temporary;
-              //a=*(int*)(&c);
+              a=*(int*)(&c);
             } else {
               error("unparsable repeat parameter.",buf);
             }
@@ -390,8 +388,7 @@ loop:
 
             if (strchr(buf,'.')) {
               if (sscanf(buf,"%f",&c)) {
-                  int* temporary = (int*)&c;
-                  a = *temporary;
+                a=*(int*)(&c);
               } else {
                 error("unparsable block member.",buf);
               }
@@ -435,8 +432,7 @@ loop:
 
         if (strchr(buf,'.')) {
           if (sscanf(buf,"%f",&c)) {
-              int* temporary = (int*)&c;
-              a = *temporary;
+            a=*(int*)(&c);
            } else {
               error("unparsable variable.",buf);
             }
