@@ -241,11 +241,13 @@ target_link_libraries(agtman curses tinfo)
 add_executable(ripc-daemon 
 	tools/ripc-daemon/ripcd.c)
 
+target_compile_definitions(ripc-daemon PRIVATE CFGFILE="r1")
+
 add_executable(ripc-cli
 	tools/ripc-daemon/cli.c)
 
 if(WITH_SSL)
-	target_compile_definitions(ripc-daemon PRIVATE USE_SSL CFGFILE="r1")
+	target_compile_definitions(ripc-daemon PRIVATE USE_SSL)
 	target_link_libraries(ripc-daemon ssl crypto) 
 	target_link_libraries(ripc-cli ssl crypto)
 else()
