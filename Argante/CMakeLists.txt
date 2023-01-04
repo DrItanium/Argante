@@ -2,7 +2,13 @@ cmake_minimum_required(VERSION 3.10)
 project(hitagimon VERSION 0.1)
 enable_language(CXX C)
 file(READ kernel/.argbuild BUILDNUMBER)
-add_compile_definitions(BUILD=${BUILDNUMBER})
+execute_process(COMMAND whoami OUTPUT_VARIABLE CURRENT_USER OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND uname -n OUTPUT_VARIABLE MACHINE_NAME OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND date "+%A, %d %B %Y, %H:%M" OUTPUT_VARIABLE CURRENT_DATE_TIME OUTPUT_STRIP_TRAILING_WHITESPACE)
+set(IDSTR "${CURRENT_USER}@${MACHINE_NAME} on ${CURRENT_DATE_TIME}")
+string(STRIP ${BUILDNUMBER} BUILDNUMBER)
+string(STRIP ${IDSTR} IDSTR)
+add_compile_definitions(BUILD=${BUILDNUMBER} IDSTR=${IDSTR})
 add_custom_command(
 	OUTPUT include/autogen-debug.h
 	COMMAND include/autogen.sh
