@@ -63,10 +63,10 @@ flexsock FXS_Accept(flexlisock bound);
 flexsock FXS_AcceptPoll(flexlisock bound);
 
 /* Poll must return -1 on error (or eof) and 0 on EAGAIN */
-int FXS_ReadPoll(flexsock f, char *buf, size_t size);
+ssize_t FXS_ReadPoll(flexsock f, char *buf, size_t size);
 
-int FXS_Read(flexsock f, char *buf, size_t size);
-int FXS_Write(flexsock f, const char *buf, size_t size);
+ssize_t FXS_Read(flexsock f, char *buf, size_t size);
+ssize_t FXS_Write(flexsock f, const char *buf, size_t size);
 
 void FXS_Close(flexsock f);
 void FXS_CloseListener(flexlisock f);
