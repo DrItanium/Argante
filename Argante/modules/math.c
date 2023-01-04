@@ -86,12 +86,12 @@ void sinus(int c)
 		    Aleksander Dobrzycki
 */
     if (cpu[c].uregs[0]==0)
-	cpu[c].fregs[0]=(float)sin((double)cpu[c].fregs[0]);
+	cpu[c].fregs[0].f=(float)sin((double)cpu[c].fregs[0]);
     else {
-	if (fabs(cpu[c].fregs[0])==cpu[c].fregs[0])
-	  cpu[c].fregs[0]=(float)sin_table[(int)rint(cpu[c].fregs[0]/CACHE_STEP) 
+	if (fabs(cpu[c].fregs[0].f)==cpu[c].fregs[0].f)
+	  cpu[c].fregs[0].f=(float)sin_table[(int)rint(cpu[c].fregs[0].f/CACHE_STEP) 
 	      % CACHE_SIZE]/ACCURATE;
-	else cpu[c].fregs[0]=(float)-sin_table[(-(int)rint(cpu[c].fregs[0]/CACHE_STEP))
+	else cpu[c].fregs[0].f=(float)-sin_table[(-(int)rint(cpu[c].fregs[0].f/CACHE_STEP))
 	    % CACHE_SIZE]/ACCURATE;
     }
 }
@@ -103,12 +103,12 @@ void sinus(int c)
 void cosinus(int c)
 {
     if (cpu[c].uregs[0]==0)
-	cpu[c].fregs[0]=(float)cos((double)cpu[c].fregs[0]);
+	cpu[c].fregs[0].f=(float)cos((double)cpu[c].fregs[0].f);
     else {
-	if (fabs(cpu[c].fregs[0])==cpu[c].fregs[0])
-	  cpu[c].fregs[0]=(float)cos_table[(int)rint(cpu[c].fregs[0]/CACHE_STEP)
+	if (fabs(cpu[c].fregs[0].f)==cpu[c].fregs[0].f)
+	  cpu[c].fregs[0].f=(float)cos_table[(int)rint(cpu[c].fregs[0].f/CACHE_STEP)
 	      % CACHE_SIZE]/ACCURATE;
-	else cpu[c].fregs[0]=(float)cos_table[(-(int)rint(cpu[c].fregs[0]/CACHE_STEP))
+	else cpu[c].fregs[0].f=(float)cos_table[(-(int)rint(cpu[c].fregs[0].f/CACHE_STEP))
 	    % CACHE_SIZE]/ACCURATE;
     }
 }
@@ -122,10 +122,10 @@ void tangens(int c)
     if (cpu[c].uregs[0]==0)
 	cpu[c].fregs[0]=(float)tan((double)cpu[c].fregs[0]);
     else {
-	if (fabs(cpu[c].fregs[0])==cpu[c].fregs[0])
-	  cpu[c].fregs[0]=(float)tan_table[(int)rint(cpu[c].fregs[0]/CACHE_STEP)
+	if (fabs(cpu[c].fregs[0].f)==cpu[c].fregs[0].f)
+	  cpu[c].fregs[0].f=(float)tan_table[(int)rint(cpu[c].fregs[0].f/CACHE_STEP)
 	      % (CACHE_SIZE/2)]/ACCURATE;
-	else cpu[c].fregs[0]=(float)-tan_table[-(int)rint(cpu[c].fregs[0]/CACHE_STEP)
+	else cpu[c].fregs[0].f=(float)-tan_table[-(int)rint(cpu[c].fregs[0].f/CACHE_STEP)
 	    % (CACHE_SIZE/2)]/ACCURATE;
     }
 
@@ -137,15 +137,15 @@ void tangens(int c)
 // return: f0 - arcsine of given value
 void asinus(int c)
 {
-    if (cpu[c].fregs[0]<-1 || cpu[c].fregs[0]>1){
+    if (cpu[c].fregs[0].f<-1 || cpu[c].fregs[0].f>1){
 	non_fatal(ERROR_MATH_RANGE,"asin: given value is out of range",c);
 	failure=1;
 	return;
     }
     if (cpu[c].uregs[0]==0)
-	cpu[c].fregs[0]=(float)asin((double)cpu[c].fregs[0]);
+	cpu[c].fregs[0].f=(float)asin((double)cpu[c].fregs[0].f);
     else {
-	    cpu[c].fregs[0]=(float)asin_table[(int)((int)rint(cpu[c].fregs[0]/CACHE_STEP)
+	    cpu[c].fregs[0].f=(float)asin_table[(int)((int)rint(cpu[c].fregs[0].f/CACHE_STEP)
 		+(int)1/CACHE_STEP)]/ACCURATE;
     }
 }
@@ -156,7 +156,7 @@ void asinus(int c)
 // return: f0 - arccosine of given value
 void acosinus(int c)
 {
-    if (cpu[c].fregs[0]<-1 || cpu[c].fregs[0]>1){
+    if (cpu[c].fregs[0].f<-1 || cpu[c].fregs[0].f>1){
 	non_fatal(ERROR_MATH_RANGE,"acos: given value is out of range",c);
 	failure=1;
 	return;
@@ -313,11 +313,11 @@ void fillcos(int c)
 	failure=1;
 	return;
     }
-    k=cpu[c].fregs[0];
+    k=cpu[c].fregs[0].f;
     k2=(int)rint(k/CACHE_STEP) % CACHE_SIZE; // security, it is a basic!
-    inx=(int)rint(cpu[c].fregs[1]/CACHE_STEP) % CACHE_SIZE;
+    inx=(int)rint(cpu[c].fregs[1].f/CACHE_STEP) % CACHE_SIZE;
     if (inx==0){
-      if (fabs(cpu[c].fregs[1])==cpu[c].fregs[1])
+      if (fabs(cpu[c].fregs[1].f)==cpu[c].fregs[1].f)
         inx=1; else inx=-1;
     }
     if (cpu[c].uregs[3]==0)
@@ -331,18 +331,18 @@ void fillcos(int c)
 	while (l>a-a_orig){
           tmp=(float)cos(k)*m;
           memcpy(a,&tmp,4);
-          k+=cpu[c].fregs[1];
+          k+=cpu[c].fregs[1].f;
           a+=cpu[c].sregs[1];
 	}
 	else if (cpu[c].uregs[2]==0)
 	while (l>a-a_orig){
           *a=(unsigned int)rint(cos(k)*m);
-          k+=cpu[c].fregs[1];
+          k+=cpu[c].fregs[1].f;
           a+=cpu[c].sregs[1];
 	}
 	else while(l>a2-a2_orig){
               *a2=(unsigned char)rint(cos(k)*m);
-              k+=cpu[c].fregs[1];
+              k+=cpu[c].fregs[1].f;
               a2+=cpu[c].sregs[1];
 	}
     } else {// cached
@@ -406,11 +406,11 @@ void filltan(int c)
 	failure=1;
 	return;
     }
-    k=cpu[c].fregs[0];
+    k=cpu[c].fregs[0].f;
     k2=(int)rint(k/CACHE_STEP) % (CACHE_SIZE/2); // security, it is a basic!
-    inx=(int)rint(cpu[c].fregs[1]/CACHE_STEP) % (CACHE_SIZE/2);
+    inx=(int)rint(cpu[c].fregs[1].f/CACHE_STEP) % (CACHE_SIZE/2);
     if (inx==0){
-      if (fabs(cpu[c].fregs[1])==cpu[c].fregs[1])
+      if (fabs(cpu[c].fregs[1].f)==cpu[c].fregs[1].f)
         inx=1; else inx=-1;
     }
     if (cpu[c].uregs[3]==0)
@@ -424,18 +424,18 @@ void filltan(int c)
 	while(l>a-a_orig){
           tmp=(float)tan(k)*m;
           memcpy(a,&tmp,4);
-          k+=cpu[c].fregs[1];
+          k+=cpu[c].fregs[1].f;
           a+=cpu[c].sregs[1];
 	}
 	else if (cpu[c].uregs[2]==0)
 	while (l>a-a_orig){
           *a=(unsigned int)rint(tan(k)*m);
-          k+=cpu[c].fregs[1];
+          k+=cpu[c].fregs[1].f;
           a+=cpu[c].sregs[1];
 	}
 	else while(l>a2-a2_orig){
               *a2=(unsigned char)rint(tan(k)*m);
-              k+=cpu[c].fregs[1];
+              k+=cpu[c].fregs[1].f;
               a2+=cpu[c].sregs[1];
 	}
     } else { // cached

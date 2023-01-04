@@ -558,7 +558,7 @@ void mem_strtofloat(int c)
 	failure=1;
 	return;
     }
-    cpu[c].fregs[0]=r;
+    cpu[c].fregs[0].f=r;
 }
 // u0 - address, u1 - offset, u2 - size in bytes
 // return: s0 - integer or call exception
