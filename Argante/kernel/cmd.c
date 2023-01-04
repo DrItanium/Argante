@@ -400,12 +400,16 @@ void cmd_add_uptr_sreg () {
 
 void cmd_add_uptr_freg () {
   int a1;
-  float f;
+  //float f;
+  union FloatRegister f;
   
   	UREGVAL(a1,A1);
-	*((int *)&f)=get_mem_value(curr_cpu,a1);
-	f=FFREG(A2)+f;
-	set_mem_value(curr_cpu,a1,*((int *)&f));
+	//*((int *)&f)=get_mem_value(curr_cpu,a1);
+	f.i=get_mem_value(curr_cpu,a1);
+	//f=FFREG(A2)+f;
+	f.f=FFREG(A2)+f.f;
+	//set_mem_value(curr_cpu,a1,*((int *)&f));
+	set_mem_value(curr_cpu,a1,f.i);
 }
 
 void cmd_add_uptr_immptr () {
@@ -452,14 +456,18 @@ void cmd_add_freg_immptr () {
   int a2;
 
 	IMMPTRVAL(a2,A2);
-	FFREG(A1)+=*((float *)&a2);
+    float* temporary = (float*)&a2;
+	//FFREG(A1)+=*((float *)&a2);
+	FFREG(A1)+=*temporary;
 }
 
 void cmd_add_freg_uptr () {
   int a2;
 
 	UPTRVAL(a2,A2);
-	FFREG(A1)+=*((float *)&a2);
+	//FFREG(A1)+=*((float *)&a2);
+    float* temporary = (float*)&a2;
+	FFREG(A1)+=*temporary;
 }
 
 
