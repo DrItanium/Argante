@@ -223,3 +223,6 @@ target_include_directories(disasm PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_executable(vcpucons
 	tools/vcpucons.c)
 
+add_executable(agtexe
+	tools/agtexe.c)
+
