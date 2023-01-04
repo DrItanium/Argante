@@ -37,7 +37,7 @@ if [ "$SYS" = "Linux" ]; then
   else
     echo "NOTE: libreadline *NOT* detected, using old-style compilation."
   fi
-
+fi
 
 ISSOL=`echo $SYS|egrep -e 'Sun|Sola|Nis'`
 
