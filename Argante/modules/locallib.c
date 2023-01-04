@@ -25,7 +25,7 @@
 #ifdef __linux__
 
 #include <linux/kernel.h>
-#include <linux/sys.h>
+//#include <linux/sys.h>
 #include <sys/sysinfo.h>
 
 #endif

@@ -69,7 +69,7 @@ extern int failure;
    Note: This function works on the currently active VCPU (ie. the 
    one stored in curr_cpu_p and curr_cpu)! This is for speed reasons. */
 
-inline void g_push_ip_on_stack() {
+void g_push_ip_on_stack() {
     CHECK_FAILURE_FN;
 
     if( curr_cpu_p->stack_ptr >= MAX_STACK ) {
@@ -105,7 +105,7 @@ inline void g_push_ip_on_stack() {
    Note: This function works on the currently active VCPU (ie. the 
    one stored in curr_cpu_p and curr_cpu)! This is for speed reasons. */
 
-inline void g_pop_ip_from_stack() {
+void g_pop_ip_from_stack() {
     CHECK_FAILURE_FN;
 
     if( curr_cpu_p->stack_ptr > 0 ) {
@@ -306,7 +306,7 @@ void set_mem_block(int c,char* src,unsigned int addr, unsigned int cnt) {
 }
 
 
-inline void* verify_access(int c,unsigned int addr,unsigned int cnt,unsigned int fl) {
+void* verify_access(int c,unsigned int addr,unsigned int cnt,unsigned int fl) {
   int x;
   // a flagi?
 
@@ -330,7 +330,7 @@ inline void* verify_access(int c,unsigned int addr,unsigned int cnt,unsigned int
 
 
 
-inline int mem_alloc(int c,unsigned int size,unsigned int flags) {
+int mem_alloc(int c,unsigned int size,unsigned int flags) {
   int x;
 
   CHECK_EXCEPT_FN2;
@@ -384,7 +384,7 @@ inline int mem_alloc(int c,unsigned int size,unsigned int flags) {
 }
 
 
-inline void mem_dealloc(int c,int h) {
+void mem_dealloc(int c,int h) {
 
   CHECK_EXCEPT_FN;
 
@@ -404,7 +404,7 @@ inline void mem_dealloc(int c,int h) {
 }
 
 
-inline void mem_realloc(int c,int h,int newsize) {
+void mem_realloc(int c,int h,int newsize) {
 
   int flags=cpu[c].uregs[0];
   void* x;
