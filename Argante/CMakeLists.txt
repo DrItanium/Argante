@@ -15,6 +15,7 @@ add_custom_command(
 
 
 add_executable(agtc 
+	include/config.h
 	include/exception.h
 	modules/syscall.h
 	compiler/autogen.h
@@ -22,6 +23,33 @@ add_executable(agtc
 	compiler/agtc.c)
 
 target_include_directories(agtc PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+# @todo add support for generating the IDSTR value
+
+add_executable(agrante 
+	kernel/bcode.c
+	kernel/console.c
+	kernel/manager.c
+	kernel/module.c
+	kernel/task.c
+	kernel/acman.c
+	kernel/debugger.c
+	kernel/cmd.c
+	kernel/main-boot.c
+	include/acman.h
+	include/bcode.h
+	include/cmd.h
+	include/config.h
+	include/console.h
+	include/debugger.h
+	include/evaluate.h
+	include/language.h
+	include/manager.h
+	include/memory.h
+	include/module.h
+	include/task.h
+)
+target_include_directories(agrante PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # add_library(hitagisys
 # 		# disabled entries are because mon960 provides the implementations for them
