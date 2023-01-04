@@ -1,0 +1,4 @@
+compiler/autogen.h
+include/autogen-debug.h
+include/language.h
+include/syscall.h

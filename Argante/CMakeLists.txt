@@ -238,17 +238,17 @@ target_compile_definitions(agtman PRIVATE CURSES)
 
 target_link_libraries(agtman curses tinfo)
 # @todo add support for the GTK GUI GMI interface
-add_executable(ripc-daemon 
+add_executable(ripcd
 	tools/ripc-daemon/ripcd.c)
 
-target_compile_definitions(ripc-daemon PRIVATE CFGFILE="r1")
+target_compile_definitions(ripcd PRIVATE CFGFILE="r1")
 
 add_executable(ripc-cli
 	tools/ripc-daemon/cli.c)
 
 if(WITH_SSL)
-	target_compile_definitions(ripc-daemon PRIVATE USE_SSL)
-	target_link_libraries(ripc-daemon ssl crypto) 
+	target_compile_definitions(ripcd PRIVATE USE_SSL)
+	target_link_libraries(ripcd ssl crypto) 
 	target_link_libraries(ripc-cli ssl crypto)
 else()
 	message(WARNING "building remote IPC connectivity daemon without SSL support! It won't affect rIPC functionality, but makes all remote data transfers dependent on security of the underlying communication layer. So, if you have secure or tunneled link between rIPC endpoints (ssh tunnels, VPN networks), it does not matter. Otherwise, it *might* cause problems.  Also, non-SSL daemons could not connect to SSL-enabled rIPC HUBs.")
