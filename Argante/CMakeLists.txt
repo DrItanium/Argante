@@ -21,6 +21,8 @@ add_executable(agtc
 	include/autogen-debug.h
 	compiler/agtc.c)
 
+target_include_directories(agtc PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 # add_library(hitagisys
 # 		# disabled entries are because mon960 provides the implementations for them
 # 		#sys/brk.cc
