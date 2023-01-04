@@ -14,6 +14,7 @@
 #ifndef ARGANTE_TASK_H__
 #define ARGANTE_TASK_H__
 #include "memory.h"
+#include "linker.h"
 
 #define LOAD_RESPAWN		0x31337
 
@@ -26,7 +27,6 @@
 #define VCPU_STATE_SLEEPUNTIL	0x00000002
 #define VCPU_STATE_IOWAIT	0x00000004
 #define VCPU_STATE_IPCWAIT	0x00000008	// by Bulba
-struct symtab;
 struct vcpu_struct {
   char domain[MAX_EXEC_DOMAINS];  // execution domains (-1, >100 = end)
   unsigned char name[MAX_NAME];	  // process name

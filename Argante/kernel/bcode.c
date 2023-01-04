@@ -179,10 +179,10 @@ inline void pop_ip_from_stack( int id ) {
     }
 }
 
-inline void set_mem_value(int c,unsigned int addr,int value);
-inline int get_mem_value(int c,unsigned int addr);
+//inline void set_mem_value(int c,unsigned int addr,int value);
+//inline int get_mem_value(int c,unsigned int addr);
 
-inline int get_mem_value(int c,unsigned int addr) {
+int get_mem_value(int c,unsigned int addr) {
   int x;
   CHECK_EXCEPT_FN2;
   x=addr/(2+MAX_ALLOC_MEMBLK);
@@ -219,7 +219,7 @@ inline int get_mem_value(int c,unsigned int addr) {
 }
 
 
-inline void get_mem_block(int c,char* dest,unsigned int addr, unsigned int cnt) {
+void get_mem_block(int c,char* dest,unsigned int addr, unsigned int cnt) {
   int x;
   // a flagi?
 
@@ -262,7 +262,7 @@ inline void get_mem_block(int c,char* dest,unsigned int addr, unsigned int cnt) 
 }
 
 
-inline void set_mem_block(int c,char* src,unsigned int addr, unsigned int cnt) {
+void set_mem_block(int c,char* src,unsigned int addr, unsigned int cnt) {
   int x;
   // a flagi?
 
@@ -463,7 +463,7 @@ inline void mem_realloc(int c,int h,int newsize) {
 
 
 
-inline void set_mem_value(int c,unsigned int addr,int value) {
+void set_mem_value(int c,unsigned int addr,int value) {
   int x;
   // a flagi?
 
