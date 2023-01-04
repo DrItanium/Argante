@@ -192,3 +192,34 @@ add_executable(ahlt
 	hll/ahlt.c)
 
 target_include_directories(ahlt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+add_executable(actest
+	include/config.h
+	include/console.h
+	tools/actest.c)
+
+target_include_directories(actest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+add_executable(binedit
+	include/config.h
+	include/bformat.h
+	include/console.h
+	tools/binedit.c)
+
+target_include_directories(binedit PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+add_executable(disasm
+	include/config.h
+	include/console.h
+	include/bformat.h
+	include/bcode.h
+	include/task.h
+	include/language.h
+	tools/disasm.c)
+
+target_include_directories(disasm PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+
+add_executable(vcpucons
+	tools/vcpucons.c)
+
