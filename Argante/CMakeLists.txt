@@ -53,50 +53,35 @@ target_sources(common-includes INTERFACE
 		  include/module.h
 		  include/syscall.h
 		  include/task.h)
+add_library(compiler-generated INTERFACE)
+target_sources(compiler-generated INTERFACE
+	FILE_SET HEADERS
+	BASE_DIRS compiler
+	FILES compiler/autogen.h
+)
 
 
 add_subdirectory(compiler)
 add_subdirectory(kernel)
 add_subdirectory(modules)
+add_subdirectory(hll)
 # @todo add support for generating the IDSTR value
 
 
-add_executable(ahlt 
-	include/config.h
-	include/console.h
-	include/bcode.h
-	include/syscall.h
-	include/bformat.h
-	hll/ahlt.h
-	hll/ahlt.c)
-
-target_include_directories(ahlt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_executable(actest
-	include/config.h
-	include/console.h
 	tools/actest.c)
-
-target_include_directories(actest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(actest common-includes)
 
 add_executable(binedit
-	include/config.h
-	include/bformat.h
-	include/console.h
 	tools/binedit.c)
+target_link_libraries(binedit common-includes)
 
-target_include_directories(binedit PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_executable(disasm
-	include/config.h
-	include/console.h
-	include/bformat.h
-	include/bcode.h
-	include/task.h
-	include/language.h
 	tools/disasm.c)
 
-target_include_directories(disasm PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(disasm common-includes)
 
 
 add_executable(vcpucons
