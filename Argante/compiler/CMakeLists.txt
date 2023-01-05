@@ -3,9 +3,9 @@ add_executable(agtc
 	${CMAKE_SOURCE_DIR}/include/config.h
 	${CMAKE_SOURCE_DIR}/include/exception.h
 	${CMAKE_SOURCE_DIR}/include/syscall.h
-	${CMAKE_SOURCE_DIR}/include/autogen-debug.h
-	autogen.h
-	agtc.c)
+	include/autogen-debug.h
+	compiler/autogen.h
+	compiler/agtc.c)
 
 target_include_directories(agtc PUBLIC ${CMAKE_SOURCE_DIR}/include)
 
