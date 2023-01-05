@@ -12,3 +12,6 @@ add_executable(agrante
 )
 
 target_link_libraries(agrante common-includes)
+add_custom_command(TARGET agrante 
+	POST_BUILD 
+	COMMAND cp agrante ${CMAKE_BINARY_DIR})
