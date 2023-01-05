@@ -10,7 +10,7 @@ string(STRIP ${BUILDNUMBER} BUILDNUMBER)
 string(STRIP ${IDSTR} IDSTR)
 add_compile_definitions(BUILD=${BUILDNUMBER} IDSTR="${IDSTR}")
 add_custom_command(
-	OUTPUT include/autogen-debug.h
+	OUTPUT include/autogen-debug.h 
 	COMMAND include/autogen.sh
 	DEPENDS include/autogen.sh modules/syscall.h
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
@@ -31,6 +31,28 @@ add_custom_command(
 	COMMAND ln -sf ${CMAKE_CURRENT_SOURCE_DIR}/modules/syscall.h include/syscall.h > /dev/null
 	DEPENDS modules/syscall.h
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_library(common-includes INTERFACE)
+target_sources(common-includes INTERFACE
+	FILE_SET HEADERS
+	BASE_DIRS include
+	FILES include/acman.h
+		  include/autogen-debug.h
+		  include/bcode.h
+		  include/bformat.h
+		  include/cmd.h
+		  include/config.h
+		  include/console.h
+		  include/debugger.h
+		  include/evaluate.h
+		  include/exception.h
+		  include/language.h
+		  include/linker.h
+		  include/manager.h
+		  include/memory.h
+		  include/module.h
+		  include/syscall.h
+		  include/task.h)
 
 
 add_subdirectory(compiler)
