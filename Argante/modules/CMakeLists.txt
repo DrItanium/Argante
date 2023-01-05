@@ -31,3 +31,34 @@ target_link_libraries(network common-includes)
 target_link_libraries(ipc common-includes)
 target_link_libraries(fs common-includes)
 target_link_libraries(display common-includes)
+
+add_custom_command(TARGET fs 
+	POST_BUILD 
+	COMMAND cp libfs.so fs.so)
+add_custom_command(TARGET display 
+	POST_BUILD 
+	COMMAND cp libdisplay.so display.so)
+add_custom_command(TARGET ipc 
+	POST_BUILD 
+	COMMAND cp libipc.so ipc.so)
+add_custom_command(TARGET network 
+	POST_BUILD 
+	COMMAND cp libnetwork.so network.so)
+add_custom_command(TARGET packet 
+	POST_BUILD 
+	COMMAND cp libpacket.so packet.so)
+
+add_custom_command(TARGET advmem 
+	POST_BUILD 
+	COMMAND cp libadvmem.so advmem.so)
+
+add_custom_command(TARGET access 
+	POST_BUILD 
+	COMMAND cp libaccess.so access.so)
+
+add_custom_command(TARGET locallib 
+	POST_BUILD 
+	COMMAND cp liblocallib.so locallib.so)
+add_custom_command(TARGET math 
+	POST_BUILD 
+	COMMAND cp libmath.so math.so)

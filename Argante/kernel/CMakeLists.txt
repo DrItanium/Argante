@@ -1,5 +1,5 @@
 
-add_executable(agrante 
+add_executable(argante 
 	bcode.c
 	console.c
 	manager.c
@@ -11,7 +11,7 @@ add_executable(agrante
 	main-boot.c
 )
 
-target_link_libraries(agrante common-includes)
-add_custom_command(TARGET agrante 
+target_link_libraries(argante common-includes m dl)
+add_custom_command(TARGET argante 
 	POST_BUILD 
-	COMMAND cp agrante ${CMAKE_BINARY_DIR})
+	COMMAND cp argante ${CMAKE_BINARY_DIR})

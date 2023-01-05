@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
-project(hitagimon VERSION 0.1)
+project(argante VERSION 0.1)
 enable_language(CXX C)
+add_link_options(-rdynamic)
 file(READ kernel/.argbuild BUILDNUMBER)
 execute_process(COMMAND whoami OUTPUT_VARIABLE CURRENT_USER OUTPUT_STRIP_TRAILING_WHITESPACE)
 execute_process(COMMAND uname -n OUTPUT_VARIABLE MACHINE_NAME OUTPUT_STRIP_TRAILING_WHITESPACE)
