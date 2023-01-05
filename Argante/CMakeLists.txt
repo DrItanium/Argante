@@ -254,3 +254,5 @@ else()
 	message(WARNING "building remote IPC connectivity daemon without SSL support! It won't affect rIPC functionality, but makes all remote data transfers dependent on security of the underlying communication layer. So, if you have secure or tunneled link between rIPC endpoints (ssh tunnels, VPN networks), it does not matter. Otherwise, it *might* cause problems.  Also, non-SSL daemons could not connect to SSL-enabled rIPC HUBs.")
 	message(WARNING "The above is the original message from the makefiles.  OpenSSL support is deactivated because the implementation uses the deprecated and broken SSLv3 implementation. A more secure implementation will need to be used in its place")
 endif()
+
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/conf DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
