@@ -33,15 +33,7 @@ add_custom_command(
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 
-add_executable(agtc 
-	include/config.h
-	include/exception.h
-	modules/syscall.h
-	compiler/autogen.h
-	include/autogen-debug.h
-	compiler/agtc.c)
-
-target_include_directories(agtc PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_subdirectory(compiler)
 
 # @todo add support for generating the IDSTR value
 
